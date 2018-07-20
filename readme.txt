@@ -13,9 +13,9 @@ string2;file2.png;123456789222;987654321222;
 
 Template data:
 
-1st string: label mark and size
-2nd string: 1st object mark and parameters
-3rd string: 2nd object mark and parameters
+1st string: label definition and size
+2nd string: 1st object definition and parameters
+3rd string: 2nd object definition and parameters
 
 ====label template file====
   label; width; height;
@@ -26,6 +26,9 @@ barcode; posX;  posY; [rotate]; default_data; width;    height;   bcFormat;
 ====end====
 
 Parameters:
+
+[] - can be set as "0" to use default value
+object content data will be taken from template "default_" field if label file has empty field for it.
 
 fontStyle:
 0 = REGULAR
