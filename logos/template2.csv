@@ -1,0 +1,7 @@
+  label; 400; 400;
+   text; 10;  10;  0;  string1;         Arial;   10; 2;
+picture; 10;  100; 0;   custom_min1.png; 0;       0;  1;
+barcode; 10;  180; 0;   123456789;       200;     40; 16;
+picture; 390; 10;  90;  custom_min1.png; 0;       0;  1;
+barcode; 290; 100; 90;  987654321;       200;     40; 16;
+   text; 10;  350; 0; string2;         Courier; 10; 8;
