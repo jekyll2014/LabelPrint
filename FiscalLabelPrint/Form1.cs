@@ -9,6 +9,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Data;
+using System.Drawing.Text;
 
 namespace FiscalLabelPrint
 {
@@ -20,10 +21,9 @@ namespace FiscalLabelPrint
             text,
             picture,
             barcode,
-            qrcode,
         }
 
-        string[] _labelTypes = { "label", "text", "picture", "barcode", "2dcode" };
+        string[] _labelTypes = { "label", "text", "picture", "barcode" };
 
         struct template
         {
@@ -39,10 +39,33 @@ namespace FiscalLabelPrint
             public int fontSize;
             public byte fontStyle;
             public string fontName;
+            public string feature;
         }
         template[] Label = new template[0];
 
         DataTable LabelsDatabase = new DataTable();
+
+        int[] BarCodeTypes = {
+            (int)BarcodeFormat.AZTEC,
+            (int)BarcodeFormat.CODABAR,
+            (int)BarcodeFormat.CODE_128,
+            (int)BarcodeFormat.CODE_39,
+            (int)BarcodeFormat.CODE_93,
+            (int)BarcodeFormat.DATA_MATRIX,
+            (int)BarcodeFormat.EAN_13,
+            (int)BarcodeFormat.EAN_8,
+            (int)BarcodeFormat.IMB,
+            (int)BarcodeFormat.ITF,
+            (int)BarcodeFormat.MAXICODE,
+            (int)BarcodeFormat.MSI,
+            (int)BarcodeFormat.PDF_417,
+            (int)BarcodeFormat.PLESSEY,
+            (int)BarcodeFormat.QR_CODE,
+            (int)BarcodeFormat.RSS_14,
+            (int)BarcodeFormat.RSS_EXPANDED,
+            (int)BarcodeFormat.UPC_A,
+            (int)BarcodeFormat.UPC_E,
+            (int)BarcodeFormat.UPC_EAN_EXTENSION };
 
         int labelWidth = 0;
         int labelHeight = 0;
@@ -57,13 +80,6 @@ namespace FiscalLabelPrint
 
         private void drawText(Image img, int posX, int posY, string text, string fontName, int fontSize, int rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
         {
-            /*InstalledFontCollection installedFontCollection = new InstalledFontCollection();
-            foreach (FontFamily fontFamily in installedFontCollection.Families)
-            {
-                if (fontFamily.Name == fontName) ;
-            }
-            installedFontCollection.Dispose();*/
-
             Font textFont = new Font(fontName, fontSize, fontStyle); //creates new font
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.HighQuality;
@@ -116,21 +132,17 @@ namespace FiscalLabelPrint
             g.Restore(state);
         }
 
-        private void drawBarcode(Image img, int posX, int posY, int width, int height, string BCdata, BarcodeFormat bcFormat, int rotateDeg = 0)
+        private void drawBarcode(Image img, int posX, int posY, int width, int height, string BCdata, BarcodeFormat bcFormat, int rotateDeg = 0, string addFeature = "")
         {
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.HighQuality;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
             GraphicsState state = g.Save();
             g.ResetTransform();
-
             // Rotate.
             g.RotateTransform(rotateDeg);
-
             // Translate to desired position. Be sure to append the rotation so it occurs after the rotation.
             g.TranslateTransform(posX, posY, MatrixOrder.Append);
-
             var barCode = new BarcodeWriter();
             barCode.Format = bcFormat;
             barCode.Options = new EncodingOptions
@@ -139,43 +151,119 @@ namespace FiscalLabelPrint
                 Height = height,
                 Width = width
             };
-            Bitmap newPicture = barCode.Write(BCdata);
-            newPicture.MakeTransparent(Color.White);
-
-            g.DrawImage(newPicture, 0, 0);
-
-            // Restore the graphics state.
-            g.Restore(state);
-        }
-
-        private void draw2Dcode(Image img, int posX, int posY, int width, int height, string BCdata, BarcodeFormat bcFormat, int rotateDeg = 0)
-        {
-            Graphics g = Graphics.FromImage(img);
-            g.SmoothingMode = SmoothingMode.HighQuality;
-            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
-            GraphicsState state = g.Save();
-            g.ResetTransform();
-
-            // Rotate.
-            g.RotateTransform(rotateDeg);
-
-            // Translate to desired position. Be sure to append the rotation so it occurs after the rotation.
-            g.TranslateTransform(posX, posY, MatrixOrder.Append);
-
-            var barCode = new BarcodeWriter();
-            barCode.Format = bcFormat;
-            barCode.Options = new EncodingOptions
+            //specify the additional encoding options if there are any
+            if (addFeature != "")
             {
-                PureBarcode = true,
-                Height = height,
-                Width = width
-            };
+                EncodeHintType _feature = EncodeHintType.MIN_SIZE;
+                string[] tmp = addFeature.Split('=');
+                if (tmp.Length == 2)
+                {
+                    switch (tmp[0])
+                    {
+                        case "AZTEC_LAYERS": //int [-4, 32]
+                            {
+                                _feature = EncodeHintType.AZTEC_LAYERS;
+                                int param = 0;
+                                int.TryParse(tmp[1], out param);
+                                barCode.Options.Hints.Add(_feature, param);
+                            }
+                            break;
+                        case "ERROR_CORRECTION": //int [0, 8]
+                            {
+                                _feature = EncodeHintType.ERROR_CORRECTION;
+                                int param = 0;
+                                int.TryParse(tmp[1], out param);
+                                barCode.Options.Hints.Add(_feature, param);
+                            }
+                            break;
+                        case "MARGIN":  //int
+                            {
+                                _feature = EncodeHintType.MARGIN;
+                                int param = 0;
+                                int.TryParse(tmp[1], out param);
+                                barCode.Options.Hints.Add(_feature, param);
+                            }
+                            break;
+                        case "PDF417_ASPECT_RATIO": //int [1, 4]
+                            {
+                                _feature = EncodeHintType.PDF417_ASPECT_RATIO;
+                                int param = 0;
+                                int.TryParse(tmp[1], out param);
+                                barCode.Options.Hints.Add(_feature, param);
+                            }
+                            break;
+                        case "QR_VERSION": //int [1, 40] ??
+                            {
+                                _feature = EncodeHintType.QR_VERSION;
+                                int param = 0;
+                                int.TryParse(tmp[1], out param);
+                                barCode.Options.Hints.Add(_feature, param);
+                            }
+                            break;
+                        case "CHARACTER_SET": //string
+                            {
+                                _feature = EncodeHintType.CHARACTER_SET;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "PDF417_COMPACTION": //string
+                            {
+                                _feature = EncodeHintType.PDF417_COMPACTION;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "CODE128_FORCE_CODESET_B": //bool
+                            {
+                                _feature = EncodeHintType.CODE128_FORCE_CODESET_B;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "DISABLE_ECI": //bool
+                            {
+                                _feature = EncodeHintType.DISABLE_ECI;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "GS1_FORMAT": //bool
+                            {
+                                _feature = EncodeHintType.GS1_FORMAT;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "PDF417_COMPACT": //bool
+                            {
+                                _feature = EncodeHintType.PDF417_COMPACT;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        /*case "DATA_MATRIX_DEFAULT_ENCODATION": //????
+                            {
+                                _feature = EncodeHintType.DATA_MATRIX_DEFAULT_ENCODATION;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "DATA_MATRIX_SHAPE": //?????
+                            {
+                                _feature = EncodeHintType.DATA_MATRIX_SHAPE;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;
+                        case "PDF417_DIMENSIONS": //????
+                            {
+                                _feature = EncodeHintType.PDF417_DIMENSIONS;
+                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                            }
+                            break;*/
+                        default:
+                            MessageBox.Show("Unrecognized additional feature option:" + addFeature);
+                            break;
+                    }
+                }
+                else MessageBox.Show("Incorrect additional feature option:" + addFeature);
+            }
             Bitmap newPicture = barCode.Write(BCdata);
             newPicture.MakeTransparent(Color.White);
-
             g.DrawImage(newPicture, 0, 0);
-
             // Restore the graphics state.
             g.Restore(state);
         }
@@ -275,10 +363,21 @@ namespace FiscalLabelPrint
                 ReadCsv(openFileDialog1.FileName, LabelsDatabase);
                 //dataGridView_labels.Rows.Clear();
                 //dataGridView_labels.Columns.Clear();
-                dataGridView_labels.DataSource = LabelsDatabase;
                 if (LabelsDatabase != null)
                 {
+                    dataGridView_labels.DataSource = LabelsDatabase;
                     foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+                    foreach (DataGridViewRow row in dataGridView_labels.Rows)
+                    {
+                        for (int i = 0; i < Label.Length; i++)
+                        {
+                            if (Label[i].type == "" && !File.Exists(row.Cells[i].Value.ToString()))
+                            {
+                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                            }
+                        }
+                    }
                     button_printCurrent.Enabled = true;
                     button_printAll.Enabled = true;
                     button_printRange.Enabled = true;
@@ -286,7 +385,13 @@ namespace FiscalLabelPrint
                     textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
                     setRowNumber(dataGridView_labels);
                 }
-                if (dataGridView_labels.Columns.Count != Label.Length - 1) MessageBox.Show("Template doesn't match label file");
+                else
+                {
+                    MessageBox.Show("Error: No label data loaded.");
+                    return;
+                }
+                if (dataGridView_labels.Columns.Count != Label.Length - 1)
+                    MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Length - 1).ToString() + "Data loaded: " + dataGridView_labels.Columns.Count.ToString());
                 dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                 dataGridView_labels.Rows[0].Selected = true;
                 generateLabel(dataGridView_labels.CurrentCell.RowIndex);
@@ -298,9 +403,9 @@ namespace FiscalLabelPrint
                 Label = new template[inputStr.Length];
                 for (int i = 0; i < inputStr.Length; i++)
                 {
-                    if (inputStr[i].ToString().Trim() != "")
+                    if (inputStr[i].Trim() != "")
                     {
-                        string[] cells = inputStr[i].ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
+                        string[] cells = inputStr[i].Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
                         for (int i1 = 0; i1 < cells.Length; i1++) cells[i1] = cells[i1].Trim();
 
                         Label[i].type = cells[0];
@@ -308,50 +413,200 @@ namespace FiscalLabelPrint
                         {
                             int.TryParse(cells[1], out Label[i].width);
                             int.TryParse(cells[2], out Label[i].height);
+                            if (Label[i].width <= 0 || Label[i].height <= 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect label size: " + Label[i].width.ToString() + "*" + Label[i].height.ToString());
+                                if (Label[i].width <= 0) Label[i].width = 1;
+                                if (Label[i].height <= 0) Label[i].height = 1;
+                            }
                             labelWidth = Label[i].width;
                             labelHeight = Label[i].height;
                         }
                         else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.text])
                         {
                             int.TryParse(cells[1], out Label[i].posX);
+                            if (Label[i].posX < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                Label[i].posX = 0;
+                            }
+                            else if (Label[i].posX >= labelWidth)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                Label[i].posX = labelWidth - 1;
+                            }
                             int.TryParse(cells[2], out Label[i].posY);
+                            if (Label[i].posY < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                Label[i].posY = 0;
+                            }
+                            else if (Label[i].posY >= labelHeight)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                Label[i].posY = labelHeight - 1;
+                            }
                             int.TryParse(cells[3], out Label[i].rotate);
                             Label[i].content = cells[4];
                             Label[i].fontName = cells[5];
+                            // Check if the font is present
+                            InstalledFontCollection installedFontCollection = new InstalledFontCollection();
+                            bool _fontPresent = false;
+                            foreach (FontFamily fontFamily in installedFontCollection.Families)
+                            {
+                                if (fontFamily.Name == Label[i].fontName)
+                                {
+                                    _fontPresent = true;
+                                    break;
+                                }
+                            }
+                            if (_fontPresent == false)
+                            {
+                                MessageBox.Show("Incorrect font name: " + Label[i].fontName + "\r\nchanged to default: " + this.Font.Name);
+                                Label[i].fontName = this.Font.Name;
+                            }
+                            installedFontCollection.Dispose();
                             int.TryParse(cells[6], out Label[i].fontSize);
                             byte.TryParse(cells[7], out Label[i].fontStyle);
+                            if (Label[i].fontStyle != 0 && Label[i].fontStyle != 1 && Label[i].fontStyle != 2 && Label[i].fontStyle != 4 && Label[i].fontStyle != 8)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect font style: " + Label[i].fontStyle);
+                                Label[i].fontStyle = 0;
+                            }
                         }
                         else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.picture])
                         {
                             int.TryParse(cells[1], out Label[i].posX);
+                            if (Label[i].posX < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                Label[i].posX = 0;
+                            }
+                            else if (Label[i].posX >= labelWidth)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                Label[i].posX = labelWidth - 1;
+                            }
                             int.TryParse(cells[2], out Label[i].posY);
+                            if (Label[i].posY < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                Label[i].posY = 0;
+                            }
+                            else if (Label[i].posY >= labelHeight)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                Label[i].posY = labelHeight - 1;
+                            }
                             int.TryParse(cells[3], out Label[i].rotate);
                             Label[i].content = cells[4];
+
+                            if (!File.Exists(Label[i].content))
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + Label[i].content);
+                            }
+
                             int.TryParse(cells[5], out Label[i].width);
+                            if (Label[i].width < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                Label[i].width = 0;
+                            }
+                            else if (Label[i].width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                            }
                             int.TryParse(cells[6], out Label[i].height);
+                            if (Label[i].height < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                Label[i].height = 0;
+                            }
+                            else if (Label[i].height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                            }
                             int t = 0;
                             int.TryParse(cells[7], out t);
                             Label[i].transparent = (t > 0);
                         }
                         else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.barcode])
                         {
-                            int.TryParse(cells[1], out Label[i].posX);
-                            int.TryParse(cells[2], out Label[i].posY);
-                            int.TryParse(cells[3], out Label[i].rotate);
-                            Label[i].content = cells[4];
-                            int.TryParse(cells[5], out Label[i].width);
-                            int.TryParse(cells[6], out Label[i].height);
-                            int.TryParse(cells[7], out Label[i].BCformat);
-                        }
-                        else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.qrcode])
-                        {
-                            int.TryParse(cells[1], out Label[i].posX);
-                            int.TryParse(cells[2], out Label[i].posY);
-                            int.TryParse(cells[3], out Label[i].rotate);
-                            Label[i].content = cells[4];
-                            int.TryParse(cells[5], out Label[i].width);
-                            int.TryParse(cells[6], out Label[i].height);
-                            int.TryParse(cells[7], out Label[i].BCformat);
+                            if (cells.Length >= 8)
+                            {
+                                int.TryParse(cells[1], out Label[i].posX);
+                                if (Label[i].posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                    Label[i].posX = 0;
+                                }
+                                else if (Label[i].posX >= labelWidth)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                    Label[i].posX = labelWidth - 1;
+                                }
+                                int.TryParse(cells[2], out Label[i].posY);
+                                if (Label[i].posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                    Label[i].posY = 0;
+                                }
+                                else if (Label[i].posY >= labelHeight)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                    Label[i].posY = labelHeight - 1;
+                                }
+                                int.TryParse(cells[3], out Label[i].rotate);
+                                Label[i].content = cells[4];
+                                int.TryParse(cells[5], out Label[i].width);
+                                if (Label[i].width < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                    Label[i].width = 0;
+                                }
+                                else if (Label[i].width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                    Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                }
+                                int.TryParse(cells[6], out Label[i].height);
+                                if (Label[i].height < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                    Label[i].height = 0;
+                                }
+                                else if (Label[i].height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                    Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                }
+                                int.TryParse(cells[7], out Label[i].BCformat);
+                                Boolean _bcCorrect = false;
+                                for (int i1 = 0; i1 < BarCodeTypes.Length; i1++)
+                                {
+                                    if (BarCodeTypes[i1] == Label[i].BCformat)
+                                    {
+                                        _bcCorrect = true;
+                                        break;
+                                    }
+                                }
+                                if (!_bcCorrect)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + Label[i].BCformat.ToString());
+                                    Label[i].BCformat = (int)BarcodeFormat.QR_CODE;
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                            if (cells.Length >= 9)
+                            {
+                                Label[i].feature = cells[8];
+                                if (Label[i].feature == "0") Label[i].feature = "";
+                            }
                         }
                     }
                 }
@@ -372,7 +627,8 @@ namespace FiscalLabelPrint
             pictureBox_label.Image = newPicture;
             for (int i = 0; i < Label.Length; i++)
             {
-                if (Label[i].type == "text")
+                if (Label[i].type == "label") ;
+                else if (Label[i].type == "text")
                 {
                     string fontname = Label[i].fontName;
                     int fontSize = Label[i].fontSize;
@@ -412,22 +668,10 @@ namespace FiscalLabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    drawBarcode(pictureBox_label.Image, posX, posY, width, height, content, BCformat, rotate);
+                    string feature = Label[i].feature;
+                    drawBarcode(pictureBox_label.Image, posX, posY, width, height, content, BCformat, rotate, feature);
                 }
-                else if (Label[i].type == "2dcode")
-                {
-                    int posX = Label[i].posX;
-                    int posY = Label[i].posY;
-                    int rotate = Label[i].rotate;
-                    string content = Label[i].content;
-                    int width = Label[i].width;
-                    int height = Label[i].height;
-                    BarcodeFormat BCformat = (BarcodeFormat)Label[i].BCformat;
-                    string tmp = "";
-                    if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
-                    if (tmp != "") content = tmp;
-                    drawBarcode(pictureBox_label.Image, posX, posY, width, height, content, BCformat, rotate);
-                }
+                else MessageBox.Show("Incorrect object: " + Label[i].type);
             }
         }
 

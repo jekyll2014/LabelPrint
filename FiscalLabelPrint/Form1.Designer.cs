@@ -36,6 +36,8 @@
             this.checkBox_scale = new System.Windows.Forms.CheckBox();
             this.checkBox_toFile = new System.Windows.Forms.CheckBox();
             this.textBox_rangeTo = new System.Windows.Forms.TextBox();
+            this.textBox_labelsName = new System.Windows.Forms.TextBox();
+            this.textBox_templateName = new System.Windows.Forms.TextBox();
             this.textBox_saveFileName = new System.Windows.Forms.TextBox();
             this.textBox_rangeFrom = new System.Windows.Forms.TextBox();
             this.button_importTemplate = new System.Windows.Forms.Button();
@@ -47,8 +49,6 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
-            this.textBox_templateName = new System.Windows.Forms.TextBox();
-            this.textBox_labelsName = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -166,6 +166,26 @@
             this.textBox_rangeTo.TabIndex = 1;
             this.textBox_rangeTo.Text = "00000";
             // 
+            // textBox_labelsName
+            // 
+            this.textBox_labelsName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox_labelsName.Enabled = false;
+            this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
+            this.textBox_labelsName.Name = "textBox_labelsName";
+            this.textBox_labelsName.Size = new System.Drawing.Size(107, 20);
+            this.textBox_labelsName.TabIndex = 1;
+            // 
+            // textBox_templateName
+            // 
+            this.textBox_templateName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox_templateName.Enabled = false;
+            this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
+            this.textBox_templateName.Name = "textBox_templateName";
+            this.textBox_templateName.Size = new System.Drawing.Size(107, 20);
+            this.textBox_templateName.TabIndex = 1;
+            // 
             // textBox_saveFileName
             // 
             this.textBox_saveFileName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -275,26 +295,6 @@
             // printDialog1
             // 
             this.printDialog1.UseEXDialog = true;
-            // 
-            // textBox_templateName
-            // 
-            this.textBox_templateName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_templateName.Enabled = false;
-            this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
-            this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(107, 20);
-            this.textBox_templateName.TabIndex = 1;
-            // 
-            // textBox_labelsName
-            // 
-            this.textBox_labelsName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_labelsName.Enabled = false;
-            this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
-            this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(107, 20);
-            this.textBox_labelsName.TabIndex = 1;
             // 
             // Form1
             // 
