@@ -73,12 +73,14 @@ namespace FiscalLabelPrint
         int pagesFrom = 0;
         int pagesTo = 0;
 
+        Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
+
         public Form1()
         {
             InitializeComponent();
         }
 
-        private void drawText(Image img, int posX, int posY, string text, string fontName, int fontSize, int rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
+        private void drawText(Bitmap img, int posX, int posY, string text, string fontName, int fontSize, int rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
         {
             Font textFont = new Font(fontName, fontSize, fontStyle); //creates new font
             Graphics g = Graphics.FromImage(img);
@@ -98,7 +100,7 @@ namespace FiscalLabelPrint
             g.Restore(state);
         }
 
-        private void drawPicture(Image img, int posX, int posY, string fileName, int rotateDeg = 0, int width = 0, int height = 0, bool makeTransparent = true)
+        private void drawPicture(Bitmap img, int posX, int posY, string fileName, int rotateDeg = 0, int width = 0, int height = 0, bool makeTransparent = true)
         {
             Bitmap newPicture = new Bitmap(1, 1);
             try
@@ -107,7 +109,7 @@ namespace FiscalLabelPrint
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error opening file:" + fileName + " : " + ex.Message);
+                MessageBox.Show("Error opening file: " + fileName + " : " + ex.Message);
                 return;
             }
             if (width == 0) width = newPicture.Width;
@@ -116,23 +118,18 @@ namespace FiscalLabelPrint
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.HighQuality;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
             GraphicsState state = g.Save();
             g.ResetTransform();
-
             // Rotate.
             g.RotateTransform(rotateDeg);
-
             // Translate to desired position. Be sure to append the rotation so it occurs after the rotation.
             g.TranslateTransform(posX, posY, MatrixOrder.Append);
-
             g.DrawImage(newPicture, 0, 0, width, height);
-
             // Restore the graphics state.
             g.Restore(state);
         }
 
-        private void drawBarcode(Image img, int posX, int posY, int width, int height, string BCdata, BarcodeFormat bcFormat, int rotateDeg = 0, string addFeature = "")
+        private void drawBarcode(Bitmap img, int posX, int posY, int width, int height, string BCdata, BarcodeFormat bcFormat, int rotateDeg = 0, string addFeature = "")
         {
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.HighQuality;
@@ -368,11 +365,12 @@ namespace FiscalLabelPrint
                     dataGridView_labels.DataSource = LabelsDatabase;
                     foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
 
+                    //check for picture file existence
                     foreach (DataGridViewRow row in dataGridView_labels.Rows)
                     {
-                        for (int i = 0; i < Label.Length; i++)
+                        for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                         {
-                            if (Label[i].type == "" && !File.Exists(row.Cells[i].Value.ToString()))
+                            if (Label[i + 1].type == _labelTypes[(int)LabelTtype.picture] && !File.Exists(row.Cells[i].Value.ToString()))
                             {
                                 MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
                             }
@@ -399,6 +397,9 @@ namespace FiscalLabelPrint
             }
             else if (openFileDialog1.Title == "Open template .CSV file")
             {
+                dataGridView_labels.DataSource = null;
+                LabelsDatabase.Clear();
+                textBox_labelsName.Clear();
                 string[] inputStr = File.ReadAllLines(openFileDialog1.FileName);
                 Label = new template[inputStr.Length];
                 for (int i = 0; i < inputStr.Length; i++)
@@ -487,6 +488,7 @@ namespace FiscalLabelPrint
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
                                 Label[i].posX = labelWidth - 1;
                             }
+
                             int.TryParse(cells[2], out Label[i].posY);
                             if (Label[i].posY < 0)
                             {
@@ -498,9 +500,10 @@ namespace FiscalLabelPrint
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
                                 Label[i].posY = labelHeight - 1;
                             }
-                            int.TryParse(cells[3], out Label[i].rotate);
-                            Label[i].content = cells[4];
 
+                            int.TryParse(cells[3], out Label[i].rotate);
+
+                            Label[i].content = cells[4];
                             if (!File.Exists(Label[i].content))
                             {
                                 MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + Label[i].content);
@@ -517,6 +520,7 @@ namespace FiscalLabelPrint
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
                                 Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
                             }
+
                             int.TryParse(cells[6], out Label[i].height);
                             if (Label[i].height < 0)
                             {
@@ -528,6 +532,7 @@ namespace FiscalLabelPrint
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
                                 Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
                             }
+
                             int t = 0;
                             int.TryParse(cells[7], out t);
                             Label[i].transparent = (t > 0);
@@ -610,9 +615,12 @@ namespace FiscalLabelPrint
                         }
                     }
                 }
-                if (Label != null) button_importLabels.Enabled = true;
-                generateLabel(-1);
-                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                if (Label != null)
+                {
+                    button_importLabels.Enabled = true;
+                    generateLabel(-1);
+                    textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                }
             }
         }
 
@@ -623,8 +631,14 @@ namespace FiscalLabelPrint
 
         private void generateLabel(int gridLine)
         {
-            Bitmap newPicture = new Bitmap(labelWidth, labelHeight, PixelFormat.Format32bppPArgb);
-            pictureBox_label.Image = newPicture;
+            LabelBmp = new Bitmap(labelWidth, labelHeight, PixelFormat.Format32bppPArgb);
+            if (checkBox_scale.Checked)
+            {
+                pictureBox_label.Dock = DockStyle.None;
+                pictureBox_label.Width = labelWidth;
+                pictureBox_label.Height = labelHeight;
+            }
+            else pictureBox_label.Dock = DockStyle.Fill;
             for (int i = 0; i < Label.Length; i++)
             {
                 if (Label[i].type == "label") ;
@@ -640,7 +654,7 @@ namespace FiscalLabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    drawText(pictureBox_label.Image, posX, posY, content, fontname, fontSize, rotate, fontStyle);
+                    drawText(LabelBmp, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
                 else if (Label[i].type == "picture")
                 {
@@ -654,7 +668,7 @@ namespace FiscalLabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    drawPicture(pictureBox_label.Image, posX, posY, content, rotate, width, height, transparent);
+                    drawPicture(LabelBmp, posX, posY, content, rotate, width, height, transparent);
                 }
                 else if (Label[i].type == "barcode")
                 {
@@ -669,30 +683,36 @@ namespace FiscalLabelPrint
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
                     string feature = Label[i].feature;
-                    drawBarcode(pictureBox_label.Image, posX, posY, width, height, content, BCformat, rotate, feature);
+                    drawBarcode(LabelBmp, posX, posY, width, height, content, BCformat, rotate, feature);
                 }
                 else MessageBox.Show("Incorrect object: " + Label[i].type);
             }
+            pictureBox_label.Image = LabelBmp;
         }
 
         private void button_printCurrent_Click(object sender, EventArgs e)
         {
             if (pictureBox_label.Image == null) return;
-            Bitmap bmp = new Bitmap(labelWidth, labelHeight);
-            Rectangle rect = new Rectangle(0, 0, labelWidth, labelHeight);
-            pictureBox_label.DrawToBitmap(bmp, rect);
+            //Bitmap bmp = new Bitmap(labelWidth, labelHeight);
+            //Rectangle rect = new Rectangle(0, 0, labelWidth, labelHeight);
+            //pictureBox_label.DrawToBitmap(bmp, rect);
             if (!checkBox_toFile.Checked)
             {
                 printDialog1 = new PrintDialog();
                 printDocument1 = new PrintDocument();
                 printDialog1.Document = printDocument1;
+                /*
                 printDocument1.PrintPage += (sender2, args) =>
                 {
                     args.Graphics.PageUnit = GraphicsUnit.Pixel;
-                    args.Graphics.DrawImage(bmp, rect);
+                    args.Graphics.DrawImage(bmp, 0, 0);
                 };
+                */
+                printDocument1.PrintPage += new PrintPageEventHandler(printImages);
+                pagesFrom = dataGridView_labels.CurrentRow.Index;
+                pagesTo = pagesFrom;
                 if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                else MessageBox.Show("Print Cancelled");
+                //else MessageBox.Show("Print Cancelled");
             }
             else savePage();
         }
@@ -708,7 +728,7 @@ namespace FiscalLabelPrint
                 pagesFrom = 0;
                 pagesTo = dataGridView_labels.Rows.Count - 1;
                 if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                else MessageBox.Show("Print Cancelled");
+                //else MessageBox.Show("Print Cancelled");
             }
             else
             {
@@ -739,7 +759,7 @@ namespace FiscalLabelPrint
                 printDocument1.PrintPage += new PrintPageEventHandler(printImages);
 
                 if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                else MessageBox.Show("Print Cancelled");
+                //else MessageBox.Show("Print Cancelled");
             }
             else
             {
@@ -760,13 +780,35 @@ namespace FiscalLabelPrint
             dataGridView_labels.Rows[pagesFrom].Selected = true;
             generateLabel(dataGridView_labels.CurrentCell.RowIndex);
             if (pictureBox_label.Image == null) return;
-            Bitmap bmp = new Bitmap(labelWidth, labelHeight);
-            Rectangle rect = new Rectangle(0, 0, labelWidth, labelHeight);
-            pictureBox_label.DrawToBitmap(bmp, rect);
             args.Graphics.PageUnit = GraphicsUnit.Pixel;
-            args.Graphics.DrawImage(bmp, rect);
+            Bitmap bmp = new Bitmap(labelWidth, labelHeight);
+            Rectangle rect = new Rectangle(0, 0, pictureBox_label.Image.Width, pictureBox_label.Image.Height);
+            pictureBox_label.DrawToBitmap(bmp, rect);
+            args.Graphics.DrawImage(pictureBox_label.Image, rect);
             args.HasMorePages = pagesFrom < pagesTo;
             pagesFrom++;
+        }
+
+        private void savePage()
+        {
+            var dock = pictureBox_label.Dock;
+            var sizeMode = pictureBox_label.SizeMode;
+            var w = pictureBox_label.Width;
+            var h = pictureBox_label.Height;
+
+            pictureBox_label.Dock = DockStyle.None;
+            pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
+            pictureBox_label.Width = labelWidth;
+            pictureBox_label.Height = labelHeight;
+
+            Rectangle rect = new Rectangle(0, 0, pictureBox_label.Image.Width, pictureBox_label.Image.Height);
+            pictureBox_label.DrawToBitmap(LabelBmp, rect);
+            if (LabelBmp != null) LabelBmp.Save(textBox_saveFileName.Text + dataGridView_labels.CurrentCell.RowIndex.ToString() + ".png", ImageFormat.Png);
+
+            pictureBox_label.Dock = dock;
+            pictureBox_label.SizeMode = sizeMode;
+            pictureBox_label.Width = w;
+            pictureBox_label.Height = h;
         }
 
         private void setRowNumber(DataGridView dgv)
@@ -778,16 +820,6 @@ namespace FiscalLabelPrint
             dgv.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders);
         }
 
-        private void savePage()
-        {
-            Bitmap bmp = new Bitmap(pictureBox_label.Image.Width, pictureBox_label.Image.Height);
-            pictureBox_label.DrawToBitmap(bmp, pictureBox_label.ClientRectangle);
-            if (checkBox_toFile.Checked)
-            {
-                bmp.Save(textBox_saveFileName.Text + dataGridView_labels.CurrentCell.RowIndex.ToString() + ".png", ImageFormat.Png);
-            }
-        }
-
         private void checkBox_toFile_CheckedChanged(object sender, EventArgs e)
         {
             textBox_saveFileName.Enabled = checkBox_toFile.Checked;
@@ -795,8 +827,18 @@ namespace FiscalLabelPrint
 
         private void checkBox_scale_CheckedChanged(object sender, EventArgs e)
         {
-            if (checkBox_scale.Checked) pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
-            else pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
+            if (checkBox_scale.Checked)
+            {
+                pictureBox_label.Dock = DockStyle.None;
+                pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
+                pictureBox_label.Width = labelWidth;
+                pictureBox_label.Height = labelHeight;
+            }
+            else
+            {
+                pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
+                pictureBox_label.Dock = DockStyle.Fill;
+            }
         }
     }
 }

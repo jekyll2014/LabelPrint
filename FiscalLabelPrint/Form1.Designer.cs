@@ -17,6 +17,7 @@
             {
                 components.Dispose();
             }
+            LabelBmp.Dispose();
             base.Dispose(disposing);
         }
 
@@ -28,7 +29,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -77,8 +78,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.dataGridView_labels);
-            this.splitContainer1.Size = new System.Drawing.Size(384, 362);
-            this.splitContainer1.SplitterDistance = 220;
+            this.splitContainer1.Size = new System.Drawing.Size(801, 570);
+            this.splitContainer1.SplitterDistance = 346;
             this.splitContainer1.TabIndex = 0;
             // 
             // splitContainer2
@@ -110,16 +111,17 @@
             this.splitContainer2.Panel2.Controls.Add(this.button_printAll);
             this.splitContainer2.Panel2.Controls.Add(this.button_printCurrent);
             this.splitContainer2.Panel2MinSize = 220;
-            this.splitContainer2.Size = new System.Drawing.Size(384, 220);
-            this.splitContainer2.SplitterDistance = 160;
+            this.splitContainer2.Size = new System.Drawing.Size(801, 346);
+            this.splitContainer2.SplitterDistance = 333;
             this.splitContainer2.TabIndex = 0;
             // 
             // pictureBox_label
             // 
+            this.pictureBox_label.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pictureBox_label.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox_label.Location = new System.Drawing.Point(0, 0);
             this.pictureBox_label.Name = "pictureBox_label";
-            this.pictureBox_label.Size = new System.Drawing.Size(156, 216);
+            this.pictureBox_label.Size = new System.Drawing.Size(329, 342);
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
@@ -128,7 +130,7 @@
             // 
             this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(149, 152);
+            this.label1.Location = new System.Drawing.Point(149, 278);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(10, 13);
             this.label1.TabIndex = 3;
@@ -149,7 +151,7 @@
             // 
             this.checkBox_toFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.checkBox_toFile.AutoSize = true;
-            this.checkBox_toFile.Location = new System.Drawing.Point(3, 177);
+            this.checkBox_toFile.Location = new System.Drawing.Point(3, 303);
             this.checkBox_toFile.Name = "checkBox_toFile";
             this.checkBox_toFile.Size = new System.Drawing.Size(104, 17);
             this.checkBox_toFile.TabIndex = 2;
@@ -160,7 +162,7 @@
             // textBox_rangeTo
             // 
             this.textBox_rangeTo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox_rangeTo.Location = new System.Drawing.Point(165, 149);
+            this.textBox_rangeTo.Location = new System.Drawing.Point(165, 275);
             this.textBox_rangeTo.Name = "textBox_rangeTo";
             this.textBox_rangeTo.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeTo.TabIndex = 1;
@@ -173,7 +175,7 @@
             this.textBox_labelsName.Enabled = false;
             this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
             this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(107, 20);
+            this.textBox_labelsName.Size = new System.Drawing.Size(351, 20);
             this.textBox_labelsName.TabIndex = 1;
             // 
             // textBox_templateName
@@ -183,14 +185,14 @@
             this.textBox_templateName.Enabled = false;
             this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
             this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(107, 20);
+            this.textBox_templateName.Size = new System.Drawing.Size(351, 20);
             this.textBox_templateName.TabIndex = 1;
             // 
             // textBox_saveFileName
             // 
             this.textBox_saveFileName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.textBox_saveFileName.Enabled = false;
-            this.textBox_saveFileName.Location = new System.Drawing.Point(113, 174);
+            this.textBox_saveFileName.Location = new System.Drawing.Point(113, 300);
             this.textBox_saveFileName.Name = "textBox_saveFileName";
             this.textBox_saveFileName.Size = new System.Drawing.Size(79, 20);
             this.textBox_saveFileName.TabIndex = 1;
@@ -199,7 +201,7 @@
             // textBox_rangeFrom
             // 
             this.textBox_rangeFrom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox_rangeFrom.Location = new System.Drawing.Point(99, 149);
+            this.textBox_rangeFrom.Location = new System.Drawing.Point(99, 275);
             this.textBox_rangeFrom.Name = "textBox_rangeFrom";
             this.textBox_rangeFrom.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeFrom.TabIndex = 1;
@@ -230,7 +232,7 @@
             // 
             this.button_printRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_printRange.Enabled = false;
-            this.button_printRange.Location = new System.Drawing.Point(3, 147);
+            this.button_printRange.Location = new System.Drawing.Point(3, 273);
             this.button_printRange.Name = "button_printRange";
             this.button_printRange.Size = new System.Drawing.Size(90, 23);
             this.button_printRange.TabIndex = 0;
@@ -242,7 +244,7 @@
             // 
             this.button_printAll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_printAll.Enabled = false;
-            this.button_printAll.Location = new System.Drawing.Point(3, 118);
+            this.button_printAll.Location = new System.Drawing.Point(3, 244);
             this.button_printAll.Name = "button_printAll";
             this.button_printAll.Size = new System.Drawing.Size(90, 23);
             this.button_printAll.TabIndex = 0;
@@ -254,7 +256,7 @@
             // 
             this.button_printCurrent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_printCurrent.Enabled = false;
-            this.button_printCurrent.Location = new System.Drawing.Point(3, 89);
+            this.button_printCurrent.Location = new System.Drawing.Point(3, 215);
             this.button_printCurrent.Name = "button_printCurrent";
             this.button_printCurrent.Size = new System.Drawing.Size(90, 23);
             this.button_printCurrent.TabIndex = 0;
@@ -272,18 +274,18 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.Format = "N0";
-            dataGridViewCellStyle1.NullValue = null;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.Format = "N0";
+            dataGridViewCellStyle5.NullValue = null;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView_labels.Size = new System.Drawing.Size(380, 134);
+            this.dataGridView_labels.Size = new System.Drawing.Size(797, 216);
             this.dataGridView_labels.TabIndex = 0;
             this.dataGridView_labels.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView_labels_CellClick);
             // 
@@ -300,7 +302,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(384, 362);
+            this.ClientSize = new System.Drawing.Size(801, 570);
             this.Controls.Add(this.splitContainer1);
             this.MinimumSize = new System.Drawing.Size(400, 400);
             this.Name = "Form1";
