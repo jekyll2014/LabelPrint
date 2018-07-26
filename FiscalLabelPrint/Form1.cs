@@ -44,6 +44,7 @@ namespace FiscalLabelPrint
         template[] Label = new template[0];
 
         DataTable LabelsDatabase = new DataTable();
+        int objectsNum = 0;
 
         int[] BarCodeTypes = {
             (int)BarcodeFormat.AZTEC,
@@ -265,10 +266,10 @@ namespace FiscalLabelPrint
             g.Restore(state);
         }
 
-        public void ReadCsv(string fileName, DataTable table)
+        public void ReadCsv(string fileName, DataTable table, bool createColumnsNames = false)
         {
             table.Clear();
-            table.Columns.Clear();
+            table.Rows.Clear();
             FileStream inputFile;
             try
             {
@@ -282,24 +283,55 @@ namespace FiscalLabelPrint
 
             //read headers
             StringBuilder inputStr = new StringBuilder();
-            int c = inputFile.ReadByte();
-            while (c != '\r' && c != '\n' && c != -1)
-            {
-                byte[] b = new byte[1];
-                b[0] = (byte)c;
-                inputStr.Append(Encoding.GetEncoding(LabelPrint.Properties.Settings.Default.CodePage).GetString(b));
-                c = inputFile.ReadByte();
-            }
-
-            //create and count columns and read headers
+            int c = 0;
             int colNum = 0;
-            if (inputStr.Length != 0)
+
+            if (createColumnsNames == true)
             {
-                string[] cells = inputStr.ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
-                colNum = cells.Length - 1;
-                for (int i = 0; i < colNum; i++)
+                table.Columns.Clear();
+                c = inputFile.ReadByte();
+                while (c != '\r' && c != '\n' && c != -1)
                 {
-                    table.Columns.Add(cells[i]);
+                    byte[] b = new byte[1];
+                    b[0] = (byte)c;
+                    inputStr.Append(Encoding.GetEncoding(LabelPrint.Properties.Settings.Default.CodePage).GetString(b));
+                    c = inputFile.ReadByte();
+                }
+
+                //create and count columns and read headers
+                if (inputStr.Length != 0)
+                {
+                    string[] cells = inputStr.ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
+                    colNum = cells.Length - 1;
+                    for (int i = 0; i < colNum; i++)
+                    {
+                        table.Columns.Add(cells[i]);
+                    }
+                }
+            }
+            else
+            {
+                c = inputFile.ReadByte();
+                while (c != '\r' && c != '\n' && c != -1)
+                {
+                    byte[] b = new byte[1];
+                    b[0] = (byte)c;
+                    inputStr.Append(Encoding.GetEncoding(LabelPrint.Properties.Settings.Default.CodePage).GetString(b));
+                    c = inputFile.ReadByte();
+                }
+
+                //create 1st row and count columns
+                if (inputStr.Length != 0)
+                {
+                    string[] cells = inputStr.ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
+                    colNum = cells.Length - 1;
+                    DataRow row = table.NewRow();
+                    for (int i = 0; i < cells.Length - 1; i++)
+                    {
+                        string tmp = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        if (tmp != "") row[i] = tmp;
+                    }
+                    table.Rows.Add(row);
                 }
             }
 
@@ -356,10 +388,10 @@ namespace FiscalLabelPrint
             if (openFileDialog1.Title == "Open labels .CSV database")
             {
                 dataGridView_labels.DataSource = null;
-                LabelsDatabase.Clear();
-                ReadCsv(openFileDialog1.FileName, LabelsDatabase);
-                //dataGridView_labels.Rows.Clear();
-                //dataGridView_labels.Columns.Clear();
+                //LabelsDatabase.Clear();
+                //LabelsDatabase.Columns.Clear();
+                //LabelsDatabase.Rows.Clear();
+                ReadCsv(openFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked);
                 if (LabelsDatabase != null)
                 {
                     dataGridView_labels.DataSource = LabelsDatabase;
@@ -397,8 +429,11 @@ namespace FiscalLabelPrint
             }
             else if (openFileDialog1.Title == "Open template .CSV file")
             {
+                objectsNum = 0;
                 dataGridView_labels.DataSource = null;
                 LabelsDatabase.Clear();
+                LabelsDatabase.Columns.Clear();
+                LabelsDatabase.Rows.Clear();
                 textBox_labelsName.Clear();
                 string[] inputStr = File.ReadAllLines(openFileDialog1.FileName);
                 Label = new template[inputStr.Length];
@@ -408,209 +443,230 @@ namespace FiscalLabelPrint
                     {
                         string[] cells = inputStr[i].Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
                         for (int i1 = 0; i1 < cells.Length; i1++) cells[i1] = cells[i1].Trim();
-
-                        Label[i].type = cells[0];
-                        if (cells.Length >= 3 && Label[i].type == _labelTypes[(int)LabelTtype.label])
+                        if (cells.Length >= 3)
                         {
-                            int.TryParse(cells[1], out Label[i].width);
-                            int.TryParse(cells[2], out Label[i].height);
-                            if (Label[i].width <= 0 || Label[i].height <= 0)
+                            Label[i].type = cells[0];
+                            objectsNum++;
+                            if (Label[i].type == _labelTypes[(int)LabelTtype.label])
                             {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect label size: " + Label[i].width.ToString() + "*" + Label[i].height.ToString());
-                                if (Label[i].width <= 0) Label[i].width = 1;
-                                if (Label[i].height <= 0) Label[i].height = 1;
-                            }
-                            labelWidth = Label[i].width;
-                            labelHeight = Label[i].height;
-                        }
-                        else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.text])
-                        {
-                            int.TryParse(cells[1], out Label[i].posX);
-                            if (Label[i].posX < 0)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
-                                Label[i].posX = 0;
-                            }
-                            else if (Label[i].posX >= labelWidth)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
-                                Label[i].posX = labelWidth - 1;
-                            }
-                            int.TryParse(cells[2], out Label[i].posY);
-                            if (Label[i].posY < 0)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
-                                Label[i].posY = 0;
-                            }
-                            else if (Label[i].posY >= labelHeight)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
-                                Label[i].posY = labelHeight - 1;
-                            }
-                            int.TryParse(cells[3], out Label[i].rotate);
-                            Label[i].content = cells[4];
-                            Label[i].fontName = cells[5];
-                            // Check if the font is present
-                            InstalledFontCollection installedFontCollection = new InstalledFontCollection();
-                            bool _fontPresent = false;
-                            foreach (FontFamily fontFamily in installedFontCollection.Families)
-                            {
-                                if (fontFamily.Name == Label[i].fontName)
+                                int.TryParse(cells[1], out Label[i].width);
+                                int.TryParse(cells[2], out Label[i].height);
+                                if (Label[i].width <= 0 || Label[i].height <= 0)
                                 {
-                                    _fontPresent = true;
-                                    break;
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect label size: " + Label[i].width.ToString() + "*" + Label[i].height.ToString());
+                                    if (Label[i].width <= 0) Label[i].width = 1;
+                                    if (Label[i].height <= 0) Label[i].height = 1;
                                 }
-                            }
-                            if (_fontPresent == false)
-                            {
-                                MessageBox.Show("Incorrect font name: " + Label[i].fontName + "\r\nchanged to default: " + this.Font.Name);
-                                Label[i].fontName = this.Font.Name;
-                            }
-                            installedFontCollection.Dispose();
-                            int.TryParse(cells[6], out Label[i].fontSize);
-                            byte.TryParse(cells[7], out Label[i].fontStyle);
-                            if (Label[i].fontStyle != 0 && Label[i].fontStyle != 1 && Label[i].fontStyle != 2 && Label[i].fontStyle != 4 && Label[i].fontStyle != 8)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect font style: " + Label[i].fontStyle);
-                                Label[i].fontStyle = 0;
-                            }
-                        }
-                        else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.picture])
-                        {
-                            int.TryParse(cells[1], out Label[i].posX);
-                            if (Label[i].posX < 0)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
-                                Label[i].posX = 0;
-                            }
-                            else if (Label[i].posX >= labelWidth)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
-                                Label[i].posX = labelWidth - 1;
+                                labelWidth = Label[i].width;
+                                labelHeight = Label[i].height;
                             }
 
-                            int.TryParse(cells[2], out Label[i].posY);
-                            if (Label[i].posY < 0)
+                            else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.text])
                             {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
-                                Label[i].posY = 0;
-                            }
-                            else if (Label[i].posY >= labelHeight)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
-                                Label[i].posY = labelHeight - 1;
-                            }
+                                if (cells.Length >= 8)
+                                {
 
-                            int.TryParse(cells[3], out Label[i].rotate);
-
-                            Label[i].content = cells[4];
-                            if (!File.Exists(Label[i].content))
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + Label[i].content);
-                            }
-
-                            int.TryParse(cells[5], out Label[i].width);
-                            if (Label[i].width < 0)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
-                                Label[i].width = 0;
-                            }
-                            else if (Label[i].width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
-                                Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
-                            }
-
-                            int.TryParse(cells[6], out Label[i].height);
-                            if (Label[i].height < 0)
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
-                                Label[i].height = 0;
-                            }
-                            else if (Label[i].height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
-                            {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
-                                Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
-                            }
-
-                            int t = 0;
-                            int.TryParse(cells[7], out t);
-                            Label[i].transparent = (t > 0);
-                        }
-                        else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.barcode])
-                        {
-                            if (cells.Length >= 8)
-                            {
-                                int.TryParse(cells[1], out Label[i].posX);
-                                if (Label[i].posX < 0)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
-                                    Label[i].posX = 0;
-                                }
-                                else if (Label[i].posX >= labelWidth)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
-                                    Label[i].posX = labelWidth - 1;
-                                }
-                                int.TryParse(cells[2], out Label[i].posY);
-                                if (Label[i].posY < 0)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
-                                    Label[i].posY = 0;
-                                }
-                                else if (Label[i].posY >= labelHeight)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
-                                    Label[i].posY = labelHeight - 1;
-                                }
-                                int.TryParse(cells[3], out Label[i].rotate);
-                                Label[i].content = cells[4];
-                                int.TryParse(cells[5], out Label[i].width);
-                                if (Label[i].width < 0)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
-                                    Label[i].width = 0;
-                                }
-                                else if (Label[i].width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
-                                    Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
-                                }
-                                int.TryParse(cells[6], out Label[i].height);
-                                if (Label[i].height < 0)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
-                                    Label[i].height = 0;
-                                }
-                                else if (Label[i].height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
-                                    Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
-                                }
-                                int.TryParse(cells[7], out Label[i].BCformat);
-                                Boolean _bcCorrect = false;
-                                for (int i1 = 0; i1 < BarCodeTypes.Length; i1++)
-                                {
-                                    if (BarCodeTypes[i1] == Label[i].BCformat)
+                                    int.TryParse(cells[1], out Label[i].posX);
+                                    if (Label[i].posX < 0)
                                     {
-                                        _bcCorrect = true;
-                                        break;
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                        Label[i].posX = 0;
+                                    }
+                                    else if (Label[i].posX >= labelWidth)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                        Label[i].posX = labelWidth - 1;
+                                    }
+                                    int.TryParse(cells[2], out Label[i].posY);
+                                    if (Label[i].posY < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                        Label[i].posY = 0;
+                                    }
+                                    else if (Label[i].posY >= labelHeight)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                        Label[i].posY = labelHeight - 1;
+                                    }
+                                    int.TryParse(cells[3], out Label[i].rotate);
+                                    Label[i].content = cells[4];
+                                    Label[i].fontName = cells[5];
+                                    // Check if the font is present
+                                    InstalledFontCollection installedFontCollection = new InstalledFontCollection();
+                                    bool _fontPresent = false;
+                                    foreach (FontFamily fontFamily in installedFontCollection.Families)
+                                    {
+                                        if (fontFamily.Name == Label[i].fontName)
+                                        {
+                                            _fontPresent = true;
+                                            break;
+                                        }
+                                    }
+                                    if (_fontPresent == false)
+                                    {
+                                        MessageBox.Show("Incorrect font name: " + Label[i].fontName + "\r\nchanged to default: " + this.Font.Name);
+                                        Label[i].fontName = this.Font.Name;
+                                    }
+                                    installedFontCollection.Dispose();
+                                    int.TryParse(cells[6], out Label[i].fontSize);
+                                    byte.TryParse(cells[7], out Label[i].fontStyle);
+                                    if (Label[i].fontStyle != 0 && Label[i].fontStyle != 1 && Label[i].fontStyle != 2 && Label[i].fontStyle != 4 && Label[i].fontStyle != 8)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect font style: " + Label[i].fontStyle);
+                                        Label[i].fontStyle = 0;
                                     }
                                 }
-                                if (!_bcCorrect)
+                                else
                                 {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + Label[i].BCformat.ToString());
-                                    Label[i].BCformat = (int)BarcodeFormat.QR_CODE;
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
                                 }
                             }
-                            else
+                            else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.picture])
                             {
-                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                                if (cells.Length >= 8)
+                                {
+
+                                    int.TryParse(cells[1], out Label[i].posX);
+                                    if (Label[i].posX < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                        Label[i].posX = 0;
+                                    }
+                                    else if (Label[i].posX >= labelWidth)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                        Label[i].posX = labelWidth - 1;
+                                    }
+
+                                    int.TryParse(cells[2], out Label[i].posY);
+                                    if (Label[i].posY < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                        Label[i].posY = 0;
+                                    }
+                                    else if (Label[i].posY >= labelHeight)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                        Label[i].posY = labelHeight - 1;
+                                    }
+
+                                    int.TryParse(cells[3], out Label[i].rotate);
+
+                                    Label[i].content = cells[4];
+                                    if (!File.Exists(Label[i].content))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + Label[i].content);
+                                    }
+
+                                    int.TryParse(cells[5], out Label[i].width);
+                                    if (Label[i].width < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                        Label[i].width = 0;
+                                    }
+                                    else if (Label[i].width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                        Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                    }
+
+                                    int.TryParse(cells[6], out Label[i].height);
+                                    if (Label[i].height < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                        Label[i].height = 0;
+                                    }
+                                    else if (Label[i].height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                        Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                    }
+
+                                    int t = 0;
+                                    int.TryParse(cells[7], out t);
+                                    Label[i].transparent = (t > 0);
+                                }
+                                else
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                                }
                             }
-                            if (cells.Length >= 9)
+                            else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.barcode])
                             {
-                                Label[i].feature = cells[8];
-                                if (Label[i].feature == "0") Label[i].feature = "";
+                                if (cells.Length >= 8)
+                                {
+                                    int.TryParse(cells[1], out Label[i].posX);
+                                    if (Label[i].posX < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                        Label[i].posX = 0;
+                                    }
+                                    else if (Label[i].posX >= labelWidth)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + Label[i].posX.ToString());
+                                        Label[i].posX = labelWidth - 1;
+                                    }
+                                    int.TryParse(cells[2], out Label[i].posY);
+                                    if (Label[i].posY < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                        Label[i].posY = 0;
+                                    }
+                                    else if (Label[i].posY >= labelHeight)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + Label[i].posY.ToString());
+                                        Label[i].posY = labelHeight - 1;
+                                    }
+                                    int.TryParse(cells[3], out Label[i].rotate);
+                                    Label[i].content = cells[4];
+                                    int.TryParse(cells[5], out Label[i].width);
+                                    if (Label[i].width < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                        Label[i].width = 0;
+                                    }
+                                    else if (Label[i].width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].width.ToString());
+                                        Label[i].width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                    }
+                                    int.TryParse(cells[6], out Label[i].height);
+                                    if (Label[i].height < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                        Label[i].height = 0;
+                                    }
+                                    else if (Label[i].height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + Label[i].height.ToString());
+                                        Label[i].height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                    }
+                                    int.TryParse(cells[7], out Label[i].BCformat);
+                                    Boolean _bcCorrect = false;
+                                    for (int i1 = 0; i1 < BarCodeTypes.Length; i1++)
+                                    {
+                                        if (BarCodeTypes[i1] == Label[i].BCformat)
+                                        {
+                                            _bcCorrect = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!_bcCorrect)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + Label[i].BCformat.ToString());
+                                        Label[i].BCformat = (int)BarcodeFormat.QR_CODE;
+                                    }
+                                }
+                                else
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                                }
+                                if (cells.Length >= 9)
+                                {
+                                    Label[i].feature = cells[8];
+                                    if (Label[i].feature == "0") Label[i].feature = "";
+                                }
+                                else Label[i].feature = "";
                             }
                         }
                     }
@@ -620,6 +676,30 @@ namespace FiscalLabelPrint
                     button_importLabels.Enabled = true;
                     generateLabel(-1);
                     textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                    //create colums and fill 1 row with default values
+                    for (int i = 1; i < objectsNum; i++)
+                    {
+                        LabelsDatabase.Columns.Add((i - 1).ToString() + " " + Label[i].type);
+                    }
+                    DataRow row = LabelsDatabase.NewRow();
+                    for (int i = 1; i < objectsNum; i++)
+                    {
+                        row[i - 1] = Label[i].content;
+                    }
+                    LabelsDatabase.Rows.Add(row);
+                    dataGridView_labels.DataSource = LabelsDatabase;
+                    if (LabelsDatabase != null)
+                    {
+                        dataGridView_labels.DataSource = LabelsDatabase;
+                        foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                        button_printCurrent.Enabled = true;
+                        button_printAll.Enabled = false;
+                        button_printRange.Enabled = false;
+                        textBox_rangeFrom.Text = "0";
+                        textBox_rangeTo.Text = "0";
+                        setRowNumber(dataGridView_labels);
+                    }
+
                 }
             }
         }
@@ -840,5 +920,6 @@ namespace FiscalLabelPrint
                 pictureBox_label.Dock = DockStyle.Fill;
             }
         }
+
     }
 }

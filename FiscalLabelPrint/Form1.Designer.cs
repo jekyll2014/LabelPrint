@@ -29,7 +29,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -50,6 +50,7 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
+            this.checkBox_columnNames = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -98,6 +99,7 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.label1);
+            this.splitContainer2.Panel2.Controls.Add(this.checkBox_columnNames);
             this.splitContainer2.Panel2.Controls.Add(this.checkBox_scale);
             this.splitContainer2.Panel2.Controls.Add(this.checkBox_toFile);
             this.splitContainer2.Panel2.Controls.Add(this.textBox_rangeTo);
@@ -139,7 +141,7 @@
             // checkBox_scale
             // 
             this.checkBox_scale.AutoSize = true;
-            this.checkBox_scale.Location = new System.Drawing.Point(3, 68);
+            this.checkBox_scale.Location = new System.Drawing.Point(3, 91);
             this.checkBox_scale.Name = "checkBox_scale";
             this.checkBox_scale.Size = new System.Drawing.Size(106, 17);
             this.checkBox_scale.TabIndex = 2;
@@ -274,16 +276,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle5.Format = "N0";
-            dataGridViewCellStyle5.NullValue = null;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(797, 216);
             this.dataGridView_labels.TabIndex = 0;
@@ -297,6 +299,17 @@
             // printDialog1
             // 
             this.printDialog1.UseEXDialog = true;
+            // 
+            // checkBox_columnNames
+            // 
+            this.checkBox_columnNames.AutoSize = true;
+            this.checkBox_columnNames.Location = new System.Drawing.Point(3, 68);
+            this.checkBox_columnNames.Name = "checkBox_columnNames";
+            this.checkBox_columnNames.Size = new System.Drawing.Size(158, 17);
+            this.checkBox_columnNames.TabIndex = 2;
+            this.checkBox_columnNames.Text = "1st string is a column names";
+            this.checkBox_columnNames.UseVisualStyleBackColor = true;
+            this.checkBox_columnNames.CheckedChanged += new System.EventHandler(this.checkBox_scale_CheckedChanged);
             // 
             // Form1
             // 
@@ -344,6 +357,7 @@
         private System.Windows.Forms.CheckBox checkBox_scale;
         private System.Windows.Forms.TextBox textBox_labelsName;
         private System.Windows.Forms.TextBox textBox_templateName;
+        private System.Windows.Forms.CheckBox checkBox_columnNames;
     }
 }
 

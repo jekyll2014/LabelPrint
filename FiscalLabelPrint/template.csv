@@ -1,7 +1,7 @@
   label; 400; 400;
-   text; 10;  10; 0; string1;     Arial; 10; 0;
-picture; 10;  100; 0; custom_min1.png; 0;  0; 1;
-barcode; 10;  180; 0; 123456789;     200;    40;   16;
-picture; 390;  10; 90; custom_min1.png; 0;  0; 1;
-barcode; 290;  200; 90; 987654321;     200;    200;   2048;
-   text; 20;  390; -90; string2;     Courier New; 20; 4;
+   text; 10;  10;  0;   string1;         Arial;       10;  0;
+picture; 10;  100; 0;   custom_min1.png; 0;           0;   1;
+barcode; 10;  180; 0;   123456789;       200;         40;  16;
+picture; 390; 10;  90;  custom_min1.png; 0;           0;   1;
+barcode; 290; 200; 90;  987654321;       200;         200; 2048;
+   text; 20;  390; -90; string2;         Courier New; 20;  4;
