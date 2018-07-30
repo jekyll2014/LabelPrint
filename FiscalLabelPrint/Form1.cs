@@ -704,11 +704,6 @@ namespace FiscalLabelPrint
             }
         }
 
-        private void dataGridView_labels_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            generateLabel(dataGridView_labels.CurrentCell.RowIndex);
-        }
-
         private void generateLabel(int gridLine)
         {
             LabelBmp = new Bitmap(labelWidth, labelHeight, PixelFormat.Format32bppPArgb);
@@ -921,5 +916,9 @@ namespace FiscalLabelPrint
             }
         }
 
+        private void dataGridView_labels_SelectionChanged(object sender, EventArgs e)
+        {
+            generateLabel(dataGridView_labels.CurrentCell.RowIndex);
+        }
     }
 }

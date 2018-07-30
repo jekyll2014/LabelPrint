@@ -34,6 +34,7 @@
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.checkBox_columnNames = new System.Windows.Forms.CheckBox();
             this.checkBox_scale = new System.Windows.Forms.CheckBox();
             this.checkBox_toFile = new System.Windows.Forms.CheckBox();
             this.textBox_rangeTo = new System.Windows.Forms.TextBox();
@@ -50,7 +51,6 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
-            this.checkBox_columnNames = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -137,6 +137,17 @@
             this.label1.Size = new System.Drawing.Size(10, 13);
             this.label1.TabIndex = 3;
             this.label1.Text = "-";
+            // 
+            // checkBox_columnNames
+            // 
+            this.checkBox_columnNames.AutoSize = true;
+            this.checkBox_columnNames.Location = new System.Drawing.Point(3, 68);
+            this.checkBox_columnNames.Name = "checkBox_columnNames";
+            this.checkBox_columnNames.Size = new System.Drawing.Size(158, 17);
+            this.checkBox_columnNames.TabIndex = 2;
+            this.checkBox_columnNames.Text = "1st string is a column names";
+            this.checkBox_columnNames.UseVisualStyleBackColor = true;
+            this.checkBox_columnNames.CheckedChanged += new System.EventHandler(this.checkBox_scale_CheckedChanged);
             // 
             // checkBox_scale
             // 
@@ -289,7 +300,7 @@
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(797, 216);
             this.dataGridView_labels.TabIndex = 0;
-            this.dataGridView_labels.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView_labels_CellClick);
+            this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.dataGridView_labels_SelectionChanged);
             // 
             // openFileDialog1
             // 
@@ -300,17 +311,6 @@
             // 
             this.printDialog1.UseEXDialog = true;
             // 
-            // checkBox_columnNames
-            // 
-            this.checkBox_columnNames.AutoSize = true;
-            this.checkBox_columnNames.Location = new System.Drawing.Point(3, 68);
-            this.checkBox_columnNames.Name = "checkBox_columnNames";
-            this.checkBox_columnNames.Size = new System.Drawing.Size(158, 17);
-            this.checkBox_columnNames.TabIndex = 2;
-            this.checkBox_columnNames.Text = "1st string is a column names";
-            this.checkBox_columnNames.UseVisualStyleBackColor = true;
-            this.checkBox_columnNames.CheckedChanged += new System.EventHandler(this.checkBox_scale_CheckedChanged);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -319,7 +319,7 @@
             this.Controls.Add(this.splitContainer1);
             this.MinimumSize = new System.Drawing.Size(400, 400);
             this.Name = "Form1";
-            this.Text = "FiscalLabelPrint";
+            this.Text = "LabelPrint";
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
