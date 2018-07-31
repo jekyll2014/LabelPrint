@@ -107,21 +107,21 @@ namespace FiscalLabelPrint
 
                     for (int i = 0; i < cmdLine.Length; i++)
                     {
-                        cmdLine[i] = cmdLine[i].Trim().ToLower();
-                        if (cmdLine[i].StartsWith("/t="))
+                        cmdLine[i] = cmdLine[i].Trim();
+                        if (cmdLine[i].ToLower().StartsWith("/t="))
                         {
 
                             template = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
                         }
-                        else if (cmdLine[i].StartsWith("/c"))
+                        else if (cmdLine[i].ToLower().StartsWith("/c"))
                         {
                             checkBox_columnNames.Checked = true;
                         }
-                        else if (cmdLine[i].StartsWith("/l="))
+                        else if (cmdLine[i].ToLower().StartsWith("/l="))
                         {
                             label = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
                         }
-                        else if (cmdLine[i].StartsWith("/p="))
+                        else if (cmdLine[i].ToLower().StartsWith("/p="))
                         {
                             cmdLine[i] = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
                             if (cmdLine[i] == "a")
@@ -140,11 +140,11 @@ namespace FiscalLabelPrint
                                 to = from;
                             }
                         }
-                        else if (cmdLine[i].StartsWith("/prn="))
+                        else if (cmdLine[i].ToLower().StartsWith("/prn="))
                         {
                             printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).Replace("_", " ");
                         }
-                        else if (cmdLine[i].StartsWith("/pic="))
+                        else if (cmdLine[i].ToLower().StartsWith("/pic="))
                         {
                             printerName = " ";
                             textBox_saveFileName.Text = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
@@ -153,7 +153,6 @@ namespace FiscalLabelPrint
                         else
                         {
                             Console.WriteLine("Unknown parameter: " + cmdLine[i]);
-                            Application.Exit();
                         }
                     }
                     //check we have enough data to print
@@ -499,15 +498,11 @@ namespace FiscalLabelPrint
             if (openFileDialog1.Title == "Open labels .CSV database")
             {
                 dataGridView_labels.DataSource = null;
-                //LabelsDatabase.Clear();
-                //LabelsDatabase.Columns.Clear();
-                //LabelsDatabase.Rows.Clear();
                 ReadCsv(openFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked);
                 if (LabelsDatabase.Rows.Count > 0)
                 {
                     dataGridView_labels.DataSource = LabelsDatabase;
                     foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-
                     //check for picture file existence
                     foreach (DataGridViewRow row in dataGridView_labels.Rows)
                     {
@@ -871,26 +866,15 @@ namespace FiscalLabelPrint
         private void button_printCurrent_Click(object sender, EventArgs e)
         {
             if (pictureBox_label.Image == null) return;
-            //Bitmap bmp = new Bitmap(labelWidth, labelHeight);
-            //Rectangle rect = new Rectangle(0, 0, labelWidth, labelHeight);
-            //pictureBox_label.DrawToBitmap(bmp, rect);
             if (!checkBox_toFile.Checked)
             {
                 printDialog1 = new PrintDialog();
                 printDocument1 = new PrintDocument();
                 printDialog1.Document = printDocument1;
-                /*
-                printDocument1.PrintPage += (sender2, args) =>
-                {
-                    args.Graphics.PageUnit = GraphicsUnit.Pixel;
-                    args.Graphics.DrawImage(bmp, 0, 0);
-                };
-                */
                 printDocument1.PrintPage += new PrintPageEventHandler(printImages);
                 pagesFrom = dataGridView_labels.CurrentRow.Index;
                 pagesTo = pagesFrom;
                 if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                //else MessageBox.Show("Print Cancelled");
             }
             else savePage();
         }
@@ -914,7 +898,6 @@ namespace FiscalLabelPrint
                     printDocument1.PrinterSettings.PrinterName = printerName;
                     printDocument1.Print();
                 }
-                //else MessageBox.Show("Print Cancelled");
             }
             else
             {
@@ -943,9 +926,15 @@ namespace FiscalLabelPrint
                 printDocument1 = new PrintDocument();
                 printDialog1.Document = printDocument1;
                 printDocument1.PrintPage += new PrintPageEventHandler(printImages);
-
-                if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                //else MessageBox.Show("Print Cancelled");
+                if (!cmdLinePrint)
+                {
+                    if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
+                }
+                else
+                {
+                    printDocument1.PrinterSettings.PrinterName = printerName;
+                    printDocument1.Print();
+                }
             }
             else
             {
