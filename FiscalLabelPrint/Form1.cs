@@ -15,7 +15,7 @@ namespace FiscalLabelPrint
 {
     public partial class Form1 : Form
     {
-        enum LabelTtype
+        enum objectTypeNum
         {
             label,
             text,
@@ -23,7 +23,7 @@ namespace FiscalLabelPrint
             barcode,
         }
 
-        string[] _labelTypes = { "label", "text", "picture", "barcode" };
+        string[] _objectTypes = { "label", "text", "picture", "barcode" };
 
         struct template
         {
@@ -74,11 +74,122 @@ namespace FiscalLabelPrint
         int pagesFrom = 0;
         int pagesTo = 0;
 
+        bool cmdLinePrint = false;
+        string printerName = "";
+
         Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
 
-        public Form1()
+        public Form1(string[] cmdLine)
         {
             InitializeComponent();
+
+            if (cmdLine.Length >= 1)
+            {
+                if (cmdLine[0] == "/?" || cmdLine[0] == "/h" || cmdLine[0] == "/help")
+                {
+                    Console.WriteLine("/?, /h, /help - print help\r\n" +
+                        "/T=file.csv - load template data from file\r\n" +
+                        "/L=file.csv - load label data from file\r\n" +
+                        "/C - 1st string of label file is column names (default = no)\r\n" +
+                        "/PRN=SystemPrinterName - output to printer (replace spaces with \'_\')\r\n" +
+                        "/PIC=pictureName - output to pictures\r\n" +
+                        "/P=A - print all labels\r\n" +
+                        "/P=xxx - print label #xxx\r\n" +
+                        "/P=xxx-yyy - print labels from xxx to yyy");
+                }
+                else
+                {
+                    string template = "";
+                    string label = "";
+                    int from = -1;
+                    int to = -1;
+                    bool printAll = false;
+
+                    for (int i = 0; i < cmdLine.Length; i++)
+                    {
+                        cmdLine[i] = cmdLine[i].Trim().ToLower();
+                        if (cmdLine[i].StartsWith("/t="))
+                        {
+
+                            template = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        }
+                        else if (cmdLine[i].StartsWith("/c"))
+                        {
+                            checkBox_columnNames.Checked = true;
+                        }
+                        else if (cmdLine[i].StartsWith("/l="))
+                        {
+                            label = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        }
+                        else if (cmdLine[i].StartsWith("/p="))
+                        {
+                            cmdLine[i] = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                            if (cmdLine[i] == "a")
+                            {
+                                printAll = true;
+                                from = to = 0;
+                            }
+                            else if (cmdLine[i].IndexOf('-') > 0)
+                            {
+                                int.TryParse(cmdLine[i].Substring(0, cmdLine[i].IndexOf('-')), out from);
+                                int.TryParse(cmdLine[i].Substring(cmdLine[i].IndexOf('-') + 1), out to);
+                            }
+                            else
+                            {
+                                int.TryParse(cmdLine[i], out from);
+                                to = from;
+                            }
+                        }
+                        else if (cmdLine[i].StartsWith("/prn="))
+                        {
+                            printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).Replace("_", " ");
+                        }
+                        else if (cmdLine[i].StartsWith("/pic="))
+                        {
+                            printerName = " ";
+                            textBox_saveFileName.Text = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                            checkBox_toFile.Checked = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Unknown parameter: " + cmdLine[i]);
+                            Application.Exit();
+                        }
+                    }
+                    //check we have enough data to print
+                    if (template != "" && label != "" && from != -1 && to != -1 && printerName != "")
+                    {
+                        cmdLinePrint = true;
+                        //import template
+                        openFileDialog1.Title = "Open template .CSV file";
+                        openFileDialog1.FileName = template;
+                        openFileDialog1_FileOk(this, null);
+                        //import labels
+                        openFileDialog1.Title = "Open labels .CSV database";
+                        openFileDialog1.FileName = label;
+                        openFileDialog1_FileOk(this, null);
+                        if (printAll == true) button_printAll_Click(this, EventArgs.Empty);
+                        else
+                        {
+                            textBox_rangeFrom.Text = from.ToString();
+                            textBox_rangeTo.Text = to.ToString();
+                            button_printRange_Click(this, EventArgs.Empty);
+                        }
+                    }
+                    else Console.WriteLine("Not enough parameters.\r\n");
+                }
+                if (System.Windows.Forms.Application.MessageLoop)
+                {
+                    // WinForms app
+                    System.Windows.Forms.Application.Exit();
+                }
+                else
+                {
+                    // Console app
+                    System.Environment.Exit(1);
+                }
+            }
+
         }
 
         private void drawText(Bitmap img, int posX, int posY, string text, string fontName, int fontSize, int rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
@@ -392,7 +503,7 @@ namespace FiscalLabelPrint
                 //LabelsDatabase.Columns.Clear();
                 //LabelsDatabase.Rows.Clear();
                 ReadCsv(openFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked);
-                if (LabelsDatabase != null)
+                if (LabelsDatabase.Rows.Count > 0)
                 {
                     dataGridView_labels.DataSource = LabelsDatabase;
                     foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -402,7 +513,7 @@ namespace FiscalLabelPrint
                     {
                         for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                         {
-                            if (Label[i + 1].type == _labelTypes[(int)LabelTtype.picture] && !File.Exists(row.Cells[i].Value.ToString()))
+                            if (Label[i + 1].type == _objectTypes[(int)objectTypeNum.picture] && !File.Exists(row.Cells[i].Value.ToString()))
                             {
                                 MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
                             }
@@ -447,7 +558,7 @@ namespace FiscalLabelPrint
                         {
                             Label[i].type = cells[0];
                             objectsNum++;
-                            if (Label[i].type == _labelTypes[(int)LabelTtype.label])
+                            if (Label[i].type == _objectTypes[(int)objectTypeNum.label])
                             {
                                 int.TryParse(cells[1], out Label[i].width);
                                 int.TryParse(cells[2], out Label[i].height);
@@ -460,8 +571,7 @@ namespace FiscalLabelPrint
                                 labelWidth = Label[i].width;
                                 labelHeight = Label[i].height;
                             }
-
-                            else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.text])
+                            else if (Label[i].type == _objectTypes[(int)objectTypeNum.text])
                             {
                                 if (cells.Length >= 8)
                                 {
@@ -521,7 +631,7 @@ namespace FiscalLabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
                                 }
                             }
-                            else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.picture])
+                            else if (Label[i].type == _objectTypes[(int)objectTypeNum.picture])
                             {
                                 if (cells.Length >= 8)
                                 {
@@ -591,7 +701,7 @@ namespace FiscalLabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
                                 }
                             }
-                            else if (cells.Length >= 8 && Label[i].type == _labelTypes[(int)LabelTtype.barcode])
+                            else if (Label[i].type == _objectTypes[(int)objectTypeNum.barcode])
                             {
                                 if (cells.Length >= 8)
                                 {
@@ -671,36 +781,29 @@ namespace FiscalLabelPrint
                         }
                     }
                 }
-                if (Label != null)
+                button_importLabels.Enabled = true;
+                generateLabel(-1);
+                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //create colums and fill 1 row with default values
+                for (int i = 1; i < objectsNum; i++)
                 {
-                    button_importLabels.Enabled = true;
-                    generateLabel(-1);
-                    textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                    //create colums and fill 1 row with default values
-                    for (int i = 1; i < objectsNum; i++)
-                    {
-                        LabelsDatabase.Columns.Add((i - 1).ToString() + " " + Label[i].type);
-                    }
-                    DataRow row = LabelsDatabase.NewRow();
-                    for (int i = 1; i < objectsNum; i++)
-                    {
-                        row[i - 1] = Label[i].content;
-                    }
-                    LabelsDatabase.Rows.Add(row);
-                    dataGridView_labels.DataSource = LabelsDatabase;
-                    if (LabelsDatabase != null)
-                    {
-                        dataGridView_labels.DataSource = LabelsDatabase;
-                        foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                        button_printCurrent.Enabled = true;
-                        button_printAll.Enabled = false;
-                        button_printRange.Enabled = false;
-                        textBox_rangeFrom.Text = "0";
-                        textBox_rangeTo.Text = "0";
-                        setRowNumber(dataGridView_labels);
-                    }
-
+                    LabelsDatabase.Columns.Add((i - 1).ToString() + " " + Label[i].type);
                 }
+                DataRow row = LabelsDatabase.NewRow();
+                for (int i = 1; i < objectsNum; i++)
+                {
+                    row[i - 1] = Label[i].content;
+                }
+                LabelsDatabase.Rows.Add(row);
+                dataGridView_labels.DataSource = LabelsDatabase;
+                dataGridView_labels.DataSource = LabelsDatabase;
+                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                button_printCurrent.Enabled = true;
+                button_printAll.Enabled = false;
+                button_printRange.Enabled = false;
+                textBox_rangeFrom.Text = "0";
+                textBox_rangeTo.Text = "0";
+                setRowNumber(dataGridView_labels);
             }
         }
 
@@ -802,7 +905,15 @@ namespace FiscalLabelPrint
                 printDocument1.PrintPage += new PrintPageEventHandler(printImages);
                 pagesFrom = 0;
                 pagesTo = dataGridView_labels.Rows.Count - 1;
-                if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
+                if (!cmdLinePrint)
+                {
+                    if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
+                }
+                else
+                {
+                    printDocument1.PrinterSettings.PrinterName = printerName;
+                    printDocument1.Print();
+                }
                 //else MessageBox.Show("Print Cancelled");
             }
             else
@@ -918,7 +1029,8 @@ namespace FiscalLabelPrint
 
         private void dataGridView_labels_SelectionChanged(object sender, EventArgs e)
         {
-            generateLabel(dataGridView_labels.CurrentCell.RowIndex);
+            if (!cmdLinePrint) generateLabel(dataGridView_labels.CurrentCell.RowIndex);
         }
+
     }
 }

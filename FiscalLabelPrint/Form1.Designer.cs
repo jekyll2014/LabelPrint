@@ -30,8 +30,8 @@
         private void InitializeComponent()
         {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
+            this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox_columnNames = new System.Windows.Forms.CheckBox();
@@ -51,71 +51,72 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
-            this.splitContainer2.Panel1.SuspendLayout();
-            this.splitContainer2.Panel2.SuspendLayout();
-            this.splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
+            this.splitContainer_horizontal.Panel1.SuspendLayout();
+            this.splitContainer_horizontal.Panel2.SuspendLayout();
+            this.splitContainer_horizontal.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer_vertical)).BeginInit();
+            this.splitContainer_vertical.Panel1.SuspendLayout();
+            this.splitContainer_vertical.Panel2.SuspendLayout();
+            this.splitContainer_vertical.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_label)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).BeginInit();
             this.SuspendLayout();
             // 
-            // splitContainer1
+            // splitContainer_horizontal
             // 
-            this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Name = "splitContainer1";
-            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            this.splitContainer_horizontal.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.splitContainer_horizontal.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer_horizontal.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer_horizontal.Name = "splitContainer_horizontal";
+            this.splitContainer_horizontal.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
-            // splitContainer1.Panel1
+            // splitContainer_horizontal.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.splitContainer2);
-            this.splitContainer1.Panel1MinSize = 220;
+            this.splitContainer_horizontal.Panel1.Controls.Add(this.splitContainer_vertical);
+            this.splitContainer_horizontal.Panel1MinSize = 230;
             // 
-            // splitContainer1.Panel2
+            // splitContainer_horizontal.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.dataGridView_labels);
-            this.splitContainer1.Size = new System.Drawing.Size(801, 570);
-            this.splitContainer1.SplitterDistance = 346;
-            this.splitContainer1.TabIndex = 0;
+            this.splitContainer_horizontal.Panel2.Controls.Add(this.dataGridView_labels);
+            this.splitContainer_horizontal.Panel2MinSize = 100;
+            this.splitContainer_horizontal.Size = new System.Drawing.Size(384, 362);
+            this.splitContainer_horizontal.SplitterDistance = 230;
+            this.splitContainer_horizontal.TabIndex = 0;
             // 
-            // splitContainer2
+            // splitContainer_vertical
             // 
-            this.splitContainer2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer2.Name = "splitContainer2";
+            this.splitContainer_vertical.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.splitContainer_vertical.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer_vertical.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer_vertical.Name = "splitContainer_vertical";
             // 
-            // splitContainer2.Panel1
+            // splitContainer_vertical.Panel1
             // 
-            this.splitContainer2.Panel1.AutoScroll = true;
-            this.splitContainer2.Panel1.Controls.Add(this.pictureBox_label);
-            this.splitContainer2.Panel1MinSize = 100;
+            this.splitContainer_vertical.Panel1.AutoScroll = true;
+            this.splitContainer_vertical.Panel1.Controls.Add(this.pictureBox_label);
+            this.splitContainer_vertical.Panel1MinSize = 100;
             // 
-            // splitContainer2.Panel2
+            // splitContainer_vertical.Panel2
             // 
-            this.splitContainer2.Panel2.Controls.Add(this.label1);
-            this.splitContainer2.Panel2.Controls.Add(this.checkBox_columnNames);
-            this.splitContainer2.Panel2.Controls.Add(this.checkBox_scale);
-            this.splitContainer2.Panel2.Controls.Add(this.checkBox_toFile);
-            this.splitContainer2.Panel2.Controls.Add(this.textBox_rangeTo);
-            this.splitContainer2.Panel2.Controls.Add(this.textBox_labelsName);
-            this.splitContainer2.Panel2.Controls.Add(this.textBox_templateName);
-            this.splitContainer2.Panel2.Controls.Add(this.textBox_saveFileName);
-            this.splitContainer2.Panel2.Controls.Add(this.textBox_rangeFrom);
-            this.splitContainer2.Panel2.Controls.Add(this.button_importTemplate);
-            this.splitContainer2.Panel2.Controls.Add(this.button_importLabels);
-            this.splitContainer2.Panel2.Controls.Add(this.button_printRange);
-            this.splitContainer2.Panel2.Controls.Add(this.button_printAll);
-            this.splitContainer2.Panel2.Controls.Add(this.button_printCurrent);
-            this.splitContainer2.Panel2MinSize = 220;
-            this.splitContainer2.Size = new System.Drawing.Size(801, 346);
-            this.splitContainer2.SplitterDistance = 333;
-            this.splitContainer2.TabIndex = 0;
+            this.splitContainer_vertical.Panel2.Controls.Add(this.label1);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.checkBox_columnNames);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.checkBox_scale);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.checkBox_toFile);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.textBox_rangeTo);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.textBox_labelsName);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.textBox_templateName);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.textBox_saveFileName);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.textBox_rangeFrom);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_importTemplate);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_importLabels);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_printRange);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_printAll);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_printCurrent);
+            this.splitContainer_vertical.Panel2MinSize = 230;
+            this.splitContainer_vertical.Size = new System.Drawing.Size(384, 230);
+            this.splitContainer_vertical.SplitterDistance = 150;
+            this.splitContainer_vertical.TabIndex = 0;
             // 
             // pictureBox_label
             // 
@@ -123,7 +124,7 @@
             this.pictureBox_label.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox_label.Location = new System.Drawing.Point(0, 0);
             this.pictureBox_label.Name = "pictureBox_label";
-            this.pictureBox_label.Size = new System.Drawing.Size(329, 342);
+            this.pictureBox_label.Size = new System.Drawing.Size(146, 226);
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
@@ -132,7 +133,7 @@
             // 
             this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(149, 278);
+            this.label1.Location = new System.Drawing.Point(149, 205);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(10, 13);
             this.label1.TabIndex = 3;
@@ -164,7 +165,7 @@
             // 
             this.checkBox_toFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.checkBox_toFile.AutoSize = true;
-            this.checkBox_toFile.Location = new System.Drawing.Point(3, 303);
+            this.checkBox_toFile.Location = new System.Drawing.Point(3, 119);
             this.checkBox_toFile.Name = "checkBox_toFile";
             this.checkBox_toFile.Size = new System.Drawing.Size(104, 17);
             this.checkBox_toFile.TabIndex = 2;
@@ -175,7 +176,7 @@
             // textBox_rangeTo
             // 
             this.textBox_rangeTo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox_rangeTo.Location = new System.Drawing.Point(165, 275);
+            this.textBox_rangeTo.Location = new System.Drawing.Point(165, 202);
             this.textBox_rangeTo.Name = "textBox_rangeTo";
             this.textBox_rangeTo.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeTo.TabIndex = 1;
@@ -188,7 +189,7 @@
             this.textBox_labelsName.Enabled = false;
             this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
             this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(351, 20);
+            this.textBox_labelsName.Size = new System.Drawing.Size(117, 20);
             this.textBox_labelsName.TabIndex = 1;
             // 
             // textBox_templateName
@@ -198,14 +199,14 @@
             this.textBox_templateName.Enabled = false;
             this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
             this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(351, 20);
+            this.textBox_templateName.Size = new System.Drawing.Size(117, 20);
             this.textBox_templateName.TabIndex = 1;
             // 
             // textBox_saveFileName
             // 
             this.textBox_saveFileName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.textBox_saveFileName.Enabled = false;
-            this.textBox_saveFileName.Location = new System.Drawing.Point(113, 300);
+            this.textBox_saveFileName.Location = new System.Drawing.Point(113, 116);
             this.textBox_saveFileName.Name = "textBox_saveFileName";
             this.textBox_saveFileName.Size = new System.Drawing.Size(79, 20);
             this.textBox_saveFileName.TabIndex = 1;
@@ -214,7 +215,7 @@
             // textBox_rangeFrom
             // 
             this.textBox_rangeFrom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox_rangeFrom.Location = new System.Drawing.Point(99, 275);
+            this.textBox_rangeFrom.Location = new System.Drawing.Point(99, 202);
             this.textBox_rangeFrom.Name = "textBox_rangeFrom";
             this.textBox_rangeFrom.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeFrom.TabIndex = 1;
@@ -245,7 +246,7 @@
             // 
             this.button_printRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_printRange.Enabled = false;
-            this.button_printRange.Location = new System.Drawing.Point(3, 273);
+            this.button_printRange.Location = new System.Drawing.Point(3, 200);
             this.button_printRange.Name = "button_printRange";
             this.button_printRange.Size = new System.Drawing.Size(90, 23);
             this.button_printRange.TabIndex = 0;
@@ -257,7 +258,7 @@
             // 
             this.button_printAll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_printAll.Enabled = false;
-            this.button_printAll.Location = new System.Drawing.Point(3, 244);
+            this.button_printAll.Location = new System.Drawing.Point(3, 171);
             this.button_printAll.Name = "button_printAll";
             this.button_printAll.Size = new System.Drawing.Size(90, 23);
             this.button_printAll.TabIndex = 0;
@@ -269,7 +270,7 @@
             // 
             this.button_printCurrent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_printCurrent.Enabled = false;
-            this.button_printCurrent.Location = new System.Drawing.Point(3, 215);
+            this.button_printCurrent.Location = new System.Drawing.Point(3, 142);
             this.button_printCurrent.Name = "button_printCurrent";
             this.button_printCurrent.Size = new System.Drawing.Size(90, 23);
             this.button_printCurrent.TabIndex = 0;
@@ -298,7 +299,7 @@
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView_labels.Size = new System.Drawing.Size(797, 216);
+            this.dataGridView_labels.Size = new System.Drawing.Size(380, 124);
             this.dataGridView_labels.TabIndex = 0;
             this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.dataGridView_labels_SelectionChanged);
             // 
@@ -315,20 +316,20 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(801, 570);
-            this.Controls.Add(this.splitContainer1);
+            this.ClientSize = new System.Drawing.Size(384, 362);
+            this.Controls.Add(this.splitContainer_horizontal);
             this.MinimumSize = new System.Drawing.Size(400, 400);
             this.Name = "Form1";
             this.Text = "LabelPrint";
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
-            this.splitContainer2.Panel1.ResumeLayout(false);
-            this.splitContainer2.Panel2.ResumeLayout(false);
-            this.splitContainer2.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
-            this.splitContainer2.ResumeLayout(false);
+            this.splitContainer_horizontal.Panel1.ResumeLayout(false);
+            this.splitContainer_horizontal.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).EndInit();
+            this.splitContainer_horizontal.ResumeLayout(false);
+            this.splitContainer_vertical.Panel1.ResumeLayout(false);
+            this.splitContainer_vertical.Panel2.ResumeLayout(false);
+            this.splitContainer_vertical.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer_vertical)).EndInit();
+            this.splitContainer_vertical.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_label)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).EndInit();
             this.ResumeLayout(false);
@@ -337,8 +338,8 @@
 
         #endregion
 
-        private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.SplitContainer splitContainer2;
+        private System.Windows.Forms.SplitContainer splitContainer_horizontal;
+        private System.Windows.Forms.SplitContainer splitContainer_vertical;
         private System.Windows.Forms.PictureBox pictureBox_label;
         private System.Windows.Forms.Button button_printCurrent;
         private System.Windows.Forms.DataGridView dataGridView_labels;
