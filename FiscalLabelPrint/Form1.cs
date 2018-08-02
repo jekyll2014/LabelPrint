@@ -1543,5 +1543,12 @@ namespace FiscalLabelPrint
             if (!cmdLinePrint) generateLabel(dataGridView_labels.CurrentCell.RowIndex);
         }
 
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex == 1)
+            {
+                //Refresh all lists
+            }
+        }
     }
 }
