@@ -688,7 +688,7 @@ namespace FiscalLabelPrint
                                 {
                                     Label[i].fgColor = fgColor = Color.Black;
                                 }
-                                if (bgColor == fgColor)
+                                if (Label[i].bgColor == Label[i].fgColor)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                 }
@@ -709,7 +709,7 @@ namespace FiscalLabelPrint
                                 }
                                 labelHeight = (int)Label[i].height;
                             }
-                            // text; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
+                            // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
                             else if (Label[i].type == _objectNames[textObject])
                             {
                                 if (cells.Length >= 9)
@@ -722,7 +722,7 @@ namespace FiscalLabelPrint
                                     {
                                         Label[i].fgColor = fgColor;
                                     }
-                                    if (bgColor == fgColor)
+                                    if (Label[i].bgColor == Label[i].fgColor)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                     }
@@ -801,7 +801,7 @@ namespace FiscalLabelPrint
                                     {
                                         Label[i].fgColor = fgColor;
                                     }
-                                    if (bgColor == fgColor)
+                                    if (Label[i].bgColor == Label[i].fgColor)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                     }
@@ -893,7 +893,7 @@ namespace FiscalLabelPrint
                                     {
                                         Label[i].fgColor = fgColor;
                                     }
-                                    if (bgColor == fgColor)
+                                    if (Label[i].bgColor == Label[i].fgColor)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                     }
@@ -996,7 +996,7 @@ namespace FiscalLabelPrint
                                     {
                                         Label[i].fgColor = fgColor;
                                     }
-                                    if (bgColor == fgColor)
+                                    if (Label[i].bgColor == Label[i].fgColor)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                     }
@@ -1095,7 +1095,7 @@ namespace FiscalLabelPrint
                                     {
                                         Label[i].fgColor = fgColor;
                                     }
-                                    if (bgColor == fgColor)
+                                    if (Label[i].bgColor == Label[i].fgColor)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                     }
@@ -1179,7 +1179,7 @@ namespace FiscalLabelPrint
                                     {
                                         Label[i].fgColor = fgColor;
                                     }
-                                    if (bgColor == fgColor)
+                                    if (Label[i].bgColor == Label[i].fgColor)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                     }
