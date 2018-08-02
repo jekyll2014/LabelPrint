@@ -115,7 +115,7 @@
             this.splitContainer_vertical.Panel2.Controls.Add(this.button_printCurrent);
             this.splitContainer_vertical.Panel2MinSize = 230;
             this.splitContainer_vertical.Size = new System.Drawing.Size(384, 230);
-            this.splitContainer_vertical.SplitterDistance = 149;
+            this.splitContainer_vertical.SplitterDistance = 150;
             this.splitContainer_vertical.TabIndex = 0;
             // 
             // pictureBox_label
@@ -124,7 +124,7 @@
             this.pictureBox_label.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox_label.Location = new System.Drawing.Point(0, 0);
             this.pictureBox_label.Name = "pictureBox_label";
-            this.pictureBox_label.Size = new System.Drawing.Size(145, 226);
+            this.pictureBox_label.Size = new System.Drawing.Size(146, 226);
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
@@ -189,7 +189,7 @@
             this.textBox_labelsName.Enabled = false;
             this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
             this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(118, 20);
+            this.textBox_labelsName.Size = new System.Drawing.Size(117, 20);
             this.textBox_labelsName.TabIndex = 1;
             // 
             // textBox_templateName
@@ -199,7 +199,7 @@
             this.textBox_templateName.Enabled = false;
             this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
             this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(118, 20);
+            this.textBox_templateName.Size = new System.Drawing.Size(117, 20);
             this.textBox_templateName.TabIndex = 1;
             // 
             // textBox_saveFileName
