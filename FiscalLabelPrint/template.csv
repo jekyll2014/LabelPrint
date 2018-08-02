@@ -1,10 +1,10 @@
-    label;      ;       ; 400; 400;
-     text;              ; 10;  10;  0;   string1;         Arial;       10;  0;
+    label; Beige;       ; 400; 400;
+     text;         Green; 10;  10;  0;   string1;         Arial;       10;  0;
   picture; White;         10;  100; 0;   custom_min1.png; 0;           0;   1;
-  barcode;      ;       ; 10;  180; 0;   123456789;       200;         40;  16;
+  barcode;   Red;       ; 10;  180; 0;   123456789;       200;         40;  16;
   picture; White;         390; 10;  90;  custom_min1.png; 0;           0;   1;
-  barcode;      ;       ; 290; 200; 90;  987654321;       200;         200; 2048; 1;
-     text;              ; 20;  390; -90; string2;         Courier New; 20;  4;
+  barcode;  Blue;       ; 290; 200; 90;  987654321;       200;         200; 2048; 1;
+     text;          Cyan; 20;  390; -90; string2;         Courier New; 20;  4;
      line;              ; 10;  10;     ; 1;               389;         389;
      line;              ; 389; 10;  135; 5;               400;
 rectangle;              ; 20;  20;  0;   3;               359;         359;  0;
