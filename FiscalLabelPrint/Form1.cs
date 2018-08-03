@@ -25,10 +25,11 @@ namespace FiscalLabelPrint
         const int ellipseObject = 6;
 
         string[] _objectNames = { "label", "text", "picture", "barcode", "line", "rectangle", "ellipse", };
+        string[] _textStyleNames = { "0=regular", "1=bold", "2=italic", "4=underline", "8=strikeout" };
 
         struct template
         {
-            public string type;
+            public string name;
             public Color bgColor;
             public Color fgColor;
             public float posX;
@@ -52,32 +53,28 @@ namespace FiscalLabelPrint
         DataTable LabelsDatabase = new DataTable();
         int objectsNum = 0;
 
-        int[] BarCodeTypes = {
-            (int)BarcodeFormat.AZTEC,
-            (int)BarcodeFormat.CODABAR,
-            (int)BarcodeFormat.CODE_128,
-            (int)BarcodeFormat.CODE_39,
-            (int)BarcodeFormat.CODE_93,
-            (int)BarcodeFormat.DATA_MATRIX,
-            (int)BarcodeFormat.EAN_13,
-            (int)BarcodeFormat.EAN_8,
-            (int)BarcodeFormat.IMB,
-            (int)BarcodeFormat.ITF,
-            (int)BarcodeFormat.MAXICODE,
-            (int)BarcodeFormat.MSI,
-            (int)BarcodeFormat.PDF_417,
-            (int)BarcodeFormat.PLESSEY,
-            (int)BarcodeFormat.QR_CODE,
-            (int)BarcodeFormat.RSS_14,
-            (int)BarcodeFormat.RSS_EXPANDED,
-            (int)BarcodeFormat.UPC_A,
-            (int)BarcodeFormat.UPC_E,
-            (int)BarcodeFormat.UPC_EAN_EXTENSION };
-
-        int labelWidth = 0;
-        int labelHeight = 0;
-        Color bgColor = Color.White;
-        Color fgColor = Color.Black;
+        List<string> bcFeatures = new List<string> { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
+        List<int> BarCodeTypes = new List<int> {
+        (int)BarcodeFormat.AZTEC,
+        (int)BarcodeFormat.CODABAR,
+        (int)BarcodeFormat.CODE_128,
+        (int)BarcodeFormat.CODE_39,
+        (int)BarcodeFormat.CODE_93,
+        (int)BarcodeFormat.DATA_MATRIX,
+        (int)BarcodeFormat.EAN_13,
+        (int)BarcodeFormat.EAN_8,
+        (int)BarcodeFormat.IMB,
+        (int)BarcodeFormat.ITF,
+        (int)BarcodeFormat.MAXICODE,
+        (int)BarcodeFormat.MSI,
+        (int)BarcodeFormat.PDF_417,
+        (int)BarcodeFormat.PLESSEY,
+        (int)BarcodeFormat.QR_CODE,
+        (int)BarcodeFormat.RSS_14,
+        (int)BarcodeFormat.RSS_EXPANDED,
+        (int)BarcodeFormat.UPC_A,
+        (int)BarcodeFormat.UPC_E,
+        (int)BarcodeFormat.UPC_EAN_EXTENSION };
 
         int pagesFrom = 0;
         int pagesTo = 0;
@@ -90,7 +87,6 @@ namespace FiscalLabelPrint
         public Form1(string[] cmdLine)
         {
             InitializeComponent();
-
             if (cmdLine.Length >= 1)
             {
                 if (cmdLine[0] == "/?" || cmdLine[0] == "/h" || cmdLine[0] == "/help")
@@ -196,14 +192,14 @@ namespace FiscalLabelPrint
                     System.Environment.Exit(1);
                 }
             }
-
+            comboBox_object.Items.AddRange(_objectNames);
         }
 
         private void fillBackground(Color bgC)
         {
-            LabelBmp = new Bitmap(labelWidth, labelHeight, PixelFormat.Format32bppPArgb);
+            LabelBmp = new Bitmap((int)Label[0].width, (int)Label[0].height, PixelFormat.Format32bppPArgb);
             Graphics g = Graphics.FromImage(LabelBmp);
-            Rectangle rect = new Rectangle(0, 0, labelWidth, labelHeight);
+            Rectangle rect = new Rectangle(0, 0, (int)Label[0].width, (int)Label[0].height);
             SolidBrush b = new SolidBrush(bgC);
             g.FillRectangle(b, rect);
             pictureBox_label.Image = LabelBmp;
@@ -624,7 +620,7 @@ namespace FiscalLabelPrint
                     {
                         for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                         {
-                            if (Label[i + 1].type == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
                             {
                                 MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
                             }
@@ -663,32 +659,36 @@ namespace FiscalLabelPrint
                 {
                     if (inputStr[i].Trim() != "")
                     {
-                        string[] cells = inputStr[i].Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
-                        for (int i1 = 0; i1 < cells.Length; i1++) cells[i1] = cells[i1].Trim();
-                        if (cells.Length >= 5)
+                        List<string> cells = new List<string>();
+                        foreach (string str in inputStr[i].Split(LabelPrint.Properties.Settings.Default.CSVdelimiter))
                         {
-                            template templ=new template();
-                            templ.type=cells[0];
+                            cells.Add(str.Trim());
+                        }
+                        if (cells[cells.Count - 1] == "") cells.RemoveAt(cells.Count - 1);
+                        if (cells.Count >= 5)
+                        {
+                            template templ = new template();
+                            templ.name = cells[0];
                             objectsNum++;
                             // label; [bgColor]; [objectColor]; width; height;
-                            if (templ.type == _objectNames[labelObject])
+                            if (templ.name == _objectNames[labelObject])
                             {
                                 if (cells[1] != "")
                                 {
-                                    templ.bgColor = bgColor = Color.FromName(cells[1]);
+                                    templ.bgColor = Color.FromName(cells[1]);
                                 }
                                 else
                                 {
-                                    templ.bgColor = bgColor = Color.White;
+                                    templ.bgColor = Color.White;
                                 }
 
                                 if (cells[2] != "")
                                 {
-                                    templ.fgColor = fgColor = Color.FromName(cells[2]);
+                                    templ.fgColor = Color.FromName(cells[2]);
                                 }
                                 else
                                 {
-                                    templ.fgColor = fgColor = Color.Black;
+                                    templ.fgColor = Color.Black;
                                 }
                                 if (templ.bgColor == templ.fgColor)
                                 {
@@ -701,7 +701,6 @@ namespace FiscalLabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Incorrect label width: " + templ.width.ToString());
                                     templ.width = 1;
                                 }
-                                labelWidth = (int)templ.width;
 
                                 float.TryParse(cells[4], out templ.height);
                                 if (templ.height <= 0)
@@ -709,12 +708,11 @@ namespace FiscalLabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Incorrect label height: " + templ.height.ToString());
                                     templ.height = 1;
                                 }
-                                labelHeight = (int)templ.height;
                             }
                             // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
-                            else if (templ.type == _objectNames[textObject])
+                            else if (templ.name == _objectNames[textObject])
                             {
-                                if (cells.Length >= 9)
+                                if (cells.Count >= 9)
                                 {
                                     if (cells[1] != "")
                                     {
@@ -722,7 +720,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.fgColor = fgColor;
+                                        templ.fgColor = Label[0].fgColor;
                                     }
                                     if (templ.bgColor == templ.fgColor)
                                     {
@@ -735,10 +733,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
-                                    else if (templ.posX >= labelWidth)
+                                    else if (templ.posX >= (int)Label[0].width)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
-                                        templ.posX = labelWidth - 1;
+                                        templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
@@ -747,10 +745,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
-                                    else if (templ.posY >= labelHeight)
+                                    else if (templ.posY >= (int)Label[0].height)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
-                                        templ.posY = labelHeight - 1;
+                                        templ.posY = (int)Label[0].height - 1;
                                     }
 
                                     float.TryParse(cells[4], out templ.rotate);
@@ -791,9 +789,9 @@ namespace FiscalLabelPrint
                                 }
                             }
                             // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
-                            else if (templ.type == _objectNames[pictureObject])
+                            else if (templ.name == _objectNames[pictureObject])
                             {
-                                if (cells.Length >= 9)
+                                if (cells.Count >= 9)
                                 {
                                     if (cells[1] != "")
                                     {
@@ -801,7 +799,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.fgColor = fgColor;
+                                        templ.fgColor = Label[0].fgColor;
                                     }
                                     if (templ.bgColor == templ.fgColor)
                                     {
@@ -814,10 +812,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
-                                    else if (templ.posX >= labelWidth)
+                                    else if (templ.posX >= (int)Label[0].width)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
-                                        templ.posX = labelWidth - 1;
+                                        templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
@@ -826,10 +824,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
-                                    else if (templ.posY >= labelHeight)
+                                    else if (templ.posY >= (int)Label[0].height)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
-                                        templ.posY = labelHeight - 1;
+                                        templ.posY = (int)Label[0].height - 1;
                                     }
 
                                     float.TryParse(cells[4], out templ.rotate);
@@ -846,10 +844,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     float.TryParse(cells[7], out templ.height);
@@ -858,10 +856,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     byte t = 0;
@@ -874,9 +872,9 @@ namespace FiscalLabelPrint
                                 }
                             }
                             // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
-                            else if (templ.type == _objectNames[barcodeObject])
+                            else if (templ.name == _objectNames[barcodeObject])
                             {
-                                if (cells.Length >= 11)
+                                if (cells.Count >= 11)
                                 {
                                     if (cells[1] != "")
                                     {
@@ -884,7 +882,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.bgColor = bgColor;
+                                        templ.bgColor = Label[0].bgColor;
                                     }
 
                                     if (cells[2] != "")
@@ -893,7 +891,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.fgColor = fgColor;
+                                        templ.fgColor = Label[0].fgColor;
                                     }
                                     if (templ.bgColor == templ.fgColor)
                                     {
@@ -906,10 +904,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
-                                    else if (templ.posX >= labelWidth)
+                                    else if (templ.posX >= (int)Label[0].width)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
-                                        templ.posX = labelWidth - 1;
+                                        templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[4], out templ.posY);
@@ -918,10 +916,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
-                                    else if (templ.posY >= labelHeight)
+                                    else if (templ.posY >= (int)Label[0].height)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
-                                        templ.posY = labelHeight - 1;
+                                        templ.posY = (int)Label[0].height - 1;
                                     }
 
                                     float.TryParse(cells[5], out templ.rotate);
@@ -934,10 +932,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     float.TryParse(cells[8], out templ.height);
@@ -946,23 +944,14 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     int.TryParse(cells[9], out templ.BCformat);
-                                    Boolean _bcCorrect = false;
-                                    for (int i1 = 0; i1 < BarCodeTypes.Length; i1++)
-                                    {
-                                        if (BarCodeTypes[i1] == templ.BCformat)
-                                        {
-                                            _bcCorrect = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!_bcCorrect)
+                                    if (!BarCodeTypes.Contains(templ.BCformat))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + templ.BCformat.ToString());
                                         templ.BCformat = (int)BarcodeFormat.QR_CODE;
@@ -972,10 +961,13 @@ namespace FiscalLabelPrint
                                     byte.TryParse(cells[10], out t);
                                     templ.transparent = (t > 0);
 
-                                    if (cells.Length >= 12)
+                                    if (cells.Count >= 12 && cells[11].Contains("="))
                                     {
-                                        templ.feature = cells[11];
-                                        if (templ.feature == "0") templ.feature = "";
+                                        if (bcFeatures.Contains(cells[11].Substring(0, cells[11].IndexOf('=')).Trim()))
+                                        {
+                                            templ.feature = cells[11];
+                                        }
+                                        else if (templ.feature == "0") templ.feature = "";
                                     }
                                     else templ.feature = "";
                                 }
@@ -986,9 +978,9 @@ namespace FiscalLabelPrint
                             }
                             // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY;
                             // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
-                            else if (templ.type == _objectNames[lineObject])
+                            else if (templ.name == _objectNames[lineObject])
                             {
-                                if (cells.Length >= 7)
+                                if (cells.Count >= 7)
                                 {
                                     if (cells[1] != "")
                                     {
@@ -996,7 +988,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.fgColor = fgColor;
+                                        templ.fgColor = Label[0].fgColor;
                                     }
                                     if (templ.bgColor == templ.fgColor)
                                     {
@@ -1009,10 +1001,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
-                                    else if (templ.posX >= labelWidth)
+                                    else if (templ.posX >= (int)Label[0].width)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
-                                        templ.posX = labelWidth - 1;
+                                        templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
@@ -1021,10 +1013,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
-                                    else if (templ.posY >= labelHeight)
+                                    else if (templ.posY >= (int)Label[0].height)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
-                                        templ.posY = labelHeight - 1;
+                                        templ.posY = (int)Label[0].height - 1;
                                     }
 
                                     float.TryParse(cells[5], out templ.lineWidth);
@@ -1044,10 +1036,10 @@ namespace FiscalLabelPrint
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
                                             templ.lineLength = 0;
                                         }
-                                        else if (templ.lineLength >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                        else if (templ.lineLength >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                         {
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
-                                            templ.lineLength = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                            templ.lineLength = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                         }
                                     }
                                     else
@@ -1058,10 +1050,10 @@ namespace FiscalLabelPrint
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                             templ.width = 0;
                                         }
-                                        else if (templ.width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                        else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                         {
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                            templ.width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                            templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                         }
 
                                         float.TryParse(cells[7], out templ.height);
@@ -1070,10 +1062,10 @@ namespace FiscalLabelPrint
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                             templ.height = 0;
                                         }
-                                        else if (templ.height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                        else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                         {
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                            templ.height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                            templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                         }
 
                                         templ.lineLength = -1;
@@ -1085,9 +1077,9 @@ namespace FiscalLabelPrint
                                 }
                             }
                             // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                            else if (templ.type == _objectNames[rectangleObject])
+                            else if (templ.name == _objectNames[rectangleObject])
                             {
-                                if (cells.Length >= 9)
+                                if (cells.Count >= 9)
                                 {
                                     if (cells[1] != "")
                                     {
@@ -1095,7 +1087,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.fgColor = fgColor;
+                                        templ.fgColor = Label[0].fgColor;
                                     }
                                     if (templ.bgColor == templ.fgColor)
                                     {
@@ -1108,10 +1100,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
-                                    else if (templ.posX >= labelWidth)
+                                    else if (templ.posX >= (int)Label[0].width)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
-                                        templ.posX = labelWidth - 1;
+                                        templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
@@ -1120,10 +1112,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
-                                    else if (templ.posY >= labelHeight)
+                                    else if (templ.posY >= (int)Label[0].height)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
-                                        templ.posY = labelHeight - 1;
+                                        templ.posY = (int)Label[0].height - 1;
                                     }
 
                                     float.TryParse(cells[4], out templ.rotate);
@@ -1141,10 +1133,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     float.TryParse(cells[7], out templ.height);
@@ -1153,10 +1145,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     byte t = 0;
@@ -1169,9 +1161,9 @@ namespace FiscalLabelPrint
                                 }
                             }
                             // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                            else if (templ.type == _objectNames[ellipseObject])
+                            else if (templ.name == _objectNames[ellipseObject])
                             {
-                                if (cells.Length >= 9)
+                                if (cells.Count >= 9)
                                 {
                                     if (cells[1] != "")
                                     {
@@ -1179,7 +1171,7 @@ namespace FiscalLabelPrint
                                     }
                                     else
                                     {
-                                        templ.fgColor = fgColor;
+                                        templ.fgColor = Label[0].fgColor;
                                     }
                                     if (templ.bgColor == templ.fgColor)
                                     {
@@ -1192,10 +1184,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
-                                    else if (templ.posX >= labelWidth)
+                                    else if (templ.posX >= (int)Label[0].width)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
-                                        templ.posX = labelWidth - 1;
+                                        templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
@@ -1204,10 +1196,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
-                                    else if (templ.posY >= labelHeight)
+                                    else if (templ.posY >= (int)Label[0].height)
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
-                                        templ.posY = labelHeight - 1;
+                                        templ.posY = (int)Label[0].height - 1;
                                     }
 
                                     float.TryParse(cells[4], out templ.rotate);
@@ -1225,10 +1217,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     float.TryParse(cells[7], out templ.height);
@@ -1237,10 +1229,10 @@ namespace FiscalLabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight))
+                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt(labelWidth * labelWidth + labelHeight * labelHeight);
+                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
                                     }
 
                                     byte t = 0;
@@ -1262,7 +1254,7 @@ namespace FiscalLabelPrint
                 //create colums and fill 1 row with default values
                 for (int i = 1; i < objectsNum; i++)
                 {
-                    LabelsDatabase.Columns.Add((i - 1).ToString() + " " + Label[i].type);
+                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].name);
                 }
                 DataRow row = LabelsDatabase.NewRow();
                 for (int i = 1; i < objectsNum; i++)
@@ -1284,21 +1276,21 @@ namespace FiscalLabelPrint
 
         private void generateLabel(int gridLine)
         {
-            LabelBmp = new Bitmap(labelWidth, labelHeight, PixelFormat.Format32bppPArgb);
             if (checkBox_scale.Checked)
             {
                 pictureBox_label.Dock = DockStyle.None;
-                pictureBox_label.Width = labelWidth;
-                pictureBox_label.Height = labelHeight;
+                pictureBox_label.Width = (int)Label[0].width;
+                pictureBox_label.Height = (int)Label[0].height;
             }
             else pictureBox_label.Dock = DockStyle.Fill;
             for (int i = 0; i < Label.Count; i++)
             {
-                if (Label[i].type == "label")
+                if (Label[i].name == _objectNames[labelObject])
                 {
+                    LabelBmp = new Bitmap((int)Label[i].width, (int)Label[i].height, PixelFormat.Format32bppPArgb);
                     fillBackground(Label[i].bgColor);
                 }
-                else if (Label[i].type == "text")
+                else if (Label[i].name == _objectNames[textObject])
                 {
                     string fontname = Label[i].fontName;
                     int fontSize = Label[i].fontSize;
@@ -1312,7 +1304,7 @@ namespace FiscalLabelPrint
                     if (tmp != "") content = tmp;
                     drawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
-                else if (Label[i].type == "picture")
+                else if (Label[i].name == _objectNames[pictureObject])
                 {
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
@@ -1326,7 +1318,7 @@ namespace FiscalLabelPrint
                     if (tmp != "") content = tmp;
                     drawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
                 }
-                else if (Label[i].type == "barcode")
+                else if (Label[i].name == _objectNames[barcodeObject])
                 {
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
@@ -1343,7 +1335,7 @@ namespace FiscalLabelPrint
 
                     drawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
-                else if (Label[i].type == "line")
+                else if (Label[i].name == _objectNames[lineObject])
                 {
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
@@ -1361,7 +1353,7 @@ namespace FiscalLabelPrint
                         drawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
                     }
                 }
-                else if (Label[i].type == "rectangle")
+                else if (Label[i].name == _objectNames[rectangleObject])
                 {
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
@@ -1372,7 +1364,7 @@ namespace FiscalLabelPrint
                     bool fill = Label[i].fill;
                     drawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
-                else if (Label[i].type == "ellipse")
+                else if (Label[i].name == _objectNames[ellipseObject])
                 {
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
@@ -1383,7 +1375,7 @@ namespace FiscalLabelPrint
                     bool fill = Label[i].fill;
                     drawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
-                else MessageBox.Show("Incorrect object: " + Label[i].type);
+                else MessageBox.Show("Incorrect object: " + Label[i].name);
             }
             pictureBox_label.Image = LabelBmp;
         }
@@ -1481,7 +1473,7 @@ namespace FiscalLabelPrint
             generateLabel(dataGridView_labels.CurrentCell.RowIndex);
             if (pictureBox_label.Image == null) return;
             args.Graphics.PageUnit = GraphicsUnit.Pixel;
-            Bitmap bmp = new Bitmap(labelWidth, labelHeight);
+            Bitmap bmp = new Bitmap((int)Label[0].width, (int)Label[0].height);
             Rectangle rect = new Rectangle(0, 0, pictureBox_label.Image.Width, pictureBox_label.Image.Height);
             pictureBox_label.DrawToBitmap(bmp, rect);
             args.Graphics.DrawImage(pictureBox_label.Image, rect);
@@ -1498,8 +1490,8 @@ namespace FiscalLabelPrint
 
             pictureBox_label.Dock = DockStyle.None;
             pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
-            pictureBox_label.Width = labelWidth;
-            pictureBox_label.Height = labelHeight;
+            pictureBox_label.Width = (int)Label[0].width;
+            pictureBox_label.Height = (int)Label[0].height;
 
             Rectangle rect = new Rectangle(0, 0, pictureBox_label.Image.Width, pictureBox_label.Image.Height);
             pictureBox_label.DrawToBitmap(LabelBmp, rect);
@@ -1531,8 +1523,8 @@ namespace FiscalLabelPrint
             {
                 pictureBox_label.Dock = DockStyle.None;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
-                pictureBox_label.Width = labelWidth;
-                pictureBox_label.Height = labelHeight;
+                pictureBox_label.Width = (int)Label[0].width;
+                pictureBox_label.Height = (int)Label[0].height;
             }
             else
             {
@@ -1550,63 +1542,810 @@ namespace FiscalLabelPrint
         {
             if (tabControl1.SelectedIndex == 1)
             {
-                //list of objects
-                listBox_objects.Items.Clear();
-                foreach (template t in Label)
-                {
-                    listBox_objects.Items.Add(t.type);
-                }
-                listBox_objects.Items.Add("");
-
-                //list of colors
-                comboBox_backgroundColor.Items.Clear();
-                comboBox_objectColor.Items.Clear();
-                comboBox_backgroundColor.Items.Add("");
-                comboBox_objectColor.Items.Add("");
-                foreach (Color c in new ColorConverter().GetStandardValues())
-                {
-                    comboBox_backgroundColor.Items.Add(c.ToString());
-                    comboBox_objectColor.Items.Add(c.ToString());
-                }
-
-                //list of fonts
-                comboBox_fontName.Items.Clear();
-                InstalledFontCollection installedFontCollection = new InstalledFontCollection();
-                foreach (FontFamily fontFamily in installedFontCollection.Families)
-                {
-                    comboBox_fontName.Items.Add(fontFamily.Name);
-                }
-
-                //list of barcode types
-                comboBox_fontName.Items.Clear();
-                foreach (BarcodeFormat b in BarCodeTypes)
-                {
-                    comboBox_fontName.Items.Add(b.ToString());
-                }
-
-                //list of barcode additional features
-                string[] bcFeatures = { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
-                comboBox_fontStyle.Items.Clear();
-                comboBox_fontStyle.Items.Add("");
-                comboBox_fontStyle.Items.AddRange(bcFeatures);
+                getObjectsList();
+                listBox_objects.SelectedIndex = 0;
             }
+        }
+
+        private void listBox_objects_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            showObject(listBox_objects.SelectedIndex);
         }
 
         private void button_apply_Click(object sender, EventArgs e)
         {
-            if (listBox_objects.SelectedIndex == listBox_objects.Items.Count)
+            int n = listBox_objects.SelectedIndex;
+            if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
             {
-                template templ = new template();
-
-                //fill templ
-
+                template templ = collectObject();
                 Label.Add(templ);
-                listBox_objects.Items.Add("");
             }
             else
             {
-
+                template templ = collectObject();
+                Label[n] = templ;
+                generateLabel(-1);
             }
+            getObjectsList();
+            listBox_objects.SelectedIndex = n;
+        }
+
+        private void button_delete_Click(object sender, EventArgs e)
+        {
+            if (listBox_objects.SelectedIndex != listBox_objects.Items.Count - 1)
+            {
+                int n = listBox_objects.SelectedIndex;
+                Label.RemoveAt(n);
+                listBox_objects.Items.Add("");
+                getObjectsList();
+                listBox_objects.SelectedIndex = n;
+            }
+        }
+
+        private void button_up_Click(object sender, EventArgs e)
+        {
+            if (listBox_objects.SelectedIndex != listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex != 0)
+            {
+                int n = listBox_objects.SelectedIndex;
+                template templ = Label[n];
+                Label.RemoveAt(n);
+                Label.Insert(n - 1, templ);
+                getObjectsList();
+                listBox_objects.SelectedIndex = n - 1;
+            }
+        }
+
+        private void button_down_Click(object sender, EventArgs e)
+        {
+            if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 2)
+            {
+                int n = listBox_objects.SelectedIndex;
+                template templ = Label[n];
+                Label.RemoveAt(n);
+                Label.Insert(n + 1, templ);
+                getObjectsList();
+                listBox_objects.SelectedIndex = n + 1;
+            }
+
+        }
+
+        void getObjectsList()
+        {
+            listBox_objects.Items.Clear();
+            foreach (template t in Label)
+            {
+                listBox_objects.Items.Add(t.name);
+            }
+            listBox_objects.Items.Add("");
+        }
+
+        string[] getColorList()
+        {
+            List<string> colorList = new List<string>();
+            foreach (Color c in new ColorConverter().GetStandardValues())
+            {
+                colorList.Add(c.Name.ToString());
+            }
+            return colorList.ToArray();
+        }
+
+        string[] getFontList()
+        {
+            List<string> fontList = new List<string>();
+            InstalledFontCollection installedFontCollection = new InstalledFontCollection();
+            foreach (FontFamily fontFamily in installedFontCollection.Families)
+            {
+                fontList.Add(fontFamily.Name);
+            }
+            installedFontCollection.Dispose();
+            return fontList.ToArray();
+        }
+
+        string[] getBarcodeList()
+        {
+            List<string> barcodeList = new List<string>();
+            foreach (BarcodeFormat b in BarCodeTypes)
+            {
+                barcodeList.Add(((int)b).ToString() + "=" + b.ToString());
+            }
+            return barcodeList.ToArray();
+        }
+
+        //****
+        void showObject(int n)
+        {
+            clearFields();
+            comboBox_object.SelectedItem = listBox_objects.SelectedItem.ToString();
+            string str = "";
+            //new object
+            if (listBox_objects.SelectedIndex >= Label.Count)
+            {
+                comboBox_object.Enabled = true;
+            }
+            // label; [bgColor]; [objectColor]; width; height;
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[labelObject])
+            {
+                label_backgroundColor.Text = "Background color";
+                comboBox_backgroundColor.Enabled = true;
+                comboBox_backgroundColor.Items.Clear();
+                if (comboBox_backgroundColor.Enabled)
+                {
+                    comboBox_backgroundColor.Items.AddRange(getColorList());
+                    str = Label[listBox_objects.SelectedIndex].bgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
+                    {
+                        if (comboBox_backgroundColor.Items[i].ToString() == str)
+                        {
+                            comboBox_backgroundColor.SelectedIndex = i;
+                            i = comboBox_backgroundColor.Items.Count;
+                        }
+                    }
+                }
+
+                label_objectColor.Text = "Default object color";
+                comboBox_objectColor.Enabled = true;
+                comboBox_objectColor.Items.Clear();
+                if (comboBox_objectColor.Enabled)
+                {
+                    comboBox_objectColor.Items.Add("");
+                    comboBox_objectColor.Items.AddRange(getColorList());
+                    str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+                }
+
+                label_width.Text = "Width";
+                textBox_width.Enabled = true;
+                if (textBox_width.Enabled)
+                {
+                    textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                }
+
+                label_height.Text = "Height";
+                textBox_height.Enabled = true;
+                if (textBox_height.Enabled)
+                {
+                    textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                }
+            }
+
+            // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[textObject])
+            {
+                comboBox_objectColor.Enabled = true;
+                label_objectColor.Text = "Default object color";
+                comboBox_objectColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                {
+                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    {
+                        comboBox_objectColor.SelectedIndex = i;
+                        i = comboBox_objectColor.Items.Count;
+                    }
+                }
+
+                textBox_posX.Enabled = true;
+                label_posX.Text = "posX";
+                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+
+                textBox_posY.Enabled = true;
+                label_posY.Text = "posY";
+                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+
+                textBox_rotate.Enabled = true;
+                label_rotate.Text = "Rotate";
+                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+
+                textBox_content.Enabled = true;
+                label_content.Text = "Data string";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+
+                comboBox_fontName.Enabled = true;
+                label_fontName.Text = "Font";
+                comboBox_fontName.Items.Clear();
+                comboBox_fontName.Items.AddRange(getFontList());
+                str = Label[listBox_objects.SelectedIndex].fontName.ToString();
+                for (int i = 0; i < comboBox_fontName.Items.Count; i++)
+                {
+                    if (comboBox_fontName.Items[i].ToString() == str)
+                    {
+                        comboBox_fontName.SelectedIndex = i;
+                        i = comboBox_fontName.Items.Count;
+                    }
+                }
+
+                comboBox_fontStyle.Enabled = true;
+                label_fontStyle.Text = "Text style";
+                comboBox_fontStyle.Items.Clear();
+                comboBox_fontStyle.Items.AddRange(_textStyleNames);
+                str = Label[listBox_objects.SelectedIndex].fontStyle.ToString();
+                for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
+                {
+                    if (comboBox_fontStyle.Items[i].ToString().StartsWith(str))
+                    {
+                        comboBox_fontStyle.SelectedIndex = i;
+                        i = comboBox_fontStyle.Items.Count;
+                    }
+                }
+
+                textBox_fontSize.Enabled = true;
+                label_fontSize.Text = "Font size";
+                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].fontSize.ToString();
+            }
+
+            // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[pictureObject])
+            {
+                comboBox_objectColor.Enabled = true;
+                label_objectColor.Text = "Transparent color";
+                comboBox_objectColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                {
+                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    {
+                        comboBox_objectColor.SelectedIndex = i;
+                        i = comboBox_objectColor.Items.Count;
+                    }
+                }
+
+                textBox_posX.Enabled = true;
+                label_posX.Text = "posX";
+                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+
+                textBox_posY.Enabled = true;
+                label_posY.Text = "posY";
+                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+
+                textBox_width.Enabled = true;
+                label_width.Text = "Width";
+                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+
+                textBox_height.Enabled = true;
+                label_height.Text = "Height";
+                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+
+                textBox_rotate.Enabled = true;
+                label_rotate.Text = "Rotate";
+                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+
+                textBox_content.Enabled = true;
+                label_content.Text = "Picture file";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+
+                checkBox_fill.Enabled = true;
+                checkBox_fill.Text = "Transparent";
+                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].transparent;
+            }
+
+            // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[barcodeObject])
+            {
+                comboBox_backgroundColor.Enabled = true;
+                label_backgroundColor.Text = "Background color";
+                comboBox_backgroundColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].bgColor.Name.ToString();
+                for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
+                {
+                    if (comboBox_backgroundColor.Items[i].ToString() == str)
+                    {
+                        comboBox_backgroundColor.SelectedIndex = i;
+                        i = comboBox_backgroundColor.Items.Count;
+                    }
+                }
+
+                comboBox_objectColor.Enabled = true;
+                label_objectColor.Text = "Default object color";
+                comboBox_objectColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                {
+                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    {
+                        comboBox_objectColor.SelectedIndex = i;
+                        i = comboBox_objectColor.Items.Count;
+                    }
+                }
+
+                textBox_posX.Enabled = true;
+                label_posX.Text = "posX";
+                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+
+                textBox_posY.Enabled = true;
+                label_posY.Text = "posY";
+                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+
+                textBox_width.Enabled = true;
+                label_width.Text = "Width";
+                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+
+                textBox_height.Enabled = true;
+                label_height.Text = "Height";
+                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+
+                textBox_rotate.Enabled = true;
+                label_rotate.Text = "Rotate";
+                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+
+                textBox_content.Enabled = true;
+                label_content.Text = "Data string";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+
+                comboBox_fontName.Enabled = true;
+                label_fontName.Text = "Barcode type";
+                comboBox_fontName.Items.Clear();
+                comboBox_fontName.Items.AddRange(getBarcodeList());
+                str = Label[listBox_objects.SelectedIndex].BCformat.ToString() + "=" + ((BarcodeFormat)Label[listBox_objects.SelectedIndex].BCformat).ToString();
+                for (int i = 0; i < comboBox_fontName.Items.Count; i++)
+                {
+                    if (comboBox_fontName.Items[i].ToString() == str)
+                    {
+                        comboBox_fontName.SelectedIndex = i;
+                        i = comboBox_fontName.Items.Count;
+                    }
+                }
+
+                comboBox_fontStyle.Enabled = true;
+                label_fontStyle.Text = "Additional feature";
+                comboBox_fontStyle.Items.AddRange(bcFeatures.ToArray());
+                str = Label[listBox_objects.SelectedIndex].feature;
+                for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
+                {
+                    if (str.StartsWith(comboBox_fontStyle.Items[i].ToString()))
+                    {
+                        comboBox_fontStyle.SelectedIndex = i;
+                    }
+                }
+
+                textBox_fontSize.Enabled = true;
+                label_fontSize.Text = "Feature value";
+                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].feature.Substring(Label[listBox_objects.SelectedIndex].feature.IndexOf('=') + 1);
+
+                checkBox_fill.Enabled = true;
+                checkBox_fill.Text = "Transparent";
+                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].transparent;
+            }
+
+            // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY;
+            // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[lineObject])
+            {
+                comboBox_objectColor.Enabled = true;
+                label_objectColor.Text = "Default object color";
+                comboBox_objectColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                {
+                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    {
+                        comboBox_objectColor.SelectedIndex = i;
+                        i = comboBox_objectColor.Items.Count;
+                    }
+                }
+
+                textBox_posX.Enabled = true;
+                label_posX.Text = "posX";
+                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+
+                textBox_posY.Enabled = true;
+                label_posY.Text = "posY";
+                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+
+                textBox_width.Enabled = true;
+                label_width.Text = "endX";
+                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+
+                label_height.Text = "endY";
+                textBox_height.Enabled = true;
+                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+
+                textBox_rotate.Enabled = true;
+                label_rotate.Text = "Rotate";
+                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+
+                textBox_content.Enabled = false;
+                label_content.Text = "Data string";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+
+                textBox_fontSize.Enabled = true;
+                label_fontSize.Text = "Line width";
+                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].lineWidth.ToString();
+
+                textBox_content.Enabled = true;
+                textBox_content.Text = "Line length";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].lineLength.ToString();
+            }
+
+            // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[rectangleObject])
+            {
+                comboBox_objectColor.Enabled = true;
+                label_objectColor.Text = "Default object color";
+                comboBox_objectColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                {
+                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    {
+                        comboBox_objectColor.SelectedIndex = i;
+                        i = comboBox_objectColor.Items.Count;
+                    }
+                }
+
+                textBox_posX.Enabled = true;
+                label_posX.Text = "posX";
+                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+
+                textBox_posY.Enabled = true;
+                label_posY.Text = "posY";
+                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+
+                textBox_width.Enabled = true;
+                label_width.Text = "Width";
+                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+
+                textBox_height.Enabled = true;
+                label_height.Text = "Height";
+                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+
+                textBox_rotate.Enabled = true;
+                label_rotate.Text = "Rotate";
+                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+
+                textBox_fontSize.Enabled = true;
+                label_fontSize.Text = "Line width";
+                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].lineWidth.ToString();
+
+                textBox_content.Enabled = true;
+                textBox_content.Text = "Line length";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].lineLength.ToString();
+
+                checkBox_fill.Enabled = true;
+                checkBox_fill.Text = "Fill with objectColor";
+                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].fill;
+            }
+
+            // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[ellipseObject])
+            {
+                label_objectColor.Text = "Default object color";
+                comboBox_objectColor.Enabled = true;
+                comboBox_objectColor.Items.AddRange(getColorList());
+                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                {
+                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    {
+                        comboBox_objectColor.SelectedIndex = i;
+                        i = comboBox_objectColor.Items.Count;
+                    }
+                }
+
+                textBox_posX.Enabled = true;
+                label_posX.Text = "posX";
+                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+
+                textBox_posY.Enabled = true;
+                label_posY.Text = "posY";
+                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+
+                textBox_width.Enabled = true;
+                label_width.Text = "Width";
+                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+
+                textBox_height.Enabled = true;
+                label_height.Text = "Height";
+                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+
+                textBox_rotate.Enabled = true;
+                label_rotate.Text = "Rotate";
+                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+
+                textBox_fontSize.Enabled = true;
+                label_fontSize.Text = "Line width";
+                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].lineWidth.ToString();
+
+                textBox_content.Enabled = true;
+                textBox_content.Text = "Line length";
+                textBox_content.Text = Label[listBox_objects.SelectedIndex].lineLength.ToString();
+
+                checkBox_fill.Enabled = true;
+                checkBox_fill.Text = "Fill with objectColor";
+                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].fill;
+            }
+        }
+
+        //****
+        template collectObject()
+        {
+            template templ = new template();
+
+            templ.name = comboBox_object.SelectedItem.ToString();
+
+            if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
+            {
+                templ.bgColor = Color.White;
+                templ.fgColor = Color.Black;
+                templ.posX = 0;
+                templ.posY = 0;
+                templ.rotate = 0;
+                templ.content = "";
+                templ.width = 1;
+                templ.height = 1;
+                templ.transparent = false;
+                templ.BCformat = 1;
+                templ.fontSize = 1;
+                templ.fontStyle = 0;
+                templ.fontName = "";
+                templ.feature = "";
+                templ.lineLength = 1;
+                templ.lineWidth = 1;
+                templ.fill = false;
+            }
+            // label; [bgColor]; [objectColor]; width; height;
+            else if (templ.name == _objectNames[labelObject])
+            {
+                if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
+                else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
+
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_width.Text, out f);
+                templ.width = f;
+
+                float.TryParse(textBox_height.Text, out f);
+                templ.height = f;
+            }
+
+            // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
+            else if (templ.name == _objectNames[textObject])
+            {
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_posX.Text, out f);
+                templ.posX = f;
+
+                float.TryParse(textBox_posY.Text, out f);
+                templ.posY = f;
+
+                float.TryParse(textBox_rotate.Text, out f);
+                templ.rotate = f;
+
+                templ.content = textBox_content.Text;
+
+                byte b = 0;
+                byte.TryParse(textBox_fontSize.Text, out b);
+                templ.fontSize = b;
+
+                byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out b);
+                templ.fontStyle = b;
+
+                templ.fontName = comboBox_fontName.SelectedItem.ToString();
+            }
+
+            // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
+            else if (templ.name == _objectNames[pictureObject])
+            {
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_posX.Text, out f);
+                templ.posX = f;
+
+                float.TryParse(textBox_posY.Text, out f);
+                templ.posY = f;
+
+                float.TryParse(textBox_rotate.Text, out f);
+                templ.rotate = f;
+
+                templ.content = textBox_content.Text;
+
+                float.TryParse(textBox_width.Text, out f);
+                templ.width = f;
+
+                float.TryParse(textBox_height.Text, out f);
+                templ.height = f;
+
+                templ.transparent = checkBox_fill.Checked;
+            }
+
+            // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
+            else if (templ.name == _objectNames[barcodeObject])
+            {
+                if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
+                else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
+
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_posX.Text, out f);
+                templ.posX = f;
+
+                float.TryParse(textBox_posY.Text, out f);
+                templ.posY = f;
+
+                float.TryParse(textBox_rotate.Text, out f);
+                templ.rotate = f;
+
+                templ.content = textBox_content.Text;
+
+                float.TryParse(textBox_width.Text, out f);
+                templ.width = f;
+
+                float.TryParse(textBox_height.Text, out f);
+                templ.height = f;
+
+                templ.transparent = checkBox_fill.Checked;
+
+                int i = 0;
+                int.TryParse(comboBox_fontName.SelectedItem.ToString().Substring(0, comboBox_fontName.SelectedItem.ToString().IndexOf('=')), out i);
+                templ.BCformat = i;
+
+                if (comboBox_fontStyle.SelectedItem.ToString() != "") templ.feature = comboBox_fontStyle.SelectedItem.ToString() + "=" + textBox_fontSize.Text;
+                else templ.feature = "";
+            }
+
+            // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY;
+            // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
+            else if (templ.name == _objectNames[lineObject])
+            {
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_posX.Text, out f);
+                templ.posX = f;
+
+                float.TryParse(textBox_posY.Text, out f);
+                templ.posY = f;
+
+                float.TryParse(textBox_rotate.Text, out f);
+                templ.rotate = f;
+
+                float.TryParse(textBox_width.Text, out f);
+                templ.width = f;
+
+                float.TryParse(textBox_height.Text, out f);
+                templ.height = f;
+
+                float.TryParse(textBox_content.Text, out f);
+                templ.lineLength = f;
+
+                float.TryParse(textBox_fontSize.Text, out f);
+                templ.lineWidth = f;
+            }
+
+            // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+            else if (templ.name == _objectNames[rectangleObject])
+            {
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_posX.Text, out f);
+                templ.posX = f;
+
+                float.TryParse(textBox_posY.Text, out f);
+                templ.posY = f;
+
+                float.TryParse(textBox_rotate.Text, out f);
+                templ.rotate = f;
+
+                float.TryParse(textBox_width.Text, out f);
+                templ.width = f;
+
+                float.TryParse(textBox_height.Text, out f);
+                templ.height = f;
+
+                float.TryParse(textBox_fontSize.Text, out f);
+                templ.lineWidth = f;
+
+                templ.fill = checkBox_fill.Checked;
+            }
+
+            // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+            else if (templ.name == _objectNames[ellipseObject])
+            {
+                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                float f = 0;
+                float.TryParse(textBox_posX.Text, out f);
+                templ.posX = f;
+
+                float.TryParse(textBox_posY.Text, out f);
+                templ.posY = f;
+
+                float.TryParse(textBox_rotate.Text, out f);
+                templ.rotate = f;
+
+                float.TryParse(textBox_width.Text, out f);
+                templ.width = f;
+
+                float.TryParse(textBox_height.Text, out f);
+                templ.height = f;
+
+                float.TryParse(textBox_fontSize.Text, out f);
+                templ.lineWidth = f;
+
+                templ.fill = checkBox_fill.Checked;
+            }
+
+            return templ;
+        }
+
+        void clearFields()
+        {
+            comboBox_object.Enabled = false;
+
+            label_backgroundColor.Text = "Background color";
+            comboBox_backgroundColor.Items.Clear();
+            comboBox_backgroundColor.Items.Add("Default background");
+            comboBox_backgroundColor.SelectedIndex = 0;
+            comboBox_backgroundColor.Enabled = false;
+
+            label_objectColor.Text = "Default object color";
+            comboBox_objectColor.Items.Clear();
+            comboBox_objectColor.Items.Add("Default objectColor");
+            comboBox_objectColor.SelectedIndex = 0; ;
+            comboBox_objectColor.Enabled = false;
+
+            label_posX.Text = "posX";
+            textBox_posX.Clear();
+            textBox_posX.Enabled = false;
+
+            label_posY.Text = "posY";
+            textBox_posY.Clear();
+            textBox_posY.Enabled = false;
+
+            label_width.Text = "Width";
+            textBox_width.Clear();
+            textBox_width.Enabled = false;
+
+            label_height.Text = "Height";
+            textBox_height.Clear();
+            textBox_height.Enabled = false;
+
+            label_rotate.Text = "Rotate";
+            textBox_rotate.Clear();
+            textBox_rotate.Enabled = false;
+
+            label_content.Text = "Data string";
+            textBox_content.Clear();
+            textBox_content.Enabled = false;
+
+            label_fontName.Text = "Font";
+            comboBox_fontName.Items.Clear();
+            comboBox_fontName.Items.Add("");
+            comboBox_fontName.SelectedIndex = 0;
+            comboBox_fontName.Enabled = false;
+
+            label_fontStyle.Text = "Text style";
+            comboBox_fontStyle.Items.Clear();
+            comboBox_fontStyle.Items.Add("");
+            comboBox_fontStyle.SelectedIndex = 0;
+            comboBox_fontStyle.Enabled = false;
+
+            label_fontSize.Text = "Font size";
+            textBox_fontSize.Clear();
+            textBox_fontSize.Enabled = false;
+
+            checkBox_fill.Enabled = false;
+            checkBox_fill.Text = "Transparent";
+
         }
     }
 }
