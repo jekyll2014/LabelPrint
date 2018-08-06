@@ -75,6 +75,10 @@ namespace LabelPrint
         (int)BarcodeFormat.UPC_E,
         (int)BarcodeFormat.UPC_EAN_EXTENSION };
 
+        int res = 200;
+        float mult = 1;
+        float[] units = { 1, 2, 3, 4 };
+
         int pagesFrom = 0;
         int pagesTo = 0;
 
@@ -2023,14 +2027,14 @@ namespace LabelPrint
                 textBox_fontSize.Text = Label[n].lineWidth.ToString();
 
                 textBox_width.Enabled = true;
-                label_width.Text = "endX (empty to use line length)";
+                label_width.Text = "endX (empty to use length)";
                 textBox_width.Text = Label[n].width.ToString();
 
                 textBox_height.Enabled = true;
-                label_height.Text = "endY (empty to use line length)";
+                label_height.Text = "endY (empty to use length)";
                 textBox_height.Text = Label[n].height.ToString();
                 textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate (empty to use line length)";
+                label_rotate.Text = "Rotate (empty to use length)";
                 textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_content.Enabled = true;
@@ -2371,7 +2375,6 @@ namespace LabelPrint
 
                 templ.transparent = !checkBox_fill.Checked;
             }
-
             return templ;
         }
 
@@ -2589,6 +2592,17 @@ namespace LabelPrint
         {
             int cp = Properties.Settings.Default.CodePage;
             if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out cp)) Properties.Settings.Default.CodePage = cp;
+        }
+
+        private void textBox_hDpi_Leave(object sender, EventArgs e)
+        {
+            int.TryParse(textBox_dpi.Text, out res);
+            textBox_dpi.Text = res.ToString();
+        }
+
+        private void comboBox_units_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            mult = units[comboBox_units.SelectedIndex];
         }
     }
 }

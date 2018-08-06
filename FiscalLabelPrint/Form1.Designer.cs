@@ -34,7 +34,7 @@
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage_print = new System.Windows.Forms.TabPage();
             this.button_printRange = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.button_printCurrent = new System.Windows.Forms.Button();
@@ -43,7 +43,7 @@
             this.checkBox_toFile = new System.Windows.Forms.CheckBox();
             this.textBox_saveFileName = new System.Windows.Forms.TextBox();
             this.textBox_rangeTo = new System.Windows.Forms.TextBox();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tabPage_edit = new System.Windows.Forms.TabPage();
             this.listBox_objects = new System.Windows.Forms.ListBox();
             this.label_content = new System.Windows.Forms.Label();
             this.label_fontSize = new System.Windows.Forms.Label();
@@ -70,25 +70,30 @@
             this.comboBox_object = new System.Windows.Forms.ComboBox();
             this.comboBox_fontName = new System.Windows.Forms.ComboBox();
             this.comboBox_backgroundColor = new System.Windows.Forms.ComboBox();
+            this.button_saveLabel = new System.Windows.Forms.Button();
             this.button_saveTemplate = new System.Windows.Forms.Button();
             this.button_delete = new System.Windows.Forms.Button();
             this.button_down = new System.Windows.Forms.Button();
             this.button_up = new System.Windows.Forms.Button();
             this.button_apply = new System.Windows.Forms.Button();
+            this.tabPage_settings = new System.Windows.Forms.TabPage();
+            this.label4 = new System.Windows.Forms.Label();
+            this.textBox_dpi = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.comboBox_units = new System.Windows.Forms.ComboBox();
             this.checkBox_columnNames = new System.Windows.Forms.CheckBox();
             this.checkBox_scale = new System.Windows.Forms.CheckBox();
             this.textBox_labelsName = new System.Windows.Forms.TextBox();
             this.textBox_templateName = new System.Windows.Forms.TextBox();
             this.button_importTemplate = new System.Windows.Forms.Button();
             this.button_importLabels = new System.Windows.Forms.Button();
+            this.comboBox_encoding = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.dataGridView_labels = new System.Windows.Forms.DataGridView();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.button_saveLabel = new System.Windows.Forms.Button();
-            this.comboBox_encoding = new System.Windows.Forms.ComboBox();
-            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -99,8 +104,9 @@
             this.splitContainer_vertical.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_label)).BeginInit();
             this.tabControl1.SuspendLayout();
-            this.tabPage1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
+            this.tabPage_print.SuspendLayout();
+            this.tabPage_edit.SuspendLayout();
+            this.tabPage_settings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).BeginInit();
             this.SuspendLayout();
             // 
@@ -170,8 +176,9 @@
             this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage_print);
+            this.tabControl1.Controls.Add(this.tabPage_edit);
+            this.tabControl1.Controls.Add(this.tabPage_settings);
             this.tabControl1.Location = new System.Drawing.Point(3, 114);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -179,23 +186,23 @@
             this.tabControl1.TabIndex = 4;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
-            // tabPage1
+            // tabPage_print
             // 
-            this.tabPage1.Controls.Add(this.button_printRange);
-            this.tabPage1.Controls.Add(this.label1);
-            this.tabPage1.Controls.Add(this.button_printCurrent);
-            this.tabPage1.Controls.Add(this.button_printAll);
-            this.tabPage1.Controls.Add(this.textBox_rangeFrom);
-            this.tabPage1.Controls.Add(this.checkBox_toFile);
-            this.tabPage1.Controls.Add(this.textBox_saveFileName);
-            this.tabPage1.Controls.Add(this.textBox_rangeTo);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(430, 313);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Print labels";
-            this.tabPage1.UseVisualStyleBackColor = true;
+            this.tabPage_print.Controls.Add(this.button_printRange);
+            this.tabPage_print.Controls.Add(this.label1);
+            this.tabPage_print.Controls.Add(this.button_printCurrent);
+            this.tabPage_print.Controls.Add(this.button_printAll);
+            this.tabPage_print.Controls.Add(this.textBox_rangeFrom);
+            this.tabPage_print.Controls.Add(this.checkBox_toFile);
+            this.tabPage_print.Controls.Add(this.textBox_saveFileName);
+            this.tabPage_print.Controls.Add(this.textBox_rangeTo);
+            this.tabPage_print.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_print.Name = "tabPage_print";
+            this.tabPage_print.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_print.Size = new System.Drawing.Size(430, 313);
+            this.tabPage_print.TabIndex = 0;
+            this.tabPage_print.Text = "Print labels";
+            this.tabPage_print.UseVisualStyleBackColor = true;
             // 
             // button_printRange
             // 
@@ -283,48 +290,48 @@
             this.textBox_rangeTo.TabIndex = 1;
             this.textBox_rangeTo.Text = "00000";
             // 
-            // tabPage2
+            // tabPage_edit
             // 
-            this.tabPage2.AutoScroll = true;
-            this.tabPage2.Controls.Add(this.listBox_objects);
-            this.tabPage2.Controls.Add(this.label_content);
-            this.tabPage2.Controls.Add(this.label_fontSize);
-            this.tabPage2.Controls.Add(this.label_rotate);
-            this.tabPage2.Controls.Add(this.label_posY);
-            this.tabPage2.Controls.Add(this.label_height);
-            this.tabPage2.Controls.Add(this.label_width);
-            this.tabPage2.Controls.Add(this.label_posX);
-            this.tabPage2.Controls.Add(this.label_fontName);
-            this.tabPage2.Controls.Add(this.label_fontStyle);
-            this.tabPage2.Controls.Add(this.label_objectColor);
-            this.tabPage2.Controls.Add(this.label_object);
-            this.tabPage2.Controls.Add(this.label_backgroundColor);
-            this.tabPage2.Controls.Add(this.checkBox_fill);
-            this.tabPage2.Controls.Add(this.textBox_height);
-            this.tabPage2.Controls.Add(this.textBox_fontSize);
-            this.tabPage2.Controls.Add(this.textBox_rotate);
-            this.tabPage2.Controls.Add(this.textBox_width);
-            this.tabPage2.Controls.Add(this.textBox_posY);
-            this.tabPage2.Controls.Add(this.textBox_content);
-            this.tabPage2.Controls.Add(this.textBox_posX);
-            this.tabPage2.Controls.Add(this.comboBox_objectColor);
-            this.tabPage2.Controls.Add(this.comboBox_fontStyle);
-            this.tabPage2.Controls.Add(this.comboBox_object);
-            this.tabPage2.Controls.Add(this.comboBox_fontName);
-            this.tabPage2.Controls.Add(this.comboBox_backgroundColor);
-            this.tabPage2.Controls.Add(this.button_saveLabel);
-            this.tabPage2.Controls.Add(this.button_saveTemplate);
-            this.tabPage2.Controls.Add(this.button_delete);
-            this.tabPage2.Controls.Add(this.button_down);
-            this.tabPage2.Controls.Add(this.button_up);
-            this.tabPage2.Controls.Add(this.button_apply);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(430, 313);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Edit template";
-            this.tabPage2.UseVisualStyleBackColor = true;
+            this.tabPage_edit.AutoScroll = true;
+            this.tabPage_edit.Controls.Add(this.listBox_objects);
+            this.tabPage_edit.Controls.Add(this.label_content);
+            this.tabPage_edit.Controls.Add(this.label_fontSize);
+            this.tabPage_edit.Controls.Add(this.label_rotate);
+            this.tabPage_edit.Controls.Add(this.label_posY);
+            this.tabPage_edit.Controls.Add(this.label_height);
+            this.tabPage_edit.Controls.Add(this.label_width);
+            this.tabPage_edit.Controls.Add(this.label_posX);
+            this.tabPage_edit.Controls.Add(this.label_fontName);
+            this.tabPage_edit.Controls.Add(this.label_fontStyle);
+            this.tabPage_edit.Controls.Add(this.label_objectColor);
+            this.tabPage_edit.Controls.Add(this.label_object);
+            this.tabPage_edit.Controls.Add(this.label_backgroundColor);
+            this.tabPage_edit.Controls.Add(this.checkBox_fill);
+            this.tabPage_edit.Controls.Add(this.textBox_height);
+            this.tabPage_edit.Controls.Add(this.textBox_fontSize);
+            this.tabPage_edit.Controls.Add(this.textBox_rotate);
+            this.tabPage_edit.Controls.Add(this.textBox_width);
+            this.tabPage_edit.Controls.Add(this.textBox_posY);
+            this.tabPage_edit.Controls.Add(this.textBox_content);
+            this.tabPage_edit.Controls.Add(this.textBox_posX);
+            this.tabPage_edit.Controls.Add(this.comboBox_objectColor);
+            this.tabPage_edit.Controls.Add(this.comboBox_fontStyle);
+            this.tabPage_edit.Controls.Add(this.comboBox_object);
+            this.tabPage_edit.Controls.Add(this.comboBox_fontName);
+            this.tabPage_edit.Controls.Add(this.comboBox_backgroundColor);
+            this.tabPage_edit.Controls.Add(this.button_saveLabel);
+            this.tabPage_edit.Controls.Add(this.button_saveTemplate);
+            this.tabPage_edit.Controls.Add(this.button_delete);
+            this.tabPage_edit.Controls.Add(this.button_down);
+            this.tabPage_edit.Controls.Add(this.button_up);
+            this.tabPage_edit.Controls.Add(this.button_apply);
+            this.tabPage_edit.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_edit.Name = "tabPage_edit";
+            this.tabPage_edit.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_edit.Size = new System.Drawing.Size(430, 313);
+            this.tabPage_edit.TabIndex = 1;
+            this.tabPage_edit.Text = "Edit template";
+            this.tabPage_edit.UseVisualStyleBackColor = true;
             // 
             // listBox_objects
             // 
@@ -568,6 +575,16 @@
             this.comboBox_backgroundColor.Size = new System.Drawing.Size(135, 21);
             this.comboBox_backgroundColor.TabIndex = 2;
             // 
+            // button_saveLabel
+            // 
+            this.button_saveLabel.Location = new System.Drawing.Point(294, 6);
+            this.button_saveLabel.Name = "button_saveLabel";
+            this.button_saveLabel.Size = new System.Drawing.Size(90, 23);
+            this.button_saveLabel.TabIndex = 0;
+            this.button_saveLabel.Text = "Save label data";
+            this.button_saveLabel.UseVisualStyleBackColor = true;
+            this.button_saveLabel.Click += new System.EventHandler(this.button_saveLabel_Click);
+            // 
             // button_saveTemplate
             // 
             this.button_saveTemplate.Location = new System.Drawing.Point(198, 6);
@@ -619,6 +636,64 @@
             this.button_apply.Text = "Apply changes";
             this.button_apply.UseVisualStyleBackColor = true;
             this.button_apply.Click += new System.EventHandler(this.button_apply_Click);
+            // 
+            // tabPage_settings
+            // 
+            this.tabPage_settings.Controls.Add(this.label4);
+            this.tabPage_settings.Controls.Add(this.textBox_dpi);
+            this.tabPage_settings.Controls.Add(this.label3);
+            this.tabPage_settings.Controls.Add(this.comboBox_units);
+            this.tabPage_settings.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_settings.Name = "tabPage_settings";
+            this.tabPage_settings.Size = new System.Drawing.Size(430, 313);
+            this.tabPage_settings.TabIndex = 2;
+            this.tabPage_settings.Text = "Settings";
+            this.tabPage_settings.UseVisualStyleBackColor = true;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(3, 6);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(102, 13);
+            this.label4.TabIndex = 9;
+            this.label4.Text = "Horizontal resolution";
+            // 
+            // textBox_dpi
+            // 
+            this.textBox_dpi.Location = new System.Drawing.Point(111, 3);
+            this.textBox_dpi.MinimumSize = new System.Drawing.Size(50, 4);
+            this.textBox_dpi.Name = "textBox_dpi";
+            this.textBox_dpi.Size = new System.Drawing.Size(50, 20);
+            this.textBox_dpi.TabIndex = 8;
+            this.textBox_dpi.Text = "200";
+            this.textBox_dpi.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.textBox_dpi.Leave += new System.EventHandler(this.textBox_hDpi_Leave);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(3, 32);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(96, 13);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "Measurement units";
+            // 
+            // comboBox_units
+            // 
+            this.comboBox_units.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_units.FormattingEnabled = true;
+            this.comboBox_units.Items.AddRange(new object[] {
+            "pix",
+            "mm",
+            "cm",
+            "\""});
+            this.comboBox_units.Location = new System.Drawing.Point(111, 29);
+            this.comboBox_units.MinimumSize = new System.Drawing.Size(50, 0);
+            this.comboBox_units.Name = "comboBox_units";
+            this.comboBox_units.Size = new System.Drawing.Size(50, 21);
+            this.comboBox_units.TabIndex = 6;
+            this.comboBox_units.SelectedIndexChanged += new System.EventHandler(this.comboBox_units_SelectedIndexChanged);
             // 
             // checkBox_columnNames
             // 
@@ -685,6 +760,26 @@
             this.button_importLabels.UseVisualStyleBackColor = true;
             this.button_importLabels.Click += new System.EventHandler(this.button_importLabels_Click);
             // 
+            // comboBox_encoding
+            // 
+            this.comboBox_encoding.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_encoding.FormattingEnabled = true;
+            this.comboBox_encoding.Location = new System.Drawing.Point(256, 67);
+            this.comboBox_encoding.MinimumSize = new System.Drawing.Size(135, 0);
+            this.comboBox_encoding.Name = "comboBox_encoding";
+            this.comboBox_encoding.Size = new System.Drawing.Size(185, 21);
+            this.comboBox_encoding.TabIndex = 2;
+            this.comboBox_encoding.SelectedIndexChanged += new System.EventHandler(this.comboBox_encoding_SelectedIndexChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(198, 70);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(52, 13);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "Encoding";
+            // 
             // dataGridView_labels
             // 
             this.dataGridView_labels.AllowUserToAddRows = false;
@@ -723,36 +818,6 @@
             // 
             this.SaveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
             // 
-            // button_saveLabel
-            // 
-            this.button_saveLabel.Location = new System.Drawing.Point(294, 6);
-            this.button_saveLabel.Name = "button_saveLabel";
-            this.button_saveLabel.Size = new System.Drawing.Size(90, 23);
-            this.button_saveLabel.TabIndex = 0;
-            this.button_saveLabel.Text = "Save label data";
-            this.button_saveLabel.UseVisualStyleBackColor = true;
-            this.button_saveLabel.Click += new System.EventHandler(this.button_saveLabel_Click);
-            // 
-            // comboBox_encoding
-            // 
-            this.comboBox_encoding.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox_encoding.FormattingEnabled = true;
-            this.comboBox_encoding.Location = new System.Drawing.Point(256, 67);
-            this.comboBox_encoding.MinimumSize = new System.Drawing.Size(135, 0);
-            this.comboBox_encoding.Name = "comboBox_encoding";
-            this.comboBox_encoding.Size = new System.Drawing.Size(185, 21);
-            this.comboBox_encoding.TabIndex = 2;
-            this.comboBox_encoding.SelectedIndexChanged += new System.EventHandler(this.comboBox_encoding_SelectedIndexChanged);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(198, 70);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(52, 13);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Encoding";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -773,10 +838,12 @@
             this.splitContainer_vertical.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_label)).EndInit();
             this.tabControl1.ResumeLayout(false);
-            this.tabPage1.ResumeLayout(false);
-            this.tabPage1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
-            this.tabPage2.PerformLayout();
+            this.tabPage_print.ResumeLayout(false);
+            this.tabPage_print.PerformLayout();
+            this.tabPage_edit.ResumeLayout(false);
+            this.tabPage_edit.PerformLayout();
+            this.tabPage_settings.ResumeLayout(false);
+            this.tabPage_settings.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).EndInit();
             this.ResumeLayout(false);
 
@@ -806,8 +873,8 @@
         private System.Windows.Forms.TextBox textBox_templateName;
         private System.Windows.Forms.CheckBox checkBox_columnNames;
         private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPage_print;
+        private System.Windows.Forms.TabPage tabPage_edit;
         private System.Windows.Forms.Button button_saveTemplate;
         private System.Windows.Forms.Button button_delete;
         private System.Windows.Forms.Button button_apply;
@@ -843,6 +910,11 @@
         private System.Windows.Forms.Button button_saveLabel;
         private System.Windows.Forms.ComboBox comboBox_encoding;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TabPage tabPage_settings;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox textBox_dpi;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ComboBox comboBox_units;
     }
 }
 
