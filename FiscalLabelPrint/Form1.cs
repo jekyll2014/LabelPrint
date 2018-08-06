@@ -12,7 +12,7 @@ using System.Data;
 using System.Drawing.Text;
 using System.Collections.Generic;
 
-namespace FiscalLabelPrint
+namespace LabelPrint
 {
     public partial class Form1 : Form
     {
@@ -193,6 +193,13 @@ namespace FiscalLabelPrint
                 }
             }
             comboBox_object.Items.AddRange(_objectNames);
+            template init_label = new template();
+            init_label.name = _objectNames[labelObject];
+            init_label.bgColor = Color.White;
+            init_label.fgColor = Color.Black;
+            init_label.width = 1;
+            init_label.height = 1;
+            Label.Add(init_label);
         }
 
         private void fillBackground(Color bgC)
@@ -207,7 +214,17 @@ namespace FiscalLabelPrint
 
         private void drawText(Bitmap img, Color fgC, float posX, float posY, string text, string fontName, int fontSize, float rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
         {
-            Font textFont = new Font(fontName, fontSize, fontStyle); //creates new font
+            //check if font supports all the options
+            Font textFont;
+            try
+            {
+                textFont = new Font(fontName, fontSize, fontStyle); //creates new font
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Font error: " + ex.Message);
+                return;
+            }
             Graphics g = Graphics.FromImage(pictureBox_label.Image);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
@@ -390,7 +407,16 @@ namespace FiscalLabelPrint
                 }
                 else MessageBox.Show("Incorrect additional feature option:" + addFeature);
             }
-            Bitmap newPicture = barCode.Write(BCdata);
+            Bitmap newPicture;
+            try
+            {
+                newPicture = barCode.Write(BCdata);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Barcode generation error: " + ex.Message);
+                return;
+            }
             newPicture.MakeTransparent(Color.White);
             if (fgC != Color.Black)
             {
@@ -492,10 +518,10 @@ namespace FiscalLabelPrint
         {
             table.Clear();
             table.Rows.Clear();
-            FileStream inputFile;
+            List<string> tmp = new List<string>();
             try
             {
-                inputFile = File.OpenRead(fileName);
+                tmp.AddRange(File.ReadAllLines(fileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage)));
             }
             catch (Exception ex)
             {
@@ -505,25 +531,17 @@ namespace FiscalLabelPrint
 
             //read headers
             StringBuilder inputStr = new StringBuilder();
-            int c = 0;
+            //int c = 0;
             int colNum = 0;
+
 
             if (createColumnsNames == true)
             {
                 table.Columns.Clear();
-                c = inputFile.ReadByte();
-                while (c != '\r' && c != '\n' && c != -1)
-                {
-                    byte[] b = new byte[1];
-                    b[0] = (byte)c;
-                    inputStr.Append(Encoding.GetEncoding(LabelPrint.Properties.Settings.Default.CodePage).GetString(b));
-                    c = inputFile.ReadByte();
-                }
-
                 //create and count columns and read headers
                 if (inputStr.Length != 0)
                 {
-                    string[] cells = inputStr.ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
+                    string[] cells = tmp[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
                     colNum = cells.Length - 1;
                     for (int i = 0; i < colNum; i++)
                     {
@@ -533,58 +551,36 @@ namespace FiscalLabelPrint
             }
             else
             {
-                c = inputFile.ReadByte();
-                while (c != '\r' && c != '\n' && c != -1)
-                {
-                    byte[] b = new byte[1];
-                    b[0] = (byte)c;
-                    inputStr.Append(Encoding.GetEncoding(LabelPrint.Properties.Settings.Default.CodePage).GetString(b));
-                    c = inputFile.ReadByte();
-                }
-
                 //create 1st row and count columns
                 if (inputStr.Length != 0)
                 {
-                    string[] cells = inputStr.ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
+                    string[] cells = tmp[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
                     colNum = cells.Length - 1;
                     DataRow row = table.NewRow();
                     for (int i = 0; i < cells.Length - 1; i++)
                     {
-                        string tmp = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        if (tmp != "") row[i] = tmp;
+                        string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        if (tmp1 != "") row[i] = tmp1;
                     }
                     table.Rows.Add(row);
                 }
             }
 
             //read CSV content string by string
-            while (c != -1)
+            for (int i1 = 1; i1 < tmp.Count; i1++)
             {
-                int i = 0;
-                c = 0;
-                inputStr.Length = 0;
-                while (i < colNum && c != -1 /*&& c != '\r' && c != '\n'*/)
+                if (tmp[i1].ToString().Replace(Properties.Settings.Default.CSVdelimiter, ' ').Trim().TrimStart('\r').TrimStart('\n').TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').TrimEnd('\r').TrimEnd('\n') != "")
                 {
-                    c = inputFile.ReadByte();
-                    byte[] b = new byte[1];
-                    b[0] = (byte)c;
-                    if (c == LabelPrint.Properties.Settings.Default.CSVdelimiter) i++;
-                    if (c != -1) inputStr.Append(Encoding.GetEncoding(LabelPrint.Properties.Settings.Default.CodePage).GetString(b));
-                }
-                while (c != '\r' && c != '\n' && c != -1) c = inputFile.ReadByte();
-                if (inputStr.ToString().Replace(LabelPrint.Properties.Settings.Default.CSVdelimiter, ' ').Trim().TrimStart('\r').TrimStart('\n').TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').TrimEnd('\r').TrimEnd('\n') != "")
-                {
-                    string[] cells = inputStr.ToString().Split(LabelPrint.Properties.Settings.Default.CSVdelimiter);
+                    string[] cells = tmp[i1].ToString().Split(Properties.Settings.Default.CSVdelimiter);
 
                     DataRow row = table.NewRow();
-                    for (i = 0; i < cells.Length - 1; i++)
+                    for (int i = 0; i < cells.Length - 1; i++)
                     {
                         row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
                     }
                     table.Rows.Add(row);
                 }
             }
-            inputFile.Close();
         }
 
         private void button_importLabels_Click(object sender, EventArgs e)
@@ -660,7 +656,7 @@ namespace FiscalLabelPrint
                     if (inputStr[i].Trim() != "")
                     {
                         List<string> cells = new List<string>();
-                        foreach (string str in inputStr[i].Split(LabelPrint.Properties.Settings.Default.CSVdelimiter))
+                        foreach (string str in inputStr[i].Split(Properties.Settings.Default.CSVdelimiter))
                         {
                             cells.Add(str.Trim());
                         }
@@ -1276,6 +1272,11 @@ namespace FiscalLabelPrint
 
         private void generateLabel(int gridLine)
         {
+            if (Label[0].name != _objectNames[labelObject])
+            {
+                MessageBox.Show("1st object must be \"label\"");
+                return;
+            }
             if (checkBox_scale.Checked)
             {
                 pictureBox_label.Dock = DockStyle.None;
@@ -1651,19 +1652,18 @@ namespace FiscalLabelPrint
             return barcodeList.ToArray();
         }
 
-        //****
         void showObject(int n)
         {
             clearFields();
             comboBox_object.SelectedItem = listBox_objects.SelectedItem.ToString();
             string str = "";
             //new object
-            if (listBox_objects.SelectedIndex >= Label.Count)
+            if (n >= Label.Count)
             {
                 comboBox_object.Enabled = true;
             }
             // label; [bgColor]; [objectColor]; width; height;
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[labelObject])
+            else if (Label[n].name == _objectNames[labelObject])
             {
                 label_backgroundColor.Text = "Background color";
                 comboBox_backgroundColor.Enabled = true;
@@ -1671,7 +1671,7 @@ namespace FiscalLabelPrint
                 if (comboBox_backgroundColor.Enabled)
                 {
                     comboBox_backgroundColor.Items.AddRange(getColorList());
-                    str = Label[listBox_objects.SelectedIndex].bgColor.Name.ToString();
+                    str = Label[n].bgColor.Name.ToString();
                     for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
                     {
                         if (comboBox_backgroundColor.Items[i].ToString() == str)
@@ -1689,7 +1689,7 @@ namespace FiscalLabelPrint
                 {
                     comboBox_objectColor.Items.Add("");
                     comboBox_objectColor.Items.AddRange(getColorList());
-                    str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                    str = Label[n].fgColor.Name.ToString();
                     for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                     {
                         if (comboBox_objectColor.Items[i].ToString() == str)
@@ -1704,24 +1704,24 @@ namespace FiscalLabelPrint
                 textBox_width.Enabled = true;
                 if (textBox_width.Enabled)
                 {
-                    textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                    textBox_width.Text = Label[n].width.ToString();
                 }
 
                 label_height.Text = "Height";
                 textBox_height.Enabled = true;
                 if (textBox_height.Enabled)
                 {
-                    textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                    textBox_height.Text = Label[n].height.ToString();
                 }
             }
 
             // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[textObject])
+            else if (Label[n].name == _objectNames[textObject])
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
                 comboBox_objectColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
                     if (comboBox_objectColor.Items[i].ToString() == str)
@@ -1733,25 +1733,26 @@ namespace FiscalLabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+                textBox_posX.Text = Label[n].posX.ToString();
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+                textBox_posY.Text = Label[n].posY.ToString();
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+                textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_content.Enabled = true;
                 label_content.Text = "Data string";
-                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+                textBox_content.Text = Label[n].content;
 
                 comboBox_fontName.Enabled = true;
                 label_fontName.Text = "Font";
                 comboBox_fontName.Items.Clear();
                 comboBox_fontName.Items.AddRange(getFontList());
-                str = Label[listBox_objects.SelectedIndex].fontName.ToString();
+                comboBox_fontName.SelectedIndex = 0;
+                str = Label[n].fontName.ToString();
                 for (int i = 0; i < comboBox_fontName.Items.Count; i++)
                 {
                     if (comboBox_fontName.Items[i].ToString() == str)
@@ -1765,7 +1766,8 @@ namespace FiscalLabelPrint
                 label_fontStyle.Text = "Text style";
                 comboBox_fontStyle.Items.Clear();
                 comboBox_fontStyle.Items.AddRange(_textStyleNames);
-                str = Label[listBox_objects.SelectedIndex].fontStyle.ToString();
+                comboBox_fontStyle.SelectedIndex = 0;
+                str = Label[n].fontStyle.ToString();
                 for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
                 {
                     if (comboBox_fontStyle.Items[i].ToString().StartsWith(str))
@@ -1777,16 +1779,16 @@ namespace FiscalLabelPrint
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Font size";
-                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].fontSize.ToString();
+                textBox_fontSize.Text = Label[n].fontSize.ToString();
             }
 
             // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[pictureObject])
+            else if (Label[n].name == _objectNames[pictureObject])
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Transparent color";
                 comboBox_objectColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
                     if (comboBox_objectColor.Items[i].ToString() == str)
@@ -1798,40 +1800,40 @@ namespace FiscalLabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+                textBox_posX.Text = Label[n].posX.ToString();
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+                textBox_posY.Text = Label[n].posY.ToString();
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                textBox_width.Text = Label[n].width.ToString();
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                textBox_height.Text = Label[n].height.ToString();
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+                textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_content.Enabled = true;
                 label_content.Text = "Picture file";
-                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+                textBox_content.Text = Label[n].content;
 
                 checkBox_fill.Enabled = true;
                 checkBox_fill.Text = "Transparent";
-                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].transparent;
+                checkBox_fill.Checked = Label[n].transparent;
             }
 
             // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[barcodeObject])
+            else if (Label[n].name == _objectNames[barcodeObject])
             {
                 comboBox_backgroundColor.Enabled = true;
                 label_backgroundColor.Text = "Background color";
                 comboBox_backgroundColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].bgColor.Name.ToString();
+                str = Label[n].bgColor.Name.ToString();
                 for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
                 {
                     if (comboBox_backgroundColor.Items[i].ToString() == str)
@@ -1844,7 +1846,7 @@ namespace FiscalLabelPrint
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
                 comboBox_objectColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
                     if (comboBox_objectColor.Items[i].ToString() == str)
@@ -1856,33 +1858,34 @@ namespace FiscalLabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+                textBox_posX.Text = Label[n].posX.ToString();
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+                textBox_posY.Text = Label[n].posY.ToString();
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                textBox_width.Text = Label[n].width.ToString();
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                textBox_height.Text = Label[n].height.ToString();
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+                textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_content.Enabled = true;
                 label_content.Text = "Data string";
-                textBox_content.Text = Label[listBox_objects.SelectedIndex].content;
+                textBox_content.Text = Label[n].content;
 
                 comboBox_fontName.Enabled = true;
                 label_fontName.Text = "Barcode type";
                 comboBox_fontName.Items.Clear();
                 comboBox_fontName.Items.AddRange(getBarcodeList());
-                str = Label[listBox_objects.SelectedIndex].BCformat.ToString() + "=" + ((BarcodeFormat)Label[listBox_objects.SelectedIndex].BCformat).ToString();
+                comboBox_fontName.SelectedIndex = 0;
+                str = Label[n].BCformat.ToString() + "=" + ((BarcodeFormat)Label[n].BCformat).ToString();
                 for (int i = 0; i < comboBox_fontName.Items.Count; i++)
                 {
                     if (comboBox_fontName.Items[i].ToString() == str)
@@ -1895,7 +1898,8 @@ namespace FiscalLabelPrint
                 comboBox_fontStyle.Enabled = true;
                 label_fontStyle.Text = "Additional feature";
                 comboBox_fontStyle.Items.AddRange(bcFeatures.ToArray());
-                str = Label[listBox_objects.SelectedIndex].feature;
+                comboBox_fontStyle.SelectedIndex = 0;
+                str = Label[n].feature;
                 for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
                 {
                     if (str.StartsWith(comboBox_fontStyle.Items[i].ToString()))
@@ -1906,21 +1910,21 @@ namespace FiscalLabelPrint
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Feature value";
-                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].feature.Substring(Label[listBox_objects.SelectedIndex].feature.IndexOf('=') + 1);
+                textBox_fontSize.Text = Label[n].feature.Substring(Label[n].feature.IndexOf('=') + 1);
 
                 checkBox_fill.Enabled = true;
                 checkBox_fill.Text = "Transparent";
-                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].transparent;
+                checkBox_fill.Checked = Label[n].transparent;
             }
 
             // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
             // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[lineObject])
+            else if (Label[n].name == _objectNames[lineObject])
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
                 comboBox_objectColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
                     if (comboBox_objectColor.Items[i].ToString() == str)
@@ -1932,45 +1936,45 @@ namespace FiscalLabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+                textBox_posX.Text = Label[n].posX.ToString();
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+                textBox_posY.Text = Label[n].posY.ToString();
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].lineWidth.ToString();
+                textBox_fontSize.Text = Label[n].lineWidth.ToString();
 
-                if (Label[listBox_objects.SelectedIndex].lineLength == -1)
+                if (Label[n].lineLength == -1)
                 {
                     textBox_width.Enabled = true;
                     label_width.Text = "endX";
-                    textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                    textBox_width.Text = Label[n].width.ToString();
 
                     label_height.Text = "endY";
                     textBox_height.Enabled = true;
-                    textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                    textBox_height.Text = Label[n].height.ToString();
                 }
                 else
                 {
                     textBox_rotate.Enabled = true;
                     label_rotate.Text = "Rotate";
-                    textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+                    textBox_rotate.Text = Label[n].rotate.ToString();
 
                     textBox_content.Enabled = true;
                     textBox_content.Text = "Line length";
-                    textBox_content.Text = Label[listBox_objects.SelectedIndex].lineLength.ToString();
+                    textBox_content.Text = Label[n].lineLength.ToString();
                 }
             }
 
             // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[rectangleObject])
+            else if (Label[n].name == _objectNames[rectangleObject])
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
                 comboBox_objectColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
                     if (comboBox_objectColor.Items[i].ToString() == str)
@@ -1982,44 +1986,44 @@ namespace FiscalLabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+                textBox_posX.Text = Label[n].posX.ToString();
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+                textBox_posY.Text = Label[n].posY.ToString();
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                textBox_width.Text = Label[n].width.ToString();
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                textBox_height.Text = Label[n].height.ToString();
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+                textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].lineWidth.ToString();
+                textBox_fontSize.Text = Label[n].lineWidth.ToString();
 
                 textBox_content.Enabled = true;
                 textBox_content.Text = "Line length";
-                textBox_content.Text = Label[listBox_objects.SelectedIndex].lineLength.ToString();
+                textBox_content.Text = Label[n].lineLength.ToString();
 
                 checkBox_fill.Enabled = true;
                 checkBox_fill.Text = "Fill with objectColor";
-                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].fill;
+                checkBox_fill.Checked = Label[n].fill;
             }
 
             // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-            else if (Label[listBox_objects.SelectedIndex].name == _objectNames[ellipseObject])
+            else if (Label[n].name == _objectNames[ellipseObject])
             {
                 label_objectColor.Text = "Default object color";
                 comboBox_objectColor.Enabled = true;
                 comboBox_objectColor.Items.AddRange(getColorList());
-                str = Label[listBox_objects.SelectedIndex].fgColor.Name.ToString();
+                str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
                     if (comboBox_objectColor.Items[i].ToString() == str)
@@ -2031,39 +2035,38 @@ namespace FiscalLabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[listBox_objects.SelectedIndex].posX.ToString();
+                textBox_posX.Text = Label[n].posX.ToString();
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[listBox_objects.SelectedIndex].posY.ToString();
+                textBox_posY.Text = Label[n].posY.ToString();
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[listBox_objects.SelectedIndex].width.ToString();
+                textBox_width.Text = Label[n].width.ToString();
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[listBox_objects.SelectedIndex].height.ToString();
+                textBox_height.Text = Label[n].height.ToString();
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[listBox_objects.SelectedIndex].rotate.ToString();
+                textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = Label[listBox_objects.SelectedIndex].lineWidth.ToString();
+                textBox_fontSize.Text = Label[n].lineWidth.ToString();
 
                 textBox_content.Enabled = true;
                 textBox_content.Text = "Line length";
-                textBox_content.Text = Label[listBox_objects.SelectedIndex].lineLength.ToString();
+                textBox_content.Text = Label[n].lineLength.ToString();
 
                 checkBox_fill.Enabled = true;
                 checkBox_fill.Text = "Fill with objectColor";
-                checkBox_fill.Checked = Label[listBox_objects.SelectedIndex].fill;
+                checkBox_fill.Checked = Label[n].fill;
             }
         }
 
-        //****
         template collectObject()
         {
             template templ = new template();
@@ -2349,6 +2352,7 @@ namespace FiscalLabelPrint
 
             label_fontSize.Text = "Font size";
             textBox_fontSize.Clear();
+            comboBox_fontName.SelectedIndex = 0;
             textBox_fontSize.Enabled = false;
 
             checkBox_fill.Enabled = false;
@@ -2358,10 +2362,10 @@ namespace FiscalLabelPrint
 
         private void button_save_Click(object sender, EventArgs e)
         {
-            SaveFileDialog1.Title = "Save .CSV table as...";
+            SaveFileDialog1.Title = "Save template as .CSV...";
             SaveFileDialog1.DefaultExt = "csv";
             SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
-            SaveFileDialog1.FileName = "production_" + DateTime.Today.ToShortDateString().Replace("/", "_") + ".csv";
+            SaveFileDialog1.FileName = "template_" + DateTime.Today.ToShortDateString().Replace("/", "_") + ".csv";
             SaveFileDialog1.ShowDialog();
         }
 
@@ -2370,19 +2374,21 @@ namespace FiscalLabelPrint
             StringBuilder output = new StringBuilder();
             for (int i = 0; i < Label.Count; i++)
             {
-                char div = LabelPrint.Properties.Settings.Default.CSVdelimiter;
+                char div = Properties.Settings.Default.CSVdelimiter;
                 // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
-                if (Label[listBox_objects.SelectedIndex].name == _objectNames[labelObject])
+                if (Label[i].name == _objectNames[labelObject])
                 {
-                    output.AppendLine(Label[i].bgColor.Name.ToString() + div +
+                    output.AppendLine(Label[i].name.ToString() + div +
+                        Label[i].bgColor.Name.ToString() + div +
                         Label[i].fgColor.Name.ToString() + div +
                         Label[i].width.ToString() + div +
                         Label[i].height.ToString() + div);
                 }
                 // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
-                else if (Label[listBox_objects.SelectedIndex].name == _objectNames[textObject])
+                else if (Label[i].name == _objectNames[textObject])
                 {
-                    output.AppendLine(Label[i].fgColor.Name.ToString() + div +
+                    output.AppendLine(Label[i].name.ToString() + div +
+                        Label[i].fgColor.Name.ToString() + div +
                         Label[i].posX.ToString() + div +
                         Label[i].posY.ToString() + div +
                         Label[i].rotate.ToString() + div +
@@ -2392,9 +2398,10 @@ namespace FiscalLabelPrint
                         Label[i].fontStyle.ToString() + div);
                 }
                 // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
-                else if (Label[listBox_objects.SelectedIndex].name == _objectNames[pictureObject])
+                else if (Label[i].name == _objectNames[pictureObject])
                 {
-                    output.AppendLine(Label[i].fgColor.Name.ToString() + div +
+                    output.AppendLine(Label[i].name.ToString() + div +
+                        Label[i].fgColor.Name.ToString() + div +
                         Label[i].posX.ToString() + div +
                         Label[i].posY.ToString() + div +
                         Label[i].rotate.ToString() + div +
@@ -2404,9 +2411,10 @@ namespace FiscalLabelPrint
                         Label[i].transparent.ToString() + div);
                 }
                 // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
-                else if (Label[listBox_objects.SelectedIndex].name == _objectNames[barcodeObject])
+                else if (Label[i].name == _objectNames[barcodeObject])
                 {
-                    output.AppendLine(Label[i].bgColor.Name.ToString() + div +
+                    output.AppendLine(Label[i].name.ToString() + div +
+                        Label[i].bgColor.Name.ToString() + div +
                         Label[i].fgColor.Name.ToString() + div +
                         Label[i].posX.ToString() + div +
                         Label[i].posY.ToString() + div +
@@ -2420,12 +2428,12 @@ namespace FiscalLabelPrint
                 }
                 // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY; (lineLength = -1)
                 // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
-                else if (Label[listBox_objects.SelectedIndex].name == _objectNames[lineObject])
+                else if (Label[i].name == _objectNames[lineObject])
                 {
-                    output.Append(
+                    output.Append(Label[i].name.ToString() + div +
                         Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div);
+                        Label[i].posX.ToString() + div +
+                        Label[i].posY.ToString() + div);
                     if (Label[i].lineLength == -1)
                     {
                         output.AppendLine("" + div +
@@ -2441,9 +2449,10 @@ namespace FiscalLabelPrint
                     }
                 }
                 // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
-                else if (Label[listBox_objects.SelectedIndex].name == _objectNames[rectangleObject])
+                else if (Label[i].name == _objectNames[rectangleObject])
                 {
-                    output.AppendLine(Label[i].fgColor.Name.ToString() + div +
+                    output.AppendLine(Label[i].name.ToString() + div +
+                        Label[i].fgColor.Name.ToString() + div +
                         Label[i].posX.ToString() + div +
                         Label[i].posY.ToString() + div +
                         Label[i].rotate.ToString() + div +
@@ -2453,9 +2462,10 @@ namespace FiscalLabelPrint
                         Label[i].fill.ToString() + div);
                 }
                 // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
-                else if (Label[listBox_objects.SelectedIndex].name == _objectNames[ellipseObject])
+                else if (Label[i].name == _objectNames[ellipseObject])
                 {
-                    output.AppendLine(Label[i].fgColor.Name.ToString() + div +
+                    output.AppendLine(Label[i].name.ToString() + div +
+                        Label[i].fgColor.Name.ToString() + div +
                         Label[i].posX.ToString() + div +
                         Label[i].posY.ToString() + div +
                         Label[i].rotate.ToString() + div +
@@ -2467,7 +2477,7 @@ namespace FiscalLabelPrint
             }
             try
             {
-                File.WriteAllText(SaveFileDialog1.FileName, output.ToString());
+                File.WriteAllText(SaveFileDialog1.FileName, output.ToString(), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
             }
             catch (Exception ex)
             {

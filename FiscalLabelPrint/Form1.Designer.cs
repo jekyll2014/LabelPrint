@@ -1,4 +1,4 @@
-﻿namespace FiscalLabelPrint
+﻿namespace LabelPrint
 {
     partial class Form1
     {
