@@ -29,7 +29,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -70,7 +70,7 @@
             this.comboBox_object = new System.Windows.Forms.ComboBox();
             this.comboBox_fontName = new System.Windows.Forms.ComboBox();
             this.comboBox_backgroundColor = new System.Windows.Forms.ComboBox();
-            this.button_save = new System.Windows.Forms.Button();
+            this.button_saveTemplate = new System.Windows.Forms.Button();
             this.button_delete = new System.Windows.Forms.Button();
             this.button_down = new System.Windows.Forms.Button();
             this.button_up = new System.Windows.Forms.Button();
@@ -86,6 +86,9 @@
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.button_saveLabel = new System.Windows.Forms.Button();
+            this.comboBox_encoding = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -144,6 +147,8 @@
             this.splitContainer_vertical.Panel2.Controls.Add(this.textBox_templateName);
             this.splitContainer_vertical.Panel2.Controls.Add(this.button_importTemplate);
             this.splitContainer_vertical.Panel2.Controls.Add(this.button_importLabels);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.comboBox_encoding);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.label2);
             this.splitContainer_vertical.Panel2MinSize = 450;
             this.splitContainer_vertical.Size = new System.Drawing.Size(714, 460);
             this.splitContainer_vertical.SplitterDistance = 255;
@@ -307,7 +312,8 @@
             this.tabPage2.Controls.Add(this.comboBox_object);
             this.tabPage2.Controls.Add(this.comboBox_fontName);
             this.tabPage2.Controls.Add(this.comboBox_backgroundColor);
-            this.tabPage2.Controls.Add(this.button_save);
+            this.tabPage2.Controls.Add(this.button_saveLabel);
+            this.tabPage2.Controls.Add(this.button_saveTemplate);
             this.tabPage2.Controls.Add(this.button_delete);
             this.tabPage2.Controls.Add(this.button_down);
             this.tabPage2.Controls.Add(this.button_up);
@@ -562,15 +568,15 @@
             this.comboBox_backgroundColor.Size = new System.Drawing.Size(135, 21);
             this.comboBox_backgroundColor.TabIndex = 2;
             // 
-            // button_save
+            // button_saveTemplate
             // 
-            this.button_save.Location = new System.Drawing.Point(198, 6);
-            this.button_save.Name = "button_save";
-            this.button_save.Size = new System.Drawing.Size(90, 23);
-            this.button_save.TabIndex = 0;
-            this.button_save.Text = "Save template";
-            this.button_save.UseVisualStyleBackColor = true;
-            this.button_save.Click += new System.EventHandler(this.button_save_Click);
+            this.button_saveTemplate.Location = new System.Drawing.Point(198, 6);
+            this.button_saveTemplate.Name = "button_saveTemplate";
+            this.button_saveTemplate.Size = new System.Drawing.Size(90, 23);
+            this.button_saveTemplate.TabIndex = 0;
+            this.button_saveTemplate.Text = "Save template";
+            this.button_saveTemplate.UseVisualStyleBackColor = true;
+            this.button_saveTemplate.Click += new System.EventHandler(this.button_save_Click);
             // 
             // button_delete
             // 
@@ -617,6 +623,8 @@
             // checkBox_columnNames
             // 
             this.checkBox_columnNames.AutoSize = true;
+            this.checkBox_columnNames.Checked = true;
+            this.checkBox_columnNames.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox_columnNames.Location = new System.Drawing.Point(3, 68);
             this.checkBox_columnNames.Name = "checkBox_columnNames";
             this.checkBox_columnNames.Size = new System.Drawing.Size(158, 17);
@@ -687,16 +695,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.Format = "N0";
-            dataGridViewCellStyle1.NullValue = null;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.Format = "N0";
+            dataGridViewCellStyle3.NullValue = null;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(710, 152);
             this.dataGridView_labels.TabIndex = 0;
@@ -714,6 +722,36 @@
             // SaveFileDialog1
             // 
             this.SaveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
+            // 
+            // button_saveLabel
+            // 
+            this.button_saveLabel.Location = new System.Drawing.Point(294, 6);
+            this.button_saveLabel.Name = "button_saveLabel";
+            this.button_saveLabel.Size = new System.Drawing.Size(90, 23);
+            this.button_saveLabel.TabIndex = 0;
+            this.button_saveLabel.Text = "Save label data";
+            this.button_saveLabel.UseVisualStyleBackColor = true;
+            this.button_saveLabel.Click += new System.EventHandler(this.button_saveLabel_Click);
+            // 
+            // comboBox_encoding
+            // 
+            this.comboBox_encoding.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_encoding.FormattingEnabled = true;
+            this.comboBox_encoding.Location = new System.Drawing.Point(256, 67);
+            this.comboBox_encoding.MinimumSize = new System.Drawing.Size(135, 0);
+            this.comboBox_encoding.Name = "comboBox_encoding";
+            this.comboBox_encoding.Size = new System.Drawing.Size(185, 21);
+            this.comboBox_encoding.TabIndex = 2;
+            this.comboBox_encoding.SelectedIndexChanged += new System.EventHandler(this.comboBox_encoding_SelectedIndexChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(198, 70);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(52, 13);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "Encoding";
             // 
             // Form1
             // 
@@ -770,7 +808,7 @@
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.Button button_save;
+        private System.Windows.Forms.Button button_saveTemplate;
         private System.Windows.Forms.Button button_delete;
         private System.Windows.Forms.Button button_apply;
         private System.Windows.Forms.CheckBox checkBox_fill;
@@ -802,6 +840,9 @@
         private System.Windows.Forms.ComboBox comboBox_object;
         private System.Windows.Forms.Label label_fontSize;
         private System.Windows.Forms.TextBox textBox_fontSize;
+        private System.Windows.Forms.Button button_saveLabel;
+        private System.Windows.Forms.ComboBox comboBox_encoding;
+        private System.Windows.Forms.Label label2;
     }
 }
 

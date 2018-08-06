@@ -1,0 +1,13 @@
+label;White;Black;400;400;
+text;Black;30;10;0;ООО "КАСТОМ";Arial;15;0;
+text;Black;30;40;0;ККТ;Arial;15;0;
+picture;Black;80;35;0;custom_min2.png;180;30;False;
+text;Black;260;30;0;®;Arial;15;0;
+text;Black;285;40;0;Q3X-Ф;Arial;15;0;
+text;Black;30;80;0;IN DC 24V       1A;Arial;15;0;
+text;Black;360;160;-90;Сделано в России;Arial;12;0;
+barcode;White;Black;30;150;0;00000000000000000030;300;50;16;False;MARGIN=0;
+text;Black;30;250;0;Серийный номер ККТ:;Arial;15;0;
+text;Black;30;300;0;00000000000000000030;Arial;15;0;
+text;Black;30;330;0;Тел. +7 (495) 956 9336;Arial;15;1;
+text;Black;30;350;0;www.customprinter.com.ru;Arial;15;0;

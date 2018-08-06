@@ -25,7 +25,7 @@ namespace LabelPrint.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1251")]
+        [global::System.Configuration.DefaultSettingValueAttribute("65001")]
         public int CodePage {
             get {
                 return ((int)(this["CodePage"]));

@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="CodePage" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">1251</Value>
+      <Value Profile="(Default)">65001</Value>
     </Setting>
     <Setting Name="CSVdelimiter" Type="System.Char" Scope="User">
       <Value Profile="(Default)">;</Value>
