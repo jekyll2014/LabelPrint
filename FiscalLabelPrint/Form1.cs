@@ -75,8 +75,10 @@ namespace LabelPrint
         (int)BarcodeFormat.UPC_E,
         (int)BarcodeFormat.UPC_EAN_EXTENSION };
 
+        //printer resolution [dpi]
         int res = 200;
         float mult = 1;
+        // measurement units constants [pix, mm, cm, "]
         float[] units = { 1, 2, 3, 4 };
 
         int pagesFrom = 0;
@@ -94,6 +96,8 @@ namespace LabelPrint
             InitializeComponent();
             if (cmdLine.Length >= 1)
             {
+                tabControl1.SelectedIndexChanged -= new EventHandler(tabControl1_SelectedIndexChanged);
+                listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
                 if (cmdLine[0] == "/?" || cmdLine[0] == "/h" || cmdLine[0] == "/help")
                 {
                     Console.WriteLine("/?, /h, /help - print help\r\n" +
@@ -186,15 +190,15 @@ namespace LabelPrint
                     }
                     else Console.WriteLine("Not enough parameters.\r\n");
                 }
-                if (System.Windows.Forms.Application.MessageLoop)
+                if (Application.MessageLoop)
                 {
                     // WinForms app
-                    System.Windows.Forms.Application.Exit();
+                    Application.Exit();
                 }
                 else
                 {
                     // Console app
-                    System.Environment.Exit(1);
+                    Environment.Exit(1);
                 }
             }
 
@@ -217,6 +221,9 @@ namespace LabelPrint
             init_label.width = 1;
             init_label.height = 1;
             Label.Add(init_label);
+            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.SelectedIndex = 0;
+            comboBox_units.SelectedIndex = 0;
         }
 
         private void fillBackground(Color bgC)
@@ -1557,14 +1564,12 @@ namespace LabelPrint
         {
             if (tabControl1.SelectedIndex == 0 && _templateChanged)
             {
+                dataGridView_labels.SelectionChanged -= new EventHandler(dataGridView_labels_SelectionChanged);
                 dataGridView_labels.DataSource = null;
-
-
                 LabelsDatabase.Clear();
                 LabelsDatabase.Rows.Clear();
                 List<string> inputStr = new List<string>();
                 char div = Properties.Settings.Default.CSVdelimiter;
-
                 //create column headers
                 LabelsDatabase.Columns.Clear();
                 //create and count columns and read headers
@@ -1603,11 +1608,13 @@ namespace LabelPrint
                 dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                 dataGridView_labels.Rows[0].Selected = true;
                 generateLabel(-1);
+                dataGridView_labels.SelectionChanged += new EventHandler(dataGridView_labels_SelectionChanged);
                 _templateChanged = false;
             }
             else if (tabControl1.SelectedIndex == 1)
             {
-                getObjectsList();
+                listBox_objects.Items.Clear();
+                listBox_objects.Items.AddRange(getObjectsList());
                 listBox_objects.SelectedIndex = 0;
             }
         }
@@ -1619,7 +1626,7 @@ namespace LabelPrint
 
         private void button_apply_Click(object sender, EventArgs e)
         {
-            listBox_objects.SelectedIndexChanged -= new EventHandler(this.listBox_objects_SelectedIndexChanged);
+            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
             int n = listBox_objects.SelectedIndex;
             if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
             {
@@ -1632,11 +1639,12 @@ namespace LabelPrint
                 Label[n] = templ;
                 generateLabel(-1);
             }
-            getObjectsList();
+            listBox_objects.Items.Clear();
+            listBox_objects.Items.AddRange(getObjectsList());
             listBox_objects.SelectedIndex = n;
             _templateChanged = true;
             showObject(listBox_objects.SelectedIndex);
-            listBox_objects.SelectedIndexChanged += new EventHandler(this.listBox_objects_SelectedIndexChanged);
+            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
         }
 
         private void button_delete_Click(object sender, EventArgs e)
@@ -1645,9 +1653,12 @@ namespace LabelPrint
             {
                 int n = listBox_objects.SelectedIndex;
                 Label.RemoveAt(n);
-                listBox_objects.Items.Add("");
-                getObjectsList();
+                listBox_objects.Items.Clear();
+                listBox_objects.Items.AddRange(getObjectsList());
                 listBox_objects.SelectedIndex = n;
+                _templateChanged = true;
+                showObject(listBox_objects.SelectedIndex);
+                generateLabel(-1);
             }
         }
 
@@ -1659,8 +1670,12 @@ namespace LabelPrint
                 template templ = Label[n];
                 Label.RemoveAt(n);
                 Label.Insert(n - 1, templ);
-                getObjectsList();
+                listBox_objects.Items.Clear();
+                listBox_objects.Items.AddRange(getObjectsList());
                 listBox_objects.SelectedIndex = n - 1;
+                _templateChanged = true;
+                showObject(listBox_objects.SelectedIndex);
+                generateLabel(-1);
             }
         }
 
@@ -1672,20 +1687,24 @@ namespace LabelPrint
                 template templ = Label[n];
                 Label.RemoveAt(n);
                 Label.Insert(n + 1, templ);
-                getObjectsList();
+                listBox_objects.Items.Clear();
+                listBox_objects.Items.AddRange(getObjectsList());
                 listBox_objects.SelectedIndex = n + 1;
+                _templateChanged = true;
+                showObject(listBox_objects.SelectedIndex);
+                generateLabel(-1);
             }
-
         }
 
-        void getObjectsList()
+        string[] getObjectsList()
         {
-            listBox_objects.Items.Clear();
+            List<string> objectList = new List<string>();
             foreach (template t in Label)
             {
-                listBox_objects.Items.Add(t.name);
+                objectList.Add(t.name);
             }
-            listBox_objects.Items.Add("");
+            objectList.Add("");
+            return objectList.ToArray();
         }
 
         string[] getColorList()
@@ -1693,7 +1712,7 @@ namespace LabelPrint
             List<string> colorList = new List<string>();
             foreach (Color c in new ColorConverter().GetStandardValues())
             {
-                colorList.Add(c.Name.ToString());
+                colorList.Add(c.Name);
             }
             return colorList.ToArray();
         }
@@ -1784,14 +1803,14 @@ namespace LabelPrint
                 textBox_width.Enabled = true;
                 if (textBox_width.Enabled)
                 {
-                    textBox_width.Text = Label[n].width.ToString();
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
                 }
 
                 label_height.Text = "Height";
                 textBox_height.Enabled = true;
                 if (textBox_height.Enabled)
                 {
-                    textBox_height.Text = Label[n].height.ToString();
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
                 }
             }
 
@@ -1813,11 +1832,11 @@ namespace LabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[n].posX.ToString();
+                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[n].posY.ToString();
+                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
@@ -1880,19 +1899,19 @@ namespace LabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[n].posX.ToString();
+                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[n].posY.ToString();
+                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[n].width.ToString();
+                textBox_width.Text = (Label[n].width / mult).ToString("F4");
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[n].height.ToString();
+                textBox_height.Text = (Label[n].height / mult).ToString("F4");
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
@@ -1938,19 +1957,19 @@ namespace LabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[n].posX.ToString();
+                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[n].posY.ToString();
+                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[n].width.ToString();
+                textBox_width.Text = (Label[n].width / mult).ToString("F4");
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[n].height.ToString();
+                textBox_height.Text = (Label[n].height / mult).ToString("F4");
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
@@ -2016,30 +2035,30 @@ namespace LabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[n].posX.ToString();
+                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[n].posY.ToString();
+                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = Label[n].lineWidth.ToString();
+                textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
 
                 textBox_width.Enabled = true;
                 label_width.Text = "endX (empty to use length)";
-                textBox_width.Text = Label[n].width.ToString();
+                textBox_width.Text = (Label[n].width / mult).ToString("F4");
 
                 textBox_height.Enabled = true;
                 label_height.Text = "endY (empty to use length)";
-                textBox_height.Text = Label[n].height.ToString();
+                textBox_height.Text = (Label[n].height / mult).ToString("F4");
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate (empty to use length)";
                 textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_content.Enabled = true;
                 label_content.Text = "Line length (empty to use coordinates)";
-                if (Label[n].lineLength != -1) textBox_content.Text = Label[n].lineLength.ToString();
+                if (Label[n].lineLength != -1) textBox_content.Text = (Label[n].lineLength / mult).ToString("F4");
             }
 
             // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
@@ -2060,19 +2079,19 @@ namespace LabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[n].posX.ToString();
+                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[n].posY.ToString();
+                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[n].width.ToString();
+                textBox_width.Text = (Label[n].width / mult).ToString("F4");
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[n].height.ToString();
+                textBox_height.Text = (Label[n].height / mult).ToString("F4");
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
@@ -2080,11 +2099,7 @@ namespace LabelPrint
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = Label[n].lineWidth.ToString();
-
-                textBox_content.Enabled = true;
-                textBox_content.Text = "Line length";
-                textBox_content.Text = Label[n].lineLength.ToString();
+                textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
 
                 checkBox_fill.Enabled = true;
                 checkBox_fill.Text = "Fill with objectColor";
@@ -2109,19 +2124,19 @@ namespace LabelPrint
 
                 textBox_posX.Enabled = true;
                 label_posX.Text = "posX";
-                textBox_posX.Text = Label[n].posX.ToString();
+                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
 
                 textBox_posY.Enabled = true;
                 label_posY.Text = "posY";
-                textBox_posY.Text = Label[n].posY.ToString();
+                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
 
                 textBox_width.Enabled = true;
                 label_width.Text = "Width";
-                textBox_width.Text = Label[n].width.ToString();
+                textBox_width.Text = (Label[n].width / mult).ToString("F4");
 
                 textBox_height.Enabled = true;
                 label_height.Text = "Height";
-                textBox_height.Text = Label[n].height.ToString();
+                textBox_height.Text = (Label[n].height / mult).ToString("F4");
 
                 textBox_rotate.Enabled = true;
                 label_rotate.Text = "Rotate";
@@ -2129,11 +2144,7 @@ namespace LabelPrint
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = Label[n].lineWidth.ToString();
-
-                textBox_content.Enabled = true;
-                textBox_content.Text = "Line length";
-                textBox_content.Text = Label[n].lineLength.ToString();
+                textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
 
                 checkBox_fill.Enabled = true;
                 checkBox_fill.Text = "Fill with objectColor";
@@ -2185,10 +2196,10 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_width.Text, out f);
-                templ.width = f;
+                templ.width = f * mult;
 
                 float.TryParse(textBox_height.Text, out f);
-                templ.height = f;
+                templ.height = f * mult;
             }
 
             // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
@@ -2199,10 +2210,10 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f;
+                templ.posX = f * mult;
 
                 float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f;
+                templ.posY = f * mult;
 
                 float.TryParse(textBox_rotate.Text, out f);
                 templ.rotate = f;
@@ -2227,10 +2238,10 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f;
+                templ.posX = f * mult;
 
                 float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f;
+                templ.posY = f * mult;
 
                 float.TryParse(textBox_rotate.Text, out f);
                 templ.rotate = f;
@@ -2238,10 +2249,10 @@ namespace LabelPrint
                 templ.content = textBox_content.Text;
 
                 float.TryParse(textBox_width.Text, out f);
-                templ.width = f;
+                templ.width = f * mult;
 
                 float.TryParse(textBox_height.Text, out f);
-                templ.height = f;
+                templ.height = f * mult;
 
                 templ.transparent = checkBox_fill.Checked;
             }
@@ -2257,10 +2268,10 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f;
+                templ.posX = f * mult;
 
                 float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f;
+                templ.posY = f * mult;
 
                 float.TryParse(textBox_rotate.Text, out f);
                 templ.rotate = f;
@@ -2268,10 +2279,10 @@ namespace LabelPrint
                 templ.content = textBox_content.Text;
 
                 float.TryParse(textBox_width.Text, out f);
-                templ.width = f;
+                templ.width = f * mult;
 
                 float.TryParse(textBox_height.Text, out f);
-                templ.height = f;
+                templ.height = f * mult;
 
                 templ.transparent = checkBox_fill.Checked;
 
@@ -2292,21 +2303,21 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f;
+                templ.posX = f * mult;
 
                 float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f;
+                templ.posY = f * mult;
 
                 float.TryParse(textBox_fontSize.Text, out f);
-                templ.lineWidth = f;
+                templ.lineWidth = f * mult;
 
                 if ((textBox_rotate.Text == "" || textBox_content.Text == "" || templ.lineLength == -1) && textBox_width.Text != "" && textBox_height.Text != "")
                 {
                     float.TryParse(textBox_width.Text, out f);
-                    templ.width = f;
+                    templ.width = f * mult;
 
                     float.TryParse(textBox_height.Text, out f);
-                    templ.height = f;
+                    templ.height = f * mult;
 
                     templ.lineLength = -1;
                 }
@@ -2316,7 +2327,7 @@ namespace LabelPrint
                     templ.rotate = f;
 
                     float.TryParse(textBox_content.Text, out f);
-                    templ.lineLength = f;
+                    templ.lineLength = f * mult;
                 }
             }
 
@@ -2328,22 +2339,22 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f;
+                templ.posX = f * mult;
 
                 float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f;
+                templ.posY = f * mult;
 
                 float.TryParse(textBox_rotate.Text, out f);
                 templ.rotate = f;
 
                 float.TryParse(textBox_width.Text, out f);
-                templ.width = f;
+                templ.width = f * mult;
 
                 float.TryParse(textBox_height.Text, out f);
-                templ.height = f;
+                templ.height = f * mult;
 
                 float.TryParse(textBox_fontSize.Text, out f);
-                templ.lineWidth = f;
+                templ.lineWidth = f * mult;
 
                 templ.transparent = !checkBox_fill.Checked;
             }
@@ -2356,22 +2367,22 @@ namespace LabelPrint
 
                 float f = 0;
                 float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f;
+                templ.posX = f * mult;
 
                 float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f;
+                templ.posY = f * mult;
 
                 float.TryParse(textBox_rotate.Text, out f);
                 templ.rotate = f;
 
                 float.TryParse(textBox_width.Text, out f);
-                templ.width = f;
+                templ.width = f * mult;
 
                 float.TryParse(textBox_height.Text, out f);
-                templ.height = f;
+                templ.height = f * mult;
 
                 float.TryParse(textBox_fontSize.Text, out f);
-                templ.lineWidth = f;
+                templ.lineWidth = f * mult;
 
                 templ.transparent = !checkBox_fill.Checked;
             }
@@ -2594,15 +2605,23 @@ namespace LabelPrint
             if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out cp)) Properties.Settings.Default.CodePage = cp;
         }
 
-        private void textBox_hDpi_Leave(object sender, EventArgs e)
+        private void textBox_dpi_Leave(object sender, EventArgs e)
         {
             int.TryParse(textBox_dpi.Text, out res);
             textBox_dpi.Text = res.ToString();
+            units[1] = (float)(res / 25.4);
+            units[2] = (float)(res / 2.54);
+            units[3] = res;
+            mult = units[comboBox_units.SelectedIndex];
         }
 
         private void comboBox_units_SelectedIndexChanged(object sender, EventArgs e)
         {
             mult = units[comboBox_units.SelectedIndex];
+            if (comboBox_units.SelectedIndex == 0) textBox_dpi.Enabled = false;
+            else textBox_dpi.Enabled = true;
+            showObject(listBox_objects.SelectedIndex);
         }
+
     }
 }
