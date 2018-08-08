@@ -684,7 +684,12 @@ namespace LabelPrint
                         if (cells.Count >= 5)
                         {
                             template templ = new template();
-                            templ.name = cells[0];
+                            if (i == 0 && cells[0]!= _objectNames[labelObject])
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                return;
+                            }
+                                templ.name = cells[0];
                             objectsNum++;
                             // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
                             if (templ.name == _objectNames[labelObject])
@@ -746,24 +751,24 @@ namespace LabelPrint
                                     float.TryParse(cells[2], out templ.posX);
                                     if (templ.posX < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
                                     else if (templ.posX >= (int)Label[0].width)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
                                     if (templ.posY < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
                                     else if (templ.posY >= (int)Label[0].height)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = (int)Label[0].height - 1;
                                     }
 
@@ -825,24 +830,24 @@ namespace LabelPrint
                                     float.TryParse(cells[2], out templ.posX);
                                     if (templ.posX < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
                                     else if (templ.posX >= (int)Label[0].width)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
                                     if (templ.posY < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
                                     else if (templ.posY >= (int)Label[0].height)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = (int)Label[0].height - 1;
                                     }
 
@@ -860,11 +865,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     float.TryParse(cells[7], out templ.height);
                                     if (templ.height < 0)
@@ -872,11 +877,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     byte t = 0;
                                     byte.TryParse(cells[8], out t);
@@ -917,24 +922,24 @@ namespace LabelPrint
                                     float.TryParse(cells[3], out templ.posX);
                                     if (templ.posX < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
                                     else if (templ.posX >= (int)Label[0].width)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[4], out templ.posY);
                                     if (templ.posY < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
                                     else if (templ.posY >= (int)Label[0].height)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = (int)Label[0].height - 1;
                                     }
 
@@ -948,11 +953,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     float.TryParse(cells[8], out templ.height);
                                     if (templ.height < 0)
@@ -960,11 +965,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     int.TryParse(cells[9], out templ.BCformat);
                                     if (!BarCodeTypes.Contains(templ.BCformat))
@@ -1014,24 +1019,24 @@ namespace LabelPrint
                                     float.TryParse(cells[2], out templ.posX);
                                     if (templ.posX < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
                                     else if (templ.posX >= (int)Label[0].width)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
                                     if (templ.posY < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
                                     else if (templ.posY >= (int)Label[0].height)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = (int)Label[0].height - 1;
                                     }
 
@@ -1052,11 +1057,11 @@ namespace LabelPrint
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
                                             templ.lineLength = 0;
                                         }
-                                        else if (templ.lineLength >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                        /*else if (templ.lineLength >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                         {
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
                                             templ.lineLength = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                        }
+                                        }*/
                                     }
                                     else
                                     {
@@ -1066,11 +1071,11 @@ namespace LabelPrint
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                             templ.width = 0;
                                         }
-                                        else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                        /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                         {
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                             templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                        }
+                                        }*/
 
                                         float.TryParse(cells[7], out templ.height);
                                         if (templ.height < 0)
@@ -1078,11 +1083,11 @@ namespace LabelPrint
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                             templ.height = 0;
                                         }
-                                        else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                        /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                         {
                                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                             templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                        }
+                                        }*/
 
                                         templ.lineLength = -1;
                                     }
@@ -1113,24 +1118,24 @@ namespace LabelPrint
                                     float.TryParse(cells[2], out templ.posX);
                                     if (templ.posX < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
                                     else if (templ.posX >= (int)Label[0].width)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
                                     if (templ.posY < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
                                     else if (templ.posY >= (int)Label[0].height)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = (int)Label[0].height - 1;
                                     }
 
@@ -1149,11 +1154,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     float.TryParse(cells[7], out templ.height);
                                     if (templ.height < 0)
@@ -1161,11 +1166,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     byte t = 0;
                                     byte.TryParse(cells[8], out t);
@@ -1197,24 +1202,24 @@ namespace LabelPrint
                                     float.TryParse(cells[2], out templ.posX);
                                     if (templ.posX < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = 0;
                                     }
                                     else if (templ.posX >= (int)Label[0].width)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect X position: " + templ.posX.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                         templ.posX = (int)Label[0].width - 1;
                                     }
 
                                     float.TryParse(cells[3], out templ.posY);
                                     if (templ.posY < 0)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = 0;
                                     }
                                     else if (templ.posY >= (int)Label[0].height)
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect Y position: " + templ.posY.ToString());
+                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                         templ.posY = (int)Label[0].height - 1;
                                     }
 
@@ -1233,11 +1238,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = 0;
                                     }
-                                    else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
                                         templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     float.TryParse(cells[7], out templ.height);
                                     if (templ.height < 0)
@@ -1245,11 +1250,11 @@ namespace LabelPrint
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = 0;
                                     }
-                                    else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
+                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
                                     {
                                         MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
                                         templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }
+                                    }*/
 
                                     byte t = 0;
                                     byte.TryParse(cells[8], out t);
@@ -1649,7 +1654,7 @@ namespace LabelPrint
 
         private void button_delete_Click(object sender, EventArgs e)
         {
-            if (listBox_objects.SelectedIndex != listBox_objects.Items.Count - 1)
+            if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex > 0)
             {
                 int n = listBox_objects.SelectedIndex;
                 Label.RemoveAt(n);
@@ -1664,7 +1669,7 @@ namespace LabelPrint
 
         private void button_up_Click(object sender, EventArgs e)
         {
-            if (listBox_objects.SelectedIndex != listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex != 0)
+            if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex > 1)
             {
                 int n = listBox_objects.SelectedIndex;
                 template templ = Label[n];
@@ -1681,7 +1686,7 @@ namespace LabelPrint
 
         private void button_down_Click(object sender, EventArgs e)
         {
-            if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 2)
+            if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 2 && listBox_objects.SelectedIndex > 0)
             {
                 int n = listBox_objects.SelectedIndex;
                 template templ = Label[n];
