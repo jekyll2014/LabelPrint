@@ -25,6 +25,6 @@ or
 
 /P=A - print all labels
 
-  =xxx - print label #xxx
+		=xxx - print label #xxx
 
-  =xxx-yyy - print labels from xxx to yyy
+		=xxx-yyy - print labels from #xxx to #yyy
