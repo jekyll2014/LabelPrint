@@ -18,9 +18,13 @@ Commandline switches added recently:
 /C - [optional] 1st string of label file is column names (default = no)
 
 /PRN=SystemPrinterName - output to printer (replace spaces with \'_\')
+
 or
+
 /PIC=pictureName - output to pictures
 
 /P=A - print all labels
+
   =xxx - print label #xxx
+
   =xxx-yyy - print labels from xxx to yyy
