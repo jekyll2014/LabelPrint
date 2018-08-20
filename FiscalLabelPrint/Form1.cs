@@ -2875,6 +2875,7 @@ namespace LabelPrint
         {
             Pen p = new Pen(fgC, lineWidth);
             p.Alignment = PenAlignment.Outset;
+            p.DashStyle = DashStyle.Dash;
             Rectangle rect = new Rectangle(-2, -2, (int)width + 4, (int)height + 4);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
