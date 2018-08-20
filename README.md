@@ -10,14 +10,17 @@ See readme.odt for more details.
 Commandline switches added recently:
 
 /?, /h, /help - print help
+
 /T=file.csv - load template data from file
+
 /L=file.csv - load label data from file
+
 /C - [optional] 1st string of label file is column names (default = no)
+
 /PRN=SystemPrinterName - output to printer (replace spaces with \'_\')
 or
 /PIC=pictureName - output to pictures
+
 /P=A - print all labels
-or
-/P=xxx - print label #xxx
-or
-/P=xxx-yyy - print labels from xxx to yyy
+  =xxx - print label #xxx
+  =xxx-yyy - print labels from xxx to yyy
