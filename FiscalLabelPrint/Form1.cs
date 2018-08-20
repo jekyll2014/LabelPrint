@@ -32,6 +32,7 @@ namespace LabelPrint
             public Color bgColor;
             public Color fgColor;
             public float dpi;
+            public int codePage;
             public float posX;
             public float posY;
             public float rotate;
@@ -198,6 +199,22 @@ namespace LabelPrint
                     Environment.Exit(1);
                 }
             }
+            comboBox_object.Items.AddRange(_objectNames);
+
+            template init_label = new template();
+            init_label.name = _objectNames[labelObject];
+            init_label.bgColor = Color.White;
+            init_label.fgColor = Color.Black;
+            init_label.width = 1;
+            init_label.height = 1;
+            init_label.dpi = 200;
+            init_label.codePage = 65001;
+            Label.Add(init_label);
+
+            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.SelectedIndex = 0;
+            comboBox_units.SelectedIndex = 0;
+            textBox_dpi.Text = Label[0].dpi.ToString("F4");
 
             comboBox_encoding.Items.Clear();
             comboBox_encoding.Items.AddRange(getEncodingList());
@@ -207,22 +224,9 @@ namespace LabelPrint
                 if (comboBox_encoding.Items[i].ToString().StartsWith(str))
                 {
                     comboBox_encoding.SelectedIndex = i;
+                    break;
                 }
             }
-
-            comboBox_object.Items.AddRange(_objectNames);
-            template init_label = new template();
-            init_label.name = _objectNames[labelObject];
-            init_label.bgColor = Color.White;
-            init_label.fgColor = Color.Black;
-            init_label.width = 1;
-            init_label.height = 1;
-            init_label.dpi = 200;
-            Label.Add(init_label);
-            listBox_objects.Items.AddRange(getObjectsList());
-            listBox_objects.SelectedIndex = 0;
-            comboBox_units.SelectedIndex = 0;
-            textBox_dpi.Text = Label[0].dpi.ToString("F4");
             textBox_dpi_Leave(this, EventArgs.Empty);
         }
 
@@ -874,7 +878,7 @@ namespace LabelPrint
                             cells.Add(str.Trim());
                         }
                         if (cells[cells.Count - 1] == "") cells.RemoveAt(cells.Count - 1);
-                        if (cells.Count >= 6)
+                        if (cells.Count >= 7)
                         {
                             template templ = new template();
                             if (i == 0 && cells[0] != _objectNames[labelObject])
@@ -928,10 +932,26 @@ namespace LabelPrint
                                 if (templ.dpi == 0) float.TryParse(textBox_dpi.Text, out templ.dpi);
                                 else if (templ.dpi < 0)
                                 {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect resolution: " + templ.height.ToString());
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect resolution: " + templ.dpi.ToString());
                                     templ.height = 1;
                                 }
                                 textBox_dpi.Text = templ.dpi.ToString("F4");
+
+                                int.TryParse(cells[6], out templ.codePage);
+                                if (templ.codePage == 0) templ.codePage = Properties.Settings.Default.CodePage;
+                                else if (templ.codePage < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect codepage: " + templ.codePage.ToString());
+                                    templ.height = 1;
+                                }
+                                for (int j = 0; j < comboBox_encoding.Items.Count; j++)
+                                {
+                                    if (comboBox_encoding.Items[j].ToString().StartsWith(templ.codePage.ToString()))
+                                    {
+                                        comboBox_encoding.SelectedIndex = j;
+                                        break;
+                                    }
+                                }
                             }
                             // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
                             else if (templ.name == _objectNames[textObject])
@@ -2395,6 +2415,7 @@ namespace LabelPrint
                 templ.posX = 0;
                 templ.posY = 0;
                 templ.dpi = 1;
+                templ.dpi = Properties.Settings.Default.CodePage;
                 templ.rotate = 0;
                 templ.content = "";
                 templ.width = 1;
@@ -2710,7 +2731,8 @@ namespace LabelPrint
                             Label[i].fgColor.Name.ToString() + div +
                             Label[i].width.ToString() + div +
                             Label[i].height.ToString() + div +
-                            Label[i].dpi.ToString() + div);
+                            Label[i].dpi.ToString() + div +
+                            Label[i].codePage.ToString() + div);
                     }
                     // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
                     else if (Label[i].name == _objectNames[textObject])
@@ -2826,8 +2848,19 @@ namespace LabelPrint
 
         private void comboBox_encoding_SelectedIndexChanged(object sender, EventArgs e)
         {
+            template templ = new template();
+            templ.name = _objectNames[labelObject];
+            templ.bgColor = Label[0].bgColor;
+            templ.fgColor = Label[0].fgColor;
+            templ.width = Label[0].width;
+            templ.height = Label[0].height;
+            templ.dpi = 1;
+            float.TryParse(textBox_dpi.Text, out templ.dpi);
             int cp = Properties.Settings.Default.CodePage;
             if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out cp)) Properties.Settings.Default.CodePage = cp;
+            templ.codePage = cp;
+            Label.RemoveAt(0);
+            Label.Insert(0, templ);
         }
 
         private void textBox_dpi_Leave(object sender, EventArgs e)
@@ -2838,7 +2871,10 @@ namespace LabelPrint
             templ.fgColor = Label[0].fgColor;
             templ.width = Label[0].width;
             templ.height = Label[0].height;
+            templ.dpi = 1;
             float.TryParse(textBox_dpi.Text, out templ.dpi);
+            templ.codePage = Properties.Settings.Default.CodePage;
+            if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out templ.codePage)) Properties.Settings.Default.CodePage = templ.codePage;
             Label.RemoveAt(0);
             Label.Insert(0, templ);
             textBox_dpi.Text = Label[0].dpi.ToString();
