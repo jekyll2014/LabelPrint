@@ -1,37 +1,37 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Drawing;
-using System.Drawing.Printing;
-using System.Windows.Forms;
-using ZXing.Common;
-using ZXing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Drawing.Printing;
+using System.Drawing.Text;
 using System.IO;
 using System.Text;
-using System.Data;
-using System.Drawing.Text;
-using System.Collections.Generic;
+using System.Windows.Forms;
+using ZXing;
+using ZXing.Common;
 
 namespace LabelPrint
 {
     public partial class Form1 : Form
     {
-        const int labelObject = 0;
-        const int textObject = 1;
-        const int pictureObject = 2;
-        const int barcodeObject = 3;
-        const int lineObject = 4;
-        const int rectangleObject = 5;
-        const int ellipseObject = 6;
+        private const int labelObject = 0;
+        private const int textObject = 1;
+        private const int pictureObject = 2;
+        private const int barcodeObject = 3;
+        private const int lineObject = 4;
+        private const int rectangleObject = 5;
+        private const int ellipseObject = 6;
+        private string[] _objectNames = { "label", "text", "picture", "barcode", "line", "rectangle", "ellipse", };
+        private string[] _textStyleNames = { "0=regular", "1=bold", "2=italic", "4=underline", "8=strikeout" };
 
-        string[] _objectNames = { "label", "text", "picture", "barcode", "line", "rectangle", "ellipse", };
-        string[] _textStyleNames = { "0=regular", "1=bold", "2=italic", "4=underline", "8=strikeout" };
-
-        struct template
+        private struct template
         {
             public string name;
             public Color bgColor;
             public Color fgColor;
+            public float dpi;
             public float posX;
             public float posY;
             public float rotate;
@@ -40,20 +40,19 @@ namespace LabelPrint
             public float height;
             public bool transparent;
             public int BCformat;
-            public byte fontSize;
+            public float fontSize;
             public byte fontStyle;
             public string fontName;
             public string feature;
             public float lineLength;
             public float lineWidth;
         }
-        List<template> Label = new List<template>();
 
-        DataTable LabelsDatabase = new DataTable();
-        int objectsNum = 0;
-
-        List<string> bcFeatures = new List<string> { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
-        List<int> BarCodeTypes = new List<int> {
+        private List<template> Label = new List<template>();
+        private DataTable LabelsDatabase = new DataTable();
+        private int objectsNum = 0;
+        private List<string> bcFeatures = new List<string> { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
+        private List<int> BarCodeTypes = new List<int> {
         (int)BarcodeFormat.AZTEC,
         (int)BarcodeFormat.CODABAR,
         (int)BarcodeFormat.CODE_128,
@@ -75,21 +74,19 @@ namespace LabelPrint
         (int)BarcodeFormat.UPC_E,
         (int)BarcodeFormat.UPC_EAN_EXTENSION };
 
-        //printer resolution [dpi]
-        int res = 200;
-        float mult = 1;
+        private float mult = 1;
+
         // measurement units constants [pix, mm, cm, "]
-        float[] units = { 1, 2, 3, 4 };
-
-        int pagesFrom = 0;
-        int pagesTo = 0;
-
-        bool _templateChanged = false;
-
-        bool cmdLinePrint = false;
-        string printerName = "";
-
-        Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
+        private float[] units = { 1, 1, 1, 1 };
+        private int pagesFrom = 0;
+        private int pagesTo = 0;
+        private bool _templateChanged = false;
+        private bool cmdLinePrint = false;
+        private string printerName = "";
+        private Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
+        private Rectangle currentObject = new Rectangle();
+        private Color _borderColor = Color.Black;
+        private string path = "";
 
         public Form1(string[] cmdLine)
         {
@@ -220,10 +217,13 @@ namespace LabelPrint
             init_label.fgColor = Color.Black;
             init_label.width = 1;
             init_label.height = 1;
+            init_label.dpi = 200;
             Label.Add(init_label);
             listBox_objects.Items.AddRange(getObjectsList());
             listBox_objects.SelectedIndex = 0;
             comboBox_units.SelectedIndex = 0;
+            textBox_dpi.Text = Label[0].dpi.ToString("F4");
+            textBox_dpi_Leave(this, EventArgs.Empty);
         }
 
         private void fillBackground(Color bgC)
@@ -236,18 +236,19 @@ namespace LabelPrint
             pictureBox_label.Image = LabelBmp;
         }
 
-        private void drawText(Bitmap img, Color fgC, float posX, float posY, string text, string fontName, int fontSize, float rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
+        private Rectangle drawText(Bitmap img, Color fgC, float posX, float posY, string text, string fontName, float fontSize, float rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             //check if font supports all the options
             Font textFont;
             try
             {
-                textFont = new Font(fontName, fontSize, fontStyle); //creates new font
+                textFont = new Font(fontName, fontSize, fontStyle, GraphicsUnit.Pixel); //creates new font
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Font error: " + ex.Message);
-                return;
+                return size;
             }
             Graphics g = Graphics.FromImage(pictureBox_label.Image);
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -264,10 +265,38 @@ namespace LabelPrint
             g.DrawString(text, textFont, b, 0, 0);
             // Restore the graphics state.
             g.Restore(state);
+            SizeF stringSize = new SizeF();
+            stringSize = g.MeasureString(text, textFont);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)stringSize.Width + 1;
+            size.Height = (int)fontSize + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            else
+            {
+                size.X = size.X + 1;
+                size.Width = size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            else
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            return size;
         }
 
-        private void drawPicture(Bitmap img, Color fgC, float posX, float posY, string fileName, float rotateDeg = 0, float width = 0, float height = 0, bool makeTransparent = true)
+        private Rectangle drawPicture(Bitmap img, Color fgC, float posX, float posY, string fileName, float rotateDeg = 0, float width = 0, float height = 0, bool makeTransparent = true)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             Bitmap newPicture = new Bitmap(1, 1);
             try
             {
@@ -276,7 +305,7 @@ namespace LabelPrint
             catch (Exception ex)
             {
                 MessageBox.Show("Error opening file: " + fileName + " : " + ex.Message);
-                return;
+                return size;
             }
             if (width == 0) width = newPicture.Width;
             if (height == 0) height = newPicture.Height;
@@ -294,10 +323,36 @@ namespace LabelPrint
             g.DrawImage(newPicture, 0, 0, width, height);
             // Restore the graphics state.
             g.Restore(state);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)width + 1;
+            size.Height = (int)height + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            else
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            else
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            return size;
         }
 
-        private void drawBarcode(Bitmap img, Color bgC, Color fgC, float posX, float posY, float width, float height, string BCdata, BarcodeFormat bcFormat, float rotateDeg = 0, string addFeature = "", bool makeTransparent = true)
+        private Rectangle drawBarcode(Bitmap img, Color bgC, Color fgC, float posX, float posY, float width, float height, string BCdata, BarcodeFormat bcFormat, float rotateDeg = 0, string addFeature = "", bool makeTransparent = true)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
@@ -439,7 +494,7 @@ namespace LabelPrint
             catch (Exception ex)
             {
                 MessageBox.Show("Barcode generation error: " + ex.Message);
-                return;
+                return size;
             }
             newPicture.MakeTransparent(Color.White);
             if (fgC != Color.Black)
@@ -457,24 +512,79 @@ namespace LabelPrint
             else g.DrawImage(newPicture, 0, 0);
             // Restore the graphics state.
             g.Restore(state);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)width + 1;
+            size.Height = (int)height + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            else
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            else
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            return size;
         }
 
-        private void drawLineCoord(Bitmap img, Color fgC, float posX, float posY, float endX, float endY, float lineWidth)
+        private Rectangle drawLineCoord(Bitmap img, Color fgC, float posX, float posY, float endX, float endY, float lineWidth)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             Pen p = new Pen(fgC, lineWidth);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.DrawLine(p, posX, posY, endX, endY);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)(endX - posX) + 1;
+            size.Height = (int)(endY - posY) + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X - (int)(lineWidth / 2) - 1;
+                size.Width = size.Width + (int)lineWidth + 1;
+            }
+            else
+            {
+                size.X = size.X + (int)(lineWidth / 2) + 1;
+                size.Width = size.Width - (int)lineWidth - 1;
+                size.X = size.X + size.Width;
+                size.Width = -size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y - (int)(lineWidth / 2) - 1;
+                size.Height = size.Height + (int)lineWidth + 1;
+            }
+            else
+            {
+                size.Y = size.Y + (int)(lineWidth / 2) + 1;
+                size.Height = size.Height - (int)lineWidth - 1;
+                size.Y = size.Y + size.Height;
+                size.Height = -size.Height;
+            }
+            return size;
         }
 
-        private void drawLineLength(Bitmap img, Color fgC, float posX, float posY, float length, float rotateDeg, float lineWidth)
+        private Rectangle drawLineLength(Bitmap img, Color fgC, float posX, float posY, float length, float rotateDeg, float lineWidth)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             Pen p = new Pen(fgC, lineWidth);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
             // Save the graphics state.
             GraphicsState state = g.Save();
             g.ResetTransform();
@@ -486,11 +596,42 @@ namespace LabelPrint
             g.DrawLine(p, 0, 0, length, 0);
             // Restore the graphics state.
             g.Restore(state);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)(length * Math.Cos(rotateDeg * Math.PI / 180)) + 1;
+            size.Height = (int)(length * Math.Sin(rotateDeg * Math.PI / 180)) + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X - (int)(lineWidth / 2) - 1;
+                size.Width = size.Width + (int)lineWidth + 1;
+            }
+            else
+            {
+                size.X = size.X + (int)(lineWidth / 2) + 1;
+                size.Width = size.Width - (int)lineWidth - 1;
+                size.X = size.X + size.Width;
+                size.Width = -size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y - (int)(lineWidth / 2) - 1;
+                size.Height = size.Height + (int)lineWidth + 1;
+            }
+            else
+            {
+                size.Y = size.Y + (int)(lineWidth / 2) + 1;
+                size.Height = size.Height - (int)lineWidth - 1;
+                size.Y = size.Y + size.Height;
+                size.Height = -size.Height;
+            }
+            return size;
         }
 
-        private void drawRectangle(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
+        private Rectangle drawRectangle(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             Pen p = new Pen(fgC, lineWidth);
+            p.Alignment = PenAlignment.Inset;
             Rectangle rect = new Rectangle(0, 0, (int)width, (int)height);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -511,11 +652,38 @@ namespace LabelPrint
             }
             // Restore the graphics state.
             g.Restore(state);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)width + 1;
+            size.Height = (int)height + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            else
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            else
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            return size;
         }
 
-        private void drawEllipse(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
+        private Rectangle drawEllipse(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
         {
+            Rectangle size = new Rectangle(0, 0, 0, 0);
             Pen p = new Pen(fgC, lineWidth);
+            p.Alignment = PenAlignment.Inset;
             Rectangle rect = new Rectangle(0, 0, (int)width, (int)height);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -536,6 +704,31 @@ namespace LabelPrint
             }
             // Restore the graphics state.
             g.Restore(state);
+            size.X = (int)posX;
+            size.Y = (int)posY;
+            size.Width = (int)width + 1;
+            size.Height = (int)height + 1;
+            if (size.Width >= 0)
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            else
+            {
+                size.X = size.X;
+                size.Width = size.Width;
+            }
+            if (size.Height >= 0)
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            else
+            {
+                size.Y = size.Y;
+                size.Height = size.Height;
+            }
+            return size;
         }
 
         private void ReadCsv(string fileName, DataTable table, bool createColumnsNames = false)
@@ -636,9 +829,9 @@ namespace LabelPrint
                     {
                         for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                         {
-                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(path + row.Cells[i].Value.ToString()))
                             {
-                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
                             }
                         }
                     }
@@ -681,15 +874,15 @@ namespace LabelPrint
                             cells.Add(str.Trim());
                         }
                         if (cells[cells.Count - 1] == "") cells.RemoveAt(cells.Count - 1);
-                        if (cells.Count >= 5)
+                        if (cells.Count >= 6)
                         {
                             template templ = new template();
-                            if (i == 0 && cells[0]!= _objectNames[labelObject])
+                            if (i == 0 && cells[0] != _objectNames[labelObject])
                             {
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                 return;
                             }
-                                templ.name = cells[0];
+                            templ.name = cells[0];
                             objectsNum++;
                             // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
                             if (templ.name == _objectNames[labelObject])
@@ -729,6 +922,16 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Incorrect label height: " + templ.height.ToString());
                                     templ.height = 1;
                                 }
+
+                                templ.dpi = 0;
+                                float.TryParse(cells[5], out templ.dpi);
+                                if (templ.dpi == 0) float.TryParse(textBox_dpi.Text, out templ.dpi);
+                                else if (templ.dpi < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect resolution: " + templ.height.ToString());
+                                    templ.height = 1;
+                                }
+                                textBox_dpi.Text = templ.dpi.ToString("F4");
                             }
                             // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
                             else if (templ.name == _objectNames[textObject])
@@ -795,7 +998,7 @@ namespace LabelPrint
                                     }
                                     installedFontCollection.Dispose();
 
-                                    byte.TryParse(cells[7], out templ.fontSize);
+                                    float.TryParse(cells[7], out templ.fontSize);
 
                                     byte.TryParse(cells[8], out templ.fontStyle);
                                     if (templ.fontStyle != 0 && templ.fontStyle != 1 && templ.fontStyle != 2 && templ.fontStyle != 4 && templ.fontStyle != 8)
@@ -854,9 +1057,9 @@ namespace LabelPrint
                                     float.TryParse(cells[4], out templ.rotate);
 
                                     templ.content = cells[5];
-                                    if (!File.Exists(templ.content))
+                                    if (!File.Exists(path + templ.content))
                                     {
-                                        MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + templ.content);
+                                        MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + path + templ.content);
                                     }
 
                                     float.TryParse(cells[6], out templ.width);
@@ -1269,9 +1472,12 @@ namespace LabelPrint
                         }
                     }
                 }
+                textBox_dpi_Leave(this, EventArgs.Empty);
                 button_importLabels.Enabled = true;
                 generateLabel(-1);
                 textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //save path to template
+                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 //create colums and fill 1 row with default values
                 for (int i = 1; i < objectsNum; i++)
                 {
@@ -1310,6 +1516,8 @@ namespace LabelPrint
                 pictureBox_label.Height = (int)Label[0].height;
             }
             else pictureBox_label.Dock = DockStyle.Fill;
+
+            Rectangle r = new Rectangle();
             for (int i = 0; i < Label.Count; i++)
             {
                 if (Label[i].name == _objectNames[labelObject])
@@ -1320,7 +1528,7 @@ namespace LabelPrint
                 else if (Label[i].name == _objectNames[textObject])
                 {
                     string fontname = Label[i].fontName;
-                    int fontSize = Label[i].fontSize;
+                    float fontSize = Label[i].fontSize;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
                     float rotate = Label[i].rotate;
@@ -1329,21 +1537,21 @@ namespace LabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    drawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
+                    r = drawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
                 else if (Label[i].name == _objectNames[pictureObject])
                 {
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
                     float rotate = Label[i].rotate;
-                    string content = Label[i].content;
+                    string content = path + Label[i].content;
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool transparent = Label[i].transparent;
                     string tmp = "";
-                    if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+                    if (gridLine > -1) tmp = path + dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    drawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
+                    r = drawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
                 }
                 else if (Label[i].name == _objectNames[barcodeObject])
                 {
@@ -1359,8 +1567,7 @@ namespace LabelPrint
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
                     string feature = Label[i].feature;
-
-                    drawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
+                    r = drawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
                 else if (Label[i].name == _objectNames[lineObject])
                 {
@@ -1372,12 +1579,12 @@ namespace LabelPrint
                     {
                         float endX = Label[i].width;
                         float endY = Label[i].height;
-                        drawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
+                        r = drawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
                     }
                     else
                     {
                         float length = Label[i].lineLength;
-                        drawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
+                        r = drawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
                     }
                 }
                 else if (Label[i].name == _objectNames[rectangleObject])
@@ -1389,7 +1596,7 @@ namespace LabelPrint
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool fill = !Label[i].transparent;
-                    drawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    r = drawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else if (Label[i].name == _objectNames[ellipseObject])
                 {
@@ -1400,9 +1607,10 @@ namespace LabelPrint
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool fill = !Label[i].transparent;
-                    drawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    r = drawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else MessageBox.Show("Incorrect object: " + Label[i].name);
+                if (i == listBox_objects.SelectedIndex) currentObject = r;
             }
             pictureBox_label.Image = LabelBmp;
         }
@@ -1567,60 +1775,67 @@ namespace LabelPrint
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedIndex == 0 && _templateChanged)
+            if (tabControl1.SelectedIndex == 0)
             {
-                dataGridView_labels.SelectionChanged -= new EventHandler(dataGridView_labels_SelectionChanged);
-                dataGridView_labels.DataSource = null;
-                LabelsDatabase.Clear();
-                LabelsDatabase.Rows.Clear();
-                List<string> inputStr = new List<string>();
-                char div = Properties.Settings.Default.CSVdelimiter;
-                //create column headers
-                LabelsDatabase.Columns.Clear();
-                //create and count columns and read headers
-                for (int i = 1; i < Label.Count; i++)
+                timer1.Enabled = false;
+                if (_templateChanged)
                 {
-                    LabelsDatabase.Columns.Add(i.ToString() + " " + Label[i].name);
-                }
-
-                //create 1st row and count columns
-                DataRow r = LabelsDatabase.NewRow();
-                for (int i = 1; i < Label.Count; i++)
-                {
-                    r[i - 1] = Label[i].content;
-                }
-                LabelsDatabase.Rows.Add(r);
-
-                dataGridView_labels.DataSource = LabelsDatabase;
-                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                //check for picture file existence
-                foreach (DataGridViewRow row in dataGridView_labels.Rows)
-                {
-                    for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
+                    dataGridView_labels.SelectionChanged -= new EventHandler(dataGridView_labels_SelectionChanged);
+                    dataGridView_labels.DataSource = null;
+                    textBox_labelsName.Clear();
+                    LabelsDatabase.Clear();
+                    LabelsDatabase.Rows.Clear();
+                    List<string> inputStr = new List<string>();
+                    char div = Properties.Settings.Default.CSVdelimiter;
+                    //create column headers
+                    LabelsDatabase.Columns.Clear();
+                    //create and count columns and read headers
+                    for (int i = 1; i < Label.Count; i++)
                     {
-                        if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                        LabelsDatabase.Columns.Add(i.ToString() + " " + Label[i].name);
+                    }
+
+                    //create 1st row and count columns
+                    DataRow r = LabelsDatabase.NewRow();
+                    for (int i = 1; i < Label.Count; i++)
+                    {
+                        r[i - 1] = Label[i].content;
+                    }
+                    LabelsDatabase.Rows.Add(r);
+
+                    dataGridView_labels.DataSource = LabelsDatabase;
+                    foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                    //check for picture file existence
+                    foreach (DataGridViewRow row in dataGridView_labels.Rows)
+                    {
+                        for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                         {
-                            MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                            {
+                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                            }
                         }
                     }
+                    button_printCurrent.Enabled = true;
+                    button_printAll.Enabled = true;
+                    button_printRange.Enabled = true;
+                    textBox_rangeFrom.Text = "0";
+                    textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
+                    setRowNumber(dataGridView_labels);
+                    dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
+                    dataGridView_labels.Rows[0].Selected = true;
+                    generateLabel(-1);
+                    dataGridView_labels.SelectionChanged += new EventHandler(dataGridView_labels_SelectionChanged);
+                    _templateChanged = false;
                 }
-                button_printCurrent.Enabled = true;
-                button_printAll.Enabled = true;
-                button_printRange.Enabled = true;
-                textBox_rangeFrom.Text = "0";
-                textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
-                setRowNumber(dataGridView_labels);
-                dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
-                dataGridView_labels.Rows[0].Selected = true;
                 generateLabel(-1);
-                dataGridView_labels.SelectionChanged += new EventHandler(dataGridView_labels_SelectionChanged);
-                _templateChanged = false;
             }
             else if (tabControl1.SelectedIndex == 1)
             {
                 listBox_objects.Items.Clear();
                 listBox_objects.Items.AddRange(getObjectsList());
                 listBox_objects.SelectedIndex = 0;
+                timer1.Enabled = true;
             }
         }
 
@@ -1701,7 +1916,7 @@ namespace LabelPrint
             }
         }
 
-        string[] getObjectsList()
+        private string[] getObjectsList()
         {
             List<string> objectList = new List<string>();
             foreach (template t in Label)
@@ -1712,7 +1927,7 @@ namespace LabelPrint
             return objectList.ToArray();
         }
 
-        string[] getColorList()
+        private string[] getColorList()
         {
             List<string> colorList = new List<string>();
             foreach (Color c in new ColorConverter().GetStandardValues())
@@ -1722,7 +1937,7 @@ namespace LabelPrint
             return colorList.ToArray();
         }
 
-        string[] getFontList()
+        private string[] getFontList()
         {
             List<string> fontList = new List<string>();
             InstalledFontCollection installedFontCollection = new InstalledFontCollection();
@@ -1734,7 +1949,7 @@ namespace LabelPrint
             return fontList.ToArray();
         }
 
-        string[] getBarcodeList()
+        private string[] getBarcodeList()
         {
             List<string> barcodeList = new List<string>();
             foreach (BarcodeFormat b in BarCodeTypes)
@@ -1744,7 +1959,7 @@ namespace LabelPrint
             return barcodeList.ToArray();
         }
 
-        string[] getEncodingList()
+        private string[] getEncodingList()
         {
             List<string> encodeList = new List<string>();
 
@@ -1756,7 +1971,7 @@ namespace LabelPrint
             return encodeList.ToArray();
         }
 
-        void showObject(int n)
+        private void showObject(int n)
         {
             clearFields();
             comboBox_object.SelectedItem = listBox_objects.SelectedItem.ToString();
@@ -1883,7 +2098,7 @@ namespace LabelPrint
 
                 textBox_fontSize.Enabled = true;
                 label_fontSize.Text = "Font size";
-                textBox_fontSize.Text = Label[n].fontSize.ToString();
+                textBox_fontSize.Text = (Label[n].fontSize / mult).ToString("F4");
             }
 
             // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
@@ -2155,9 +2370,11 @@ namespace LabelPrint
                 checkBox_fill.Text = "Fill with objectColor";
                 checkBox_fill.Checked = !Label[n].transparent;
             }
+
+            generateLabel(-1);
         }
 
-        template collectObject()
+        private template collectObject()
         {
             template templ = new template();
 
@@ -2177,6 +2394,7 @@ namespace LabelPrint
                 }
                 templ.posX = 0;
                 templ.posY = 0;
+                templ.dpi = 1;
                 templ.rotate = 0;
                 templ.content = "";
                 templ.width = 1;
@@ -2225,12 +2443,13 @@ namespace LabelPrint
 
                 templ.content = textBox_content.Text;
 
-                byte b = 0;
-                byte.TryParse(textBox_fontSize.Text, out b);
-                templ.fontSize = b;
+                float b = 0;
+                float.TryParse(textBox_fontSize.Text, out b);
+                templ.fontSize = b * mult;
 
-                byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out b);
-                templ.fontStyle = b;
+                byte s = 0;
+                byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
+                templ.fontStyle = s;
 
                 templ.fontName = comboBox_fontName.SelectedItem.ToString();
             }
@@ -2394,7 +2613,7 @@ namespace LabelPrint
             return templ;
         }
 
-        void clearFields()
+        private void clearFields()
         {
             comboBox_object.Enabled = false;
 
@@ -2490,7 +2709,8 @@ namespace LabelPrint
                             Label[i].bgColor.Name.ToString() + div +
                             Label[i].fgColor.Name.ToString() + div +
                             Label[i].width.ToString() + div +
-                            Label[i].height.ToString() + div);
+                            Label[i].height.ToString() + div +
+                            Label[i].dpi.ToString() + div);
                     }
                     // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
                     else if (Label[i].name == _objectNames[textObject])
@@ -2612,11 +2832,19 @@ namespace LabelPrint
 
         private void textBox_dpi_Leave(object sender, EventArgs e)
         {
-            int.TryParse(textBox_dpi.Text, out res);
-            textBox_dpi.Text = res.ToString();
-            units[1] = (float)(res / 25.4);
-            units[2] = (float)(res / 2.54);
-            units[3] = res;
+            template templ = new template();
+            templ.name = _objectNames[labelObject];
+            templ.bgColor = Label[0].bgColor;
+            templ.fgColor = Label[0].fgColor;
+            templ.width = Label[0].width;
+            templ.height = Label[0].height;
+            float.TryParse(textBox_dpi.Text, out templ.dpi);
+            Label.RemoveAt(0);
+            Label.Insert(0, templ);
+            textBox_dpi.Text = Label[0].dpi.ToString();
+            units[1] = (float)(Label[0].dpi / 25.4);
+            units[2] = (float)(Label[0].dpi / 2.54);
+            units[3] = Label[0].dpi;
             mult = units[comboBox_units.SelectedIndex];
         }
 
@@ -2626,6 +2854,42 @@ namespace LabelPrint
             if (comboBox_units.SelectedIndex == 0) textBox_dpi.Enabled = false;
             else textBox_dpi.Enabled = true;
             showObject(listBox_objects.SelectedIndex);
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (listBox_objects.SelectedIndex > 0 && listBox_objects.SelectedIndex < Label.Count)
+            {
+                if (_borderColor == Color.Black) _borderColor = Color.LightGray;
+                else _borderColor = Color.Black;
+
+                if (Label[listBox_objects.SelectedIndex].name == _objectNames[lineObject])
+                    drawSelection(LabelBmp, _borderColor, currentObject.X, currentObject.Y, currentObject.Width, currentObject.Height, 0, 1);
+                else
+                    drawSelection(LabelBmp, _borderColor, currentObject.X, currentObject.Y, currentObject.Width, currentObject.Height, Label[listBox_objects.SelectedIndex].rotate, 1);
+                pictureBox_label.Image = LabelBmp;
+            }
+        }
+
+        private void drawSelection(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth)
+        {
+            Pen p = new Pen(fgC, lineWidth);
+            p.Alignment = PenAlignment.Outset;
+            Rectangle rect = new Rectangle(-2, -2, (int)width + 4, (int)height + 4);
+            Graphics g = Graphics.FromImage(img);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            // Save the graphics state.
+            GraphicsState state = g.Save();
+            g.ResetTransform();
+            // Rotate.
+            g.RotateTransform(rotateDeg);
+            // Translate to desired position. Be sure to append the rotation so it occurs after the rotation.
+            g.TranslateTransform(posX, posY, MatrixOrder.Append);
+            // Draw the text at the origin.
+            g.DrawRectangle(p, rect);
+            // Restore the graphics state.
+            g.Restore(state);
         }
 
     }
