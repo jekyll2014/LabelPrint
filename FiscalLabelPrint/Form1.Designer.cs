@@ -128,7 +128,7 @@
             // 
             this.splitContainer_horizontal.Panel2.Controls.Add(this.dataGridView_labels);
             this.splitContainer_horizontal.Panel2MinSize = 100;
-            this.splitContainer_horizontal.Size = new System.Drawing.Size(714, 620);
+            this.splitContainer_horizontal.Size = new System.Drawing.Size(978, 616);
             this.splitContainer_horizontal.SplitterDistance = 460;
             this.splitContainer_horizontal.TabIndex = 0;
             // 
@@ -162,8 +162,8 @@
             this.splitContainer_vertical.Panel2.Controls.Add(this.comboBox_encoding);
             this.splitContainer_vertical.Panel2.Controls.Add(this.label2);
             this.splitContainer_vertical.Panel2MinSize = 450;
-            this.splitContainer_vertical.Size = new System.Drawing.Size(714, 460);
-            this.splitContainer_vertical.SplitterDistance = 255;
+            this.splitContainer_vertical.Size = new System.Drawing.Size(978, 460);
+            this.splitContainer_vertical.SplitterDistance = 349;
             this.splitContainer_vertical.TabIndex = 0;
             // 
             // pictureBox_label
@@ -172,7 +172,7 @@
             this.pictureBox_label.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox_label.Location = new System.Drawing.Point(0, 0);
             this.pictureBox_label.Name = "pictureBox_label";
-            this.pictureBox_label.Size = new System.Drawing.Size(251, 456);
+            this.pictureBox_label.Size = new System.Drawing.Size(345, 456);
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
@@ -196,7 +196,7 @@
             this.tabControl1.Location = new System.Drawing.Point(3, 121);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(438, 332);
+            this.tabControl1.Size = new System.Drawing.Size(608, 332);
             this.tabControl1.TabIndex = 4;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
@@ -342,7 +342,7 @@
             this.tabPage_edit.Location = new System.Drawing.Point(4, 22);
             this.tabPage_edit.Name = "tabPage_edit";
             this.tabPage_edit.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_edit.Size = new System.Drawing.Size(430, 306);
+            this.tabPage_edit.Size = new System.Drawing.Size(600, 306);
             this.tabPage_edit.TabIndex = 1;
             this.tabPage_edit.Text = "Edit template";
             this.tabPage_edit.UseVisualStyleBackColor = true;
@@ -483,6 +483,7 @@
             this.textBox_height.Name = "textBox_height";
             this.textBox_height.Size = new System.Drawing.Size(135, 20);
             this.textBox_height.TabIndex = 3;
+            this.textBox_height.Leave += new System.EventHandler(this.textBox_height_Leave);
             // 
             // textBox_fontSize
             // 
@@ -499,6 +500,7 @@
             this.textBox_rotate.Name = "textBox_rotate";
             this.textBox_rotate.Size = new System.Drawing.Size(135, 20);
             this.textBox_rotate.TabIndex = 3;
+            this.textBox_rotate.Leave += new System.EventHandler(this.textBox_rotate_Leave);
             // 
             // textBox_width
             // 
@@ -507,6 +509,7 @@
             this.textBox_width.Name = "textBox_width";
             this.textBox_width.Size = new System.Drawing.Size(135, 20);
             this.textBox_width.TabIndex = 3;
+            this.textBox_width.Leave += new System.EventHandler(this.textBox_width_Leave);
             // 
             // textBox_posY
             // 
@@ -515,6 +518,7 @@
             this.textBox_posY.Name = "textBox_posY";
             this.textBox_posY.Size = new System.Drawing.Size(135, 20);
             this.textBox_posY.TabIndex = 3;
+            this.textBox_posY.Leave += new System.EventHandler(this.textBox_posY_Leave);
             // 
             // textBox_content
             // 
@@ -522,7 +526,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_content.Location = new System.Drawing.Point(108, 285);
             this.textBox_content.Name = "textBox_content";
-            this.textBox_content.Size = new System.Drawing.Size(313, 20);
+            this.textBox_content.Size = new System.Drawing.Size(483, 20);
             this.textBox_content.TabIndex = 3;
             // 
             // textBox_posX
@@ -532,6 +536,7 @@
             this.textBox_posX.Name = "textBox_posX";
             this.textBox_posX.Size = new System.Drawing.Size(135, 20);
             this.textBox_posX.TabIndex = 3;
+            this.textBox_posX.Leave += new System.EventHandler(this.textBox_posX_Leave);
             // 
             // comboBox_objectColor
             // 
@@ -710,7 +715,7 @@
             this.textBox_labelsName.Enabled = false;
             this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
             this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(342, 20);
+            this.textBox_labelsName.Size = new System.Drawing.Size(512, 20);
             this.textBox_labelsName.TabIndex = 1;
             // 
             // comboBox_units
@@ -736,7 +741,7 @@
             this.textBox_templateName.Enabled = false;
             this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
             this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(342, 20);
+            this.textBox_templateName.Size = new System.Drawing.Size(512, 20);
             this.textBox_templateName.TabIndex = 1;
             // 
             // button_importTemplate
@@ -801,7 +806,7 @@
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView_labels.Size = new System.Drawing.Size(710, 152);
+            this.dataGridView_labels.Size = new System.Drawing.Size(974, 148);
             this.dataGridView_labels.TabIndex = 0;
             this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.dataGridView_labels_SelectionChanged);
             // 
@@ -827,7 +832,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(714, 620);
+            this.ClientSize = new System.Drawing.Size(978, 616);
             this.Controls.Add(this.splitContainer_horizontal);
             this.MinimumSize = new System.Drawing.Size(620, 600);
             this.Name = "Form1";

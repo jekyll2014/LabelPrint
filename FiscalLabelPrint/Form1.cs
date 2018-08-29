@@ -2465,6 +2465,7 @@ namespace LabelPrint
                 templ.content = textBox_content.Text;
 
                 float b = 0;
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
                 float.TryParse(textBox_fontSize.Text, out b);
                 templ.fontSize = b * mult;
 
@@ -2553,6 +2554,7 @@ namespace LabelPrint
                 float.TryParse(textBox_posY.Text, out f);
                 templ.posY = f * mult;
 
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
                 float.TryParse(textBox_fontSize.Text, out f);
                 templ.lineWidth = f * mult;
 
@@ -2571,6 +2573,7 @@ namespace LabelPrint
                     float.TryParse(textBox_rotate.Text, out f);
                     templ.rotate = f;
 
+                    textBox_content.Text = Evaluate(textBox_content.Text);
                     float.TryParse(textBox_content.Text, out f);
                     templ.lineLength = f * mult;
                 }
@@ -2598,6 +2601,7 @@ namespace LabelPrint
                 float.TryParse(textBox_height.Text, out f);
                 templ.height = f * mult;
 
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
                 float.TryParse(textBox_fontSize.Text, out f);
                 templ.lineWidth = f * mult;
 
@@ -2626,6 +2630,7 @@ namespace LabelPrint
                 float.TryParse(textBox_height.Text, out f);
                 templ.height = f * mult;
 
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
                 float.TryParse(textBox_fontSize.Text, out f);
                 templ.lineWidth = f * mult;
 
@@ -2928,6 +2933,56 @@ namespace LabelPrint
             // Restore the graphics state.
             g.Restore(state);
         }
+
+        private string Evaluate(string expression)  //calculate string formula
+        {
+            expression = expression.Replace(',', '.');
+            var loDataTable = new DataTable();
+            var loDataColumn = new DataColumn("Eval", typeof(float), expression);
+            loDataTable.Columns.Add(loDataColumn);
+            loDataTable.Rows.Add(0);
+            expression = loDataTable.Rows[0]["Eval"].ToString();
+            return expression;
+        }
+
+        private void textBox_posX_Leave(object sender, EventArgs e)
+        {
+            textBox_posX.Text = Evaluate(textBox_posX.Text);
+        }
+
+        private void textBox_posY_Leave(object sender, EventArgs e)
+        {
+            textBox_posY.Text = Evaluate(textBox_posY.Text);
+        }
+
+        private void textBox_width_Leave(object sender, EventArgs e)
+        {
+            textBox_width.Text = Evaluate(textBox_width.Text);
+        }
+
+        private void textBox_height_Leave(object sender, EventArgs e)
+        {
+            textBox_height.Text = Evaluate(textBox_height.Text);
+        }
+
+        private void textBox_rotate_Leave(object sender, EventArgs e)
+        {
+            textBox_rotate.Text = Evaluate(textBox_rotate.Text);
+        }
+
+        /*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
+        {
+            if (variables != null)
+            {
+                if (variables.Length != values.Length) return 0;
+                for (int i = 0; i < variables.Length; i++) expression = expression.Replace(variables[i], values[i]);
+            }
+            var loDataTable = new DataTable();
+            var loDataColumn = new DataColumn("Eval", typeof(long), expression);
+            loDataTable.Columns.Add(loDataColumn);
+            loDataTable.Rows.Add(0);
+            return (long)(loDataTable.Rows[0]["Eval"]);
+        }*/
 
     }
 }
