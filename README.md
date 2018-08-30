@@ -34,6 +34,8 @@ Planned features:
 +0) allow both "." and "," float point.
 +1) calculate formulas in the numeric input fields
 2) show seq.number of the element in the interface (elements list?)
-2) allow macros to include other field value (%xxx)
-3) allow basic group operations (move left/right/top/down)
-4) allow multiselect and edit fields?
+3) allow macros to include other field value (%xxx)
+4) allow basic group operations (move left/right/top/down)
+5) allow multiselect and edit fields?
+6) show coordinates on the mouse cursor on the label picture
+7) ??? drag'n'drop objects
