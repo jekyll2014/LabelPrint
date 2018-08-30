@@ -88,6 +88,7 @@ namespace LabelPrint
         private Rectangle currentObject = new Rectangle();
         private Color _borderColor = Color.Black;
         private string path = "";
+        private Bitmap objectBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
 
         public Form1(string[] cmdLine)
         {
@@ -2174,14 +2175,14 @@ namespace LabelPrint
                 textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
 
                 textBox_width.Enabled = true;
-                label_width.Text = "endX (empty to use length)";
+                label_width.Text = "endX";
                 textBox_width.Text = (Label[n].width / mult).ToString("F4");
 
                 textBox_height.Enabled = true;
-                label_height.Text = "endY (empty to use length)";
+                label_height.Text = "endY";
                 textBox_height.Text = (Label[n].height / mult).ToString("F4");
                 textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate (empty to use length)";
+                label_rotate.Text = "Rotate";
                 textBox_rotate.Text = Label[n].rotate.ToString();
 
                 textBox_content.Enabled = true;
@@ -2874,6 +2875,96 @@ namespace LabelPrint
             }
         }
 
+        private void checkBox_allowGroup_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox_allowGroup.Checked) listBox_objects.SelectionMode = SelectionMode.MultiExtended;
+            else listBox_objects.SelectionMode = SelectionMode.One;
+        }
+
+        private void button_moveUp_Click(object sender, EventArgs e)
+        {
+            foreach (int n in listBox_objects.SelectedIndices)
+            {
+                template templ = Label[n];
+                float y = 0;
+                float.TryParse(textBox_move.Text, out y);
+                templ.posX -= y;
+                Label.RemoveAt(n);
+                Label.Insert(n, templ);
+            }
+            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            int k = listBox_objects.SelectedIndex;
+            listBox_objects.Items.Clear();
+            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.SelectedIndex = k;
+            _templateChanged = true;
+            showObject(listBox_objects.SelectedIndex);
+            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+        }
+
+        private void button_moveLeft_Click(object sender, EventArgs e)
+        {
+            foreach (int n in listBox_objects.SelectedIndices)
+            {
+                template templ = Label[n];
+                float x = 0;
+                float.TryParse(textBox_move.Text, out x);
+                templ.posY -= x;
+                Label.RemoveAt(n);
+                Label.Insert(n, templ);
+            }
+            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            int k = listBox_objects.SelectedIndex;
+            listBox_objects.Items.Clear();
+            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.SelectedIndex = k;
+            _templateChanged = true;
+            showObject(listBox_objects.SelectedIndex);
+            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+        }
+
+        private void button_moveDown_Click(object sender, EventArgs e)
+        {
+            foreach (int n in listBox_objects.SelectedIndices)
+            {
+                template templ = Label[n];
+                float y = 0;
+                float.TryParse(textBox_move.Text, out y);
+                templ.posY += y;
+                Label.RemoveAt(n);
+                Label.Insert(n, templ);
+            }
+            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            int k = listBox_objects.SelectedIndex;
+            listBox_objects.Items.Clear();
+            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.SelectedIndex = k;
+            _templateChanged = true;
+            showObject(listBox_objects.SelectedIndex);
+            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+        }
+
+        private void button_moveRight_Click(object sender, EventArgs e)
+        {
+            foreach (int n in listBox_objects.SelectedIndices)
+            {
+                template templ = Label[n];
+                float x = 0;
+                float.TryParse(textBox_move.Text, out x);
+                templ.posX += x;
+                Label.RemoveAt(n);
+                Label.Insert(n, templ);
+                listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+                int k = listBox_objects.SelectedIndex;
+                listBox_objects.Items.Clear();
+                listBox_objects.Items.AddRange(getObjectsList());
+                listBox_objects.SelectedIndex = k;
+                _templateChanged = true;
+                showObject(listBox_objects.SelectedIndex);
+                listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            }
+        }
+
         /*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
         {
             if (variables != null)
@@ -2886,6 +2977,76 @@ namespace LabelPrint
             loDataTable.Columns.Add(loDataColumn);
             loDataTable.Rows.Add(0);
             return (long)(loDataTable.Rows[0]["Eval"]);
+        }*/
+
+        private void pictureBox_label_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!checkBox_scale.Checked) return;
+            textBox_mX.Text = e.X.ToString();
+            textBox_mY.Text = e.Y.ToString();
+        }
+
+        /*private int xPosOrig, yPosOrig;
+        private int xPosCurrent, yPosCurrent;
+        private void pictureBox_label_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (!checkBox_scale.Checked) return;
+            if (e.Button == MouseButtons.Left)
+            {
+                objectBmp = new Bitmap(currentObject.Width, currentObject.Height, PixelFormat.Format32bppPArgb);
+                Graphics g = Graphics.FromImage(objectBmp);
+                Rectangle rect = new Rectangle(0, 0, currentObject.Width, currentObject.Height);
+                SolidBrush b = new SolidBrush(Color.Transparent);
+                g.FillRectangle(b, rect);
+                pictureBox_label.Image = objectBmp;
+
+                drawEllipse(objectBmp, Color.Black, 0, 0, currentObject.Width, currentObject.Height, Label[listBox_objects.SelectedIndex].rotate, 10, false);
+                pictureBox_object.Top = currentObject.Y;
+                pictureBox_object.Left = currentObject.X;
+
+                pictureBox_object.Width = currentObject.Width;
+                pictureBox_object.Height = currentObject.Height;
+                pictureBox_object.Image = objectBmp;
+                pictureBox_object.Visible = true;
+
+                xPosOrig = e.X;
+                yPosOrig = e.Y;
+            }
+        }
+
+        private void pictureBox_object_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!checkBox_scale.Checked) return;
+            if (e.Button == MouseButtons.Left)
+            {
+                PictureBox p = sender as PictureBox;
+                if (p != null)
+                {
+                    xPosCurrent += e.X - xPosOrig;
+                    if (xPosCurrent < pictureBox_label.Left) xPosCurrent = pictureBox_label.Left;
+                    if (xPosCurrent > pictureBox_label.Left + pictureBox_label.Width - p.Width) xPosCurrent = pictureBox_label.Left + pictureBox_label.Width - p.Width;
+                    p.Left = xPosCurrent;
+
+                    yPosCurrent += e.Y - yPosOrig;
+                    if (yPosCurrent < pictureBox_label.Top) yPosCurrent = pictureBox_label.Top;
+                    if (yPosCurrent > pictureBox_label.Top + pictureBox_label.Height - p.Height) yPosCurrent = pictureBox_label.Top + pictureBox_label.Height - p.Height;
+                    p.Top = yPosCurrent;
+
+                    textBox_posX.Text = xPosCurrent.ToString();
+                    textBox_posY.Text = yPosCurrent.ToString();
+                }
+            }
+        }
+
+        private void pictureBox_object_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (!checkBox_scale.Checked) return;
+            if (e.Button == MouseButtons.Left)
+            {
+                pictureBox_object.Visible = false;
+                Bitmap objectBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
+                button_apply_Click(this, EventArgs.Empty);
+            }
         }*/
 
     }
