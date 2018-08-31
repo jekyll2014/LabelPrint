@@ -1677,14 +1677,14 @@ namespace LabelPrint
             if (checkBox_scale.Checked)
             {
                 pictureBox_label.Dock = DockStyle.None;
-                pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
+                pictureBox_label.SizeMode = PictureBoxSizeMode.Normal;
                 pictureBox_label.Width = (int)Label[0].width;
                 pictureBox_label.Height = (int)Label[0].height;
             }
             else
             {
-                pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
                 pictureBox_label.Dock = DockStyle.Fill;
+                pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
             }
         }
 
@@ -2877,8 +2877,24 @@ namespace LabelPrint
 
         private void checkBox_allowGroup_CheckedChanged(object sender, EventArgs e)
         {
-            if (checkBox_allowGroup.Checked) listBox_objects.SelectionMode = SelectionMode.MultiExtended;
-            else listBox_objects.SelectionMode = SelectionMode.One;
+            if (checkBox_allowGroup.Checked)
+            {
+                listBox_objects.SelectionMode = SelectionMode.MultiExtended;
+                button_moveUp.Enabled = true;
+                button_moveDown.Enabled = true;
+                button_moveLeft.Enabled = true;
+                button_moveRight.Enabled = true;
+                textBox_move.Enabled = true;
+            }
+            else
+            {
+                listBox_objects.SelectionMode = SelectionMode.One;
+                button_moveUp.Enabled = false;
+                button_moveDown.Enabled = false;
+                button_moveLeft.Enabled = false;
+                button_moveRight.Enabled = false;
+                textBox_move.Enabled = false;
+            }
         }
 
         private void button_moveUp_Click(object sender, EventArgs e)
@@ -2888,7 +2904,7 @@ namespace LabelPrint
                 template templ = Label[n];
                 float y = 0;
                 float.TryParse(textBox_move.Text, out y);
-                templ.posX -= y;
+                templ.posY -= y;
                 Label.RemoveAt(n);
                 Label.Insert(n, templ);
             }
@@ -2909,7 +2925,7 @@ namespace LabelPrint
                 template templ = Label[n];
                 float x = 0;
                 float.TryParse(textBox_move.Text, out x);
-                templ.posY -= x;
+                templ.posX -= x;
                 Label.RemoveAt(n);
                 Label.Insert(n, templ);
             }
@@ -2981,9 +2997,66 @@ namespace LabelPrint
 
         private void pictureBox_label_MouseMove(object sender, MouseEventArgs e)
         {
-            if (!checkBox_scale.Checked) return;
-            textBox_mX.Text = e.X.ToString();
-            textBox_mY.Text = e.Y.ToString();
+            if (!checkBox_scale.Checked)
+            {
+                float scaleW = (float)pictureBox_label.Width / LabelBmp.Width;
+                float scaleH = (float)pictureBox_label.Height / LabelBmp.Height;
+                float scale = 0;
+                if (scaleW > scaleH)
+                {
+                    scale = scaleH;
+                    //float corr = (float)(pictureBox_label.Width - LabelBmp.Width) / 2;
+                    //textBox_mX.Text = ((e.X - corr) / scale).ToString();
+                    textBox_mX.Text = "";
+                    textBox_mY.Text = (e.Y / scale).ToString();
+                }
+                else
+                {
+                    scale = scaleW;
+                    textBox_mX.Text = (e.X / scale).ToString();
+                    //float corr = (float)(pictureBox_label.Height - LabelBmp.Height) / 2;
+                    //textBox_mY.Text = ((e.Y - corr) / scale).ToString();
+                    textBox_mY.Text = "";
+                }
+            }
+            else
+            {
+                textBox_mX.Text = e.X.ToString();
+                textBox_mY.Text = e.Y.ToString();
+            }
+        }
+
+        private bool IsInPolygon(Point[] poly, Point pnt)
+        {
+            int i, j;
+            int nvert = poly.Length;
+            bool c = false;
+            for (i = 0, j = nvert - 1; i < nvert; j = i++)
+            {
+                if (((poly[i].Y > pnt.Y) != (poly[j].Y > pnt.Y)) &&
+                 (pnt.X < (poly[j].X - poly[i].X) * (pnt.Y - poly[i].Y) / (poly[j].Y - poly[i].Y) + poly[i].X))
+                    c = !c;
+            }
+            return c;
+        }
+
+        private PointF[] rotatePolygon(PointF zeroPoint, PointF[] poly, float angle)
+        {
+            PointF[] p = new PointF[poly.Length];
+            for (int i = 0; i < poly.Length; i++)
+            {
+                double xn = 0, yn = 0;
+                rotateLine(zeroPoint.X, zeroPoint.Y, poly[i].X, poly[i].Y, angle, out xn, out yn);
+                p[i].X = (float)xn;
+                p[i].X = (float)yn;
+            }
+            return p;
+        }
+
+        private void rotateLine(double xc, double yc, double x, double y, double a, out double xn, out double yn)
+        {
+            xn = (x - xc) * Math.Cos(a) - (y - yc) * Math.Sin(a) + xc;
+            yn = (x - xc) * Math.Sin(a) + (y - yc) * Math.Cos(a) + yc;
         }
 
         /*private int xPosOrig, yPosOrig;

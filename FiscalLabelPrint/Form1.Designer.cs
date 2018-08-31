@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -74,6 +74,8 @@
             this.textBox_width = new System.Windows.Forms.TextBox();
             this.textBox_posY = new System.Windows.Forms.TextBox();
             this.textBox_content = new System.Windows.Forms.TextBox();
+            this.textBox_mY = new System.Windows.Forms.TextBox();
+            this.textBox_mX = new System.Windows.Forms.TextBox();
             this.textBox_posX = new System.Windows.Forms.TextBox();
             this.comboBox_objectColor = new System.Windows.Forms.ComboBox();
             this.comboBox_fontStyle = new System.Windows.Forms.ComboBox();
@@ -105,8 +107,6 @@
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.textBox_mX = new System.Windows.Forms.TextBox();
-            this.textBox_mY = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -381,7 +381,7 @@
             // 
             // button_moveLeft
             // 
-            this.button_moveLeft.Location = new System.Drawing.Point(4, 48);
+            this.button_moveLeft.Location = new System.Drawing.Point(6, 71);
             this.button_moveLeft.Name = "button_moveLeft";
             this.button_moveLeft.Size = new System.Drawing.Size(41, 23);
             this.button_moveLeft.TabIndex = 0;
@@ -391,7 +391,7 @@
             // 
             // button_moveDown
             // 
-            this.button_moveDown.Location = new System.Drawing.Point(51, 74);
+            this.button_moveDown.Location = new System.Drawing.Point(53, 97);
             this.button_moveDown.Name = "button_moveDown";
             this.button_moveDown.Size = new System.Drawing.Size(41, 23);
             this.button_moveDown.TabIndex = 0;
@@ -401,7 +401,7 @@
             // 
             // button_moveUp
             // 
-            this.button_moveUp.Location = new System.Drawing.Point(51, 19);
+            this.button_moveUp.Location = new System.Drawing.Point(53, 42);
             this.button_moveUp.Name = "button_moveUp";
             this.button_moveUp.Size = new System.Drawing.Size(41, 23);
             this.button_moveUp.TabIndex = 0;
@@ -411,7 +411,7 @@
             // 
             // button_moveRight
             // 
-            this.button_moveRight.Location = new System.Drawing.Point(98, 46);
+            this.button_moveRight.Location = new System.Drawing.Point(100, 71);
             this.button_moveRight.Name = "button_moveRight";
             this.button_moveRight.Size = new System.Drawing.Size(41, 23);
             this.button_moveRight.TabIndex = 0;
@@ -421,7 +421,7 @@
             // 
             // textBox_move
             // 
-            this.textBox_move.Location = new System.Drawing.Point(51, 48);
+            this.textBox_move.Location = new System.Drawing.Point(53, 71);
             this.textBox_move.MinimumSize = new System.Drawing.Size(4, 4);
             this.textBox_move.Name = "textBox_move";
             this.textBox_move.Size = new System.Drawing.Size(41, 20);
@@ -432,7 +432,7 @@
             // checkBox_allowGroup
             // 
             this.checkBox_allowGroup.AutoSize = true;
-            this.checkBox_allowGroup.Location = new System.Drawing.Point(6, 103);
+            this.checkBox_allowGroup.Location = new System.Drawing.Point(6, 19);
             this.checkBox_allowGroup.Name = "checkBox_allowGroup";
             this.checkBox_allowGroup.Size = new System.Drawing.Size(102, 17);
             this.checkBox_allowGroup.TabIndex = 4;
@@ -621,6 +621,22 @@
             this.textBox_content.Name = "textBox_content";
             this.textBox_content.Size = new System.Drawing.Size(387, 20);
             this.textBox_content.TabIndex = 3;
+            // 
+            // textBox_mY
+            // 
+            this.textBox_mY.Location = new System.Drawing.Point(398, 141);
+            this.textBox_mY.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_mY.Name = "textBox_mY";
+            this.textBox_mY.Size = new System.Drawing.Size(67, 20);
+            this.textBox_mY.TabIndex = 3;
+            // 
+            // textBox_mX
+            // 
+            this.textBox_mX.Location = new System.Drawing.Point(322, 141);
+            this.textBox_mX.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_mX.Name = "textBox_mX";
+            this.textBox_mX.Size = new System.Drawing.Size(67, 20);
+            this.textBox_mX.TabIndex = 3;
             // 
             // textBox_posX
             // 
@@ -898,16 +914,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.Format = "N0";
-            dataGridViewCellStyle1.NullValue = null;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.Format = "N0";
+            dataGridViewCellStyle3.NullValue = null;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(974, 148);
             this.dataGridView_labels.TabIndex = 0;
@@ -930,22 +946,6 @@
             // 
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
-            // textBox_mX
-            // 
-            this.textBox_mX.Location = new System.Drawing.Point(322, 141);
-            this.textBox_mX.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_mX.Name = "textBox_mX";
-            this.textBox_mX.Size = new System.Drawing.Size(67, 20);
-            this.textBox_mX.TabIndex = 3;
-            // 
-            // textBox_mY
-            // 
-            this.textBox_mY.Location = new System.Drawing.Point(398, 141);
-            this.textBox_mY.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_mY.Name = "textBox_mY";
-            this.textBox_mY.Size = new System.Drawing.Size(67, 20);
-            this.textBox_mY.TabIndex = 3;
             // 
             // Form1
             // 
