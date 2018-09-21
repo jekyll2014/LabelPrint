@@ -85,7 +85,7 @@ namespace LabelPrint
         private bool cmdLinePrint = false;
         private string printerName = "";
         private Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
-        private Rectangle currentObject = new Rectangle();
+        private List<Rectangle> currentObject = new List<Rectangle>();
         private Color _borderColor = Color.Black;
         private string path = "";
         private Bitmap objectBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
@@ -1436,10 +1436,10 @@ namespace LabelPrint
                 pictureBox_label.Height = (int)Label[0].height;
             }
             else pictureBox_label.Dock = DockStyle.Fill;
-
-            Rectangle r = new Rectangle();
+            currentObject.Clear();
             for (int i = 0; i < Label.Count; i++)
             {
+                currentObject.Add(new Rectangle());
                 if (Label[i].name == _objectNames[labelObject])
                 {
                     LabelBmp = new Bitmap((int)Label[i].width, (int)Label[i].height, PixelFormat.Format32bppPArgb);
@@ -1457,7 +1457,7 @@ namespace LabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    r = drawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
+                    currentObject[i] = drawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
                 else if (Label[i].name == _objectNames[pictureObject])
                 {
@@ -1471,7 +1471,7 @@ namespace LabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = path + dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    r = drawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
+                    currentObject[i] = drawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
                 }
                 else if (Label[i].name == _objectNames[barcodeObject])
                 {
@@ -1487,7 +1487,7 @@ namespace LabelPrint
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
                     string feature = Label[i].feature;
-                    r = drawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
+                    currentObject[i] = drawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
                 else if (Label[i].name == _objectNames[lineObject])
                 {
@@ -1499,12 +1499,12 @@ namespace LabelPrint
                     {
                         float endX = Label[i].width;
                         float endY = Label[i].height;
-                        r = drawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
+                        currentObject[i] = drawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
                     }
                     else
                     {
                         float length = Label[i].lineLength;
-                        r = drawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
+                        currentObject[i] = drawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
                     }
                 }
                 else if (Label[i].name == _objectNames[rectangleObject])
@@ -1516,7 +1516,7 @@ namespace LabelPrint
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool fill = !Label[i].transparent;
-                    r = drawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    currentObject[i] = drawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else if (Label[i].name == _objectNames[ellipseObject])
                 {
@@ -1527,10 +1527,9 @@ namespace LabelPrint
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool fill = !Label[i].transparent;
-                    r = drawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    currentObject[i] = drawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else MessageBox.Show("Incorrect object: " + Label[i].name);
-                if (i == listBox_objects.SelectedIndex) currentObject = r;
             }
             pictureBox_label.Image = LabelBmp;
         }
@@ -1761,6 +1760,7 @@ namespace LabelPrint
 
         private void listBox_objects_SelectedIndexChanged(object sender, EventArgs e)
         {
+            label_number.Text = "#" + listBox_objects.SelectedIndex.ToString();
             showObject(listBox_objects.SelectedIndex);
         }
 
@@ -2354,7 +2354,7 @@ namespace LabelPrint
                 templ.content = textBox_content.Text;
 
                 float b = 0;
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
                 float.TryParse(textBox_fontSize.Text, out b);
                 templ.fontSize = b * mult;
 
@@ -2443,7 +2443,7 @@ namespace LabelPrint
                 float.TryParse(textBox_posY.Text, out f);
                 templ.posY = f * mult;
 
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
                 float.TryParse(textBox_fontSize.Text, out f);
                 templ.lineWidth = f * mult;
 
@@ -2462,7 +2462,7 @@ namespace LabelPrint
                     float.TryParse(textBox_rotate.Text, out f);
                     templ.rotate = f;
 
-                    textBox_content.Text = Evaluate(textBox_content.Text);
+                    textBox_content.Text = Evaluate(textBox_content.Text).ToString();
                     float.TryParse(textBox_content.Text, out f);
                     templ.lineLength = f * mult;
                 }
@@ -2490,7 +2490,7 @@ namespace LabelPrint
                 float.TryParse(textBox_height.Text, out f);
                 templ.height = f * mult;
 
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
                 float.TryParse(textBox_fontSize.Text, out f);
                 templ.lineWidth = f * mult;
 
@@ -2519,7 +2519,7 @@ namespace LabelPrint
                 float.TryParse(textBox_height.Text, out f);
                 templ.height = f * mult;
 
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text);
+                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
                 float.TryParse(textBox_fontSize.Text, out f);
                 templ.lineWidth = f * mult;
 
@@ -2788,17 +2788,20 @@ namespace LabelPrint
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (listBox_objects.SelectedIndex > 0 && listBox_objects.SelectedIndex < Label.Count)
+            if (_borderColor == Color.Black) _borderColor = Color.LightGray;
+            else _borderColor = Color.Black;
+            foreach (int n in listBox_objects.SelectedIndices)
             {
-                if (_borderColor == Color.Black) _borderColor = Color.LightGray;
-                else _borderColor = Color.Black;
+                if (n > 0 && n < Label.Count)
+                {
 
-                if (Label[listBox_objects.SelectedIndex].name == _objectNames[lineObject])
-                    drawSelection(LabelBmp, _borderColor, currentObject.X, currentObject.Y, currentObject.Width, currentObject.Height, 0, 1);
-                else
-                    drawSelection(LabelBmp, _borderColor, currentObject.X, currentObject.Y, currentObject.Width, currentObject.Height, Label[listBox_objects.SelectedIndex].rotate, 1);
-                pictureBox_label.Image = LabelBmp;
+                    if (Label[n].name == _objectNames[lineObject])
+                        drawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, 0, 1);
+                    else
+                        drawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, Label[n].rotate, 1);
+                }
             }
+            pictureBox_label.Image = LabelBmp;
         }
 
         private void drawSelection(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth)
@@ -2823,40 +2826,40 @@ namespace LabelPrint
             g.Restore(state);
         }
 
-        private string Evaluate(string expression)  //calculate string formula
+        private float Evaluate(string expression)  //calculate string formula
         {
             expression = expression.Replace(',', '.');
             var loDataTable = new DataTable();
             var loDataColumn = new DataColumn("Eval", typeof(float), expression);
             loDataTable.Columns.Add(loDataColumn);
             loDataTable.Rows.Add(0);
-            expression = loDataTable.Rows[0]["Eval"].ToString();
-            return expression;
+            float e = (float)loDataTable.Rows[0]["Eval"];
+            return e;
         }
 
         private void textBox_posX_Leave(object sender, EventArgs e)
         {
-            textBox_posX.Text = Evaluate(textBox_posX.Text);
+            textBox_posX.Text = Evaluate(textBox_posX.Text).ToString();
         }
 
         private void textBox_posY_Leave(object sender, EventArgs e)
         {
-            textBox_posY.Text = Evaluate(textBox_posY.Text);
+            textBox_posY.Text = Evaluate(textBox_posY.Text).ToString();
         }
 
         private void textBox_width_Leave(object sender, EventArgs e)
         {
-            textBox_width.Text = Evaluate(textBox_width.Text);
+            textBox_width.Text = Evaluate(textBox_width.Text).ToString();
         }
 
         private void textBox_height_Leave(object sender, EventArgs e)
         {
-            textBox_height.Text = Evaluate(textBox_height.Text);
+            textBox_height.Text = Evaluate(textBox_height.Text).ToString();
         }
 
         private void textBox_rotate_Leave(object sender, EventArgs e)
         {
-            textBox_rotate.Text = Evaluate(textBox_rotate.Text);
+            textBox_rotate.Text = Evaluate(textBox_rotate.Text).ToString();
         }
 
         private void button_clone_Click(object sender, EventArgs e)
@@ -2899,20 +2902,24 @@ namespace LabelPrint
 
         private void button_moveUp_Click(object sender, EventArgs e)
         {
+            List<int> k = new List<int>();
             foreach (int n in listBox_objects.SelectedIndices)
             {
-                template templ = Label[n];
-                float y = 0;
-                float.TryParse(textBox_move.Text, out y);
-                templ.posY -= y;
-                Label.RemoveAt(n);
-                Label.Insert(n, templ);
+                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                {
+                    template templ = Label[n];
+                    float y = 0;
+                    float.TryParse(textBox_move.Text, out y);
+                    templ.posY -= y;
+                    Label.RemoveAt(n);
+                    Label.Insert(n, templ);
+                    k.Add(n);
+                }
             }
             listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            int k = listBox_objects.SelectedIndex;
             listBox_objects.Items.Clear();
             listBox_objects.Items.AddRange(getObjectsList());
-            listBox_objects.SelectedIndex = k;
+            foreach (int n in k) listBox_objects.SetSelected(n, true);
             _templateChanged = true;
             showObject(listBox_objects.SelectedIndex);
             listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
@@ -2920,20 +2927,24 @@ namespace LabelPrint
 
         private void button_moveLeft_Click(object sender, EventArgs e)
         {
+            List<int> k = new List<int>();
             foreach (int n in listBox_objects.SelectedIndices)
             {
-                template templ = Label[n];
-                float x = 0;
-                float.TryParse(textBox_move.Text, out x);
-                templ.posX -= x;
-                Label.RemoveAt(n);
-                Label.Insert(n, templ);
+                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                {
+                    template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_move.Text, out x);
+                    templ.posX -= x;
+                    Label.RemoveAt(n);
+                    Label.Insert(n, templ);
+                    k.Add(n);
+                }
             }
             listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            int k = listBox_objects.SelectedIndex;
             listBox_objects.Items.Clear();
             listBox_objects.Items.AddRange(getObjectsList());
-            listBox_objects.SelectedIndex = k;
+            foreach (int n in k) listBox_objects.SetSelected(n, true);
             _templateChanged = true;
             showObject(listBox_objects.SelectedIndex);
             listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
@@ -2941,20 +2952,24 @@ namespace LabelPrint
 
         private void button_moveDown_Click(object sender, EventArgs e)
         {
+            List<int> k = new List<int>();
             foreach (int n in listBox_objects.SelectedIndices)
             {
-                template templ = Label[n];
-                float y = 0;
-                float.TryParse(textBox_move.Text, out y);
-                templ.posY += y;
-                Label.RemoveAt(n);
-                Label.Insert(n, templ);
+                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                {
+                    template templ = Label[n];
+                    float y = 0;
+                    float.TryParse(textBox_move.Text, out y);
+                    templ.posY += y;
+                    Label.RemoveAt(n);
+                    Label.Insert(n, templ);
+                    k.Add(n);
+                }
             }
             listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            int k = listBox_objects.SelectedIndex;
             listBox_objects.Items.Clear();
             listBox_objects.Items.AddRange(getObjectsList());
-            listBox_objects.SelectedIndex = k;
+            foreach (int n in k) listBox_objects.SetSelected(n, true);
             _templateChanged = true;
             showObject(listBox_objects.SelectedIndex);
             listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
@@ -2962,23 +2977,27 @@ namespace LabelPrint
 
         private void button_moveRight_Click(object sender, EventArgs e)
         {
+            List<int> k = new List<int>();
             foreach (int n in listBox_objects.SelectedIndices)
             {
-                template templ = Label[n];
-                float x = 0;
-                float.TryParse(textBox_move.Text, out x);
-                templ.posX += x;
-                Label.RemoveAt(n);
-                Label.Insert(n, templ);
-                listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-                int k = listBox_objects.SelectedIndex;
-                listBox_objects.Items.Clear();
-                listBox_objects.Items.AddRange(getObjectsList());
-                listBox_objects.SelectedIndex = k;
-                _templateChanged = true;
-                showObject(listBox_objects.SelectedIndex);
-                listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                {
+                    template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_move.Text, out x);
+                    templ.posX += x;
+                    Label.RemoveAt(n);
+                    Label.Insert(n, templ);
+                    k.Add(n);
+                }
             }
+            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objects.Items.Clear();
+            listBox_objects.Items.AddRange(getObjectsList());
+            foreach (int n in k) listBox_objects.SetSelected(n, true);
+            _templateChanged = true;
+            showObject(listBox_objects.SelectedIndex);
+            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
         }
 
         /*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
@@ -2993,7 +3012,7 @@ namespace LabelPrint
             loDataTable.Columns.Add(loDataColumn);
             loDataTable.Rows.Add(0);
             return (long)(loDataTable.Rows[0]["Eval"]);
-        }*/
+        }
 
         private void pictureBox_label_MouseMove(object sender, MouseEventArgs e)
         {
@@ -3058,6 +3077,7 @@ namespace LabelPrint
             xn = (x - xc) * Math.Cos(a) - (y - yc) * Math.Sin(a) + xc;
             yn = (x - xc) * Math.Sin(a) + (y - yc) * Math.Cos(a) + yc;
         }
+        */
 
         /*private int xPosOrig, yPosOrig;
         private int xPosCurrent, yPosCurrent;

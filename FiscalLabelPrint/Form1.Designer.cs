@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -65,6 +65,7 @@
             this.label_fontName = new System.Windows.Forms.Label();
             this.label_fontStyle = new System.Windows.Forms.Label();
             this.label_objectColor = new System.Windows.Forms.Label();
+            this.label_number = new System.Windows.Forms.Label();
             this.label_object = new System.Windows.Forms.Label();
             this.label_backgroundColor = new System.Windows.Forms.Label();
             this.checkBox_fill = new System.Windows.Forms.CheckBox();
@@ -188,7 +189,7 @@
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
-            this.pictureBox_label.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox_label_MouseMove);
+            //this.pictureBox_label.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox_label_MouseMove);
             // 
             // label5
             // 
@@ -332,6 +333,7 @@
             this.tabPage_edit.Controls.Add(this.label_fontName);
             this.tabPage_edit.Controls.Add(this.label_fontStyle);
             this.tabPage_edit.Controls.Add(this.label_objectColor);
+            this.tabPage_edit.Controls.Add(this.label_number);
             this.tabPage_edit.Controls.Add(this.label_object);
             this.tabPage_edit.Controls.Add(this.label_backgroundColor);
             this.tabPage_edit.Controls.Add(this.checkBox_fill);
@@ -381,6 +383,7 @@
             // 
             // button_moveLeft
             // 
+            this.button_moveLeft.Enabled = false;
             this.button_moveLeft.Location = new System.Drawing.Point(6, 71);
             this.button_moveLeft.Name = "button_moveLeft";
             this.button_moveLeft.Size = new System.Drawing.Size(41, 23);
@@ -391,6 +394,7 @@
             // 
             // button_moveDown
             // 
+            this.button_moveDown.Enabled = false;
             this.button_moveDown.Location = new System.Drawing.Point(53, 97);
             this.button_moveDown.Name = "button_moveDown";
             this.button_moveDown.Size = new System.Drawing.Size(41, 23);
@@ -401,6 +405,7 @@
             // 
             // button_moveUp
             // 
+            this.button_moveUp.Enabled = false;
             this.button_moveUp.Location = new System.Drawing.Point(53, 42);
             this.button_moveUp.Name = "button_moveUp";
             this.button_moveUp.Size = new System.Drawing.Size(41, 23);
@@ -411,6 +416,7 @@
             // 
             // button_moveRight
             // 
+            this.button_moveRight.Enabled = false;
             this.button_moveRight.Location = new System.Drawing.Point(100, 71);
             this.button_moveRight.Name = "button_moveRight";
             this.button_moveRight.Size = new System.Drawing.Size(41, 23);
@@ -456,9 +462,9 @@
             this.label_content.AutoSize = true;
             this.label_content.Location = new System.Drawing.Point(108, 269);
             this.label_content.Name = "label_content";
-            this.label_content.Size = new System.Drawing.Size(83, 13);
+            this.label_content.Size = new System.Drawing.Size(80, 13);
             this.label_content.TabIndex = 5;
-            this.label_content.Text = "Default_content";
+            this.label_content.Text = "Default content";
             // 
             // label_fontSize
             // 
@@ -541,14 +547,23 @@
             this.label_objectColor.TabIndex = 5;
             this.label_objectColor.Text = "Object color";
             // 
+            // label_number
+            // 
+            this.label_number.AutoSize = true;
+            this.label_number.Location = new System.Drawing.Point(181, 32);
+            this.label_number.Name = "label_number";
+            this.label_number.Size = new System.Drawing.Size(20, 13);
+            this.label_number.TabIndex = 5;
+            this.label_number.Text = "#0";
+            // 
             // label_object
             // 
             this.label_object.AutoSize = true;
             this.label_object.Location = new System.Drawing.Point(108, 32);
             this.label_object.Name = "label_object";
-            this.label_object.Size = new System.Drawing.Size(67, 13);
+            this.label_object.Size = new System.Drawing.Size(61, 13);
             this.label_object.TabIndex = 5;
-            this.label_object.Text = "Object name";
+            this.label_object.Text = "Object type";
             // 
             // label_backgroundColor
             // 
@@ -705,6 +720,7 @@
             // 
             // button_clone
             // 
+            this.button_clone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_clone.Location = new System.Drawing.Point(3, 219);
             this.button_clone.Name = "button_clone";
             this.button_clone.Size = new System.Drawing.Size(99, 23);
@@ -735,6 +751,7 @@
             // 
             // button_delete
             // 
+            this.button_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_delete.Location = new System.Drawing.Point(6, 277);
             this.button_delete.Name = "button_delete";
             this.button_delete.Size = new System.Drawing.Size(96, 23);
@@ -914,16 +931,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.Format = "N0";
-            dataGridViewCellStyle3.NullValue = null;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(974, 148);
             this.dataGridView_labels.TabIndex = 0;
@@ -1055,6 +1072,7 @@
         private System.Windows.Forms.CheckBox checkBox_allowGroup;
         private System.Windows.Forms.TextBox textBox_mX;
         private System.Windows.Forms.TextBox textBox_mY;
+        private System.Windows.Forms.Label label_number;
     }
 }
 
