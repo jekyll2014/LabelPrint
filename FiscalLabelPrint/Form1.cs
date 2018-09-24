@@ -1431,11 +1431,11 @@ namespace LabelPrint
             }
             if (checkBox_scale.Checked)
             {
-                pictureBox_label.Dock = DockStyle.None;
-                pictureBox_label.Width = (int)Label[0].width;
-                pictureBox_label.Height = (int)Label[0].height;
+                //pictureBox_label.Dock = DockStyle.None;
+                //pictureBox_label.Width = (int)Label[0].width;
+                //pictureBox_label.Height = (int)Label[0].height;
             }
-            else pictureBox_label.Dock = DockStyle.Fill;
+            //else pictureBox_label.Dock = DockStyle.Fill;
             currentObject.Clear();
             for (int i = 0; i < Label.Count; i++)
             {
@@ -1637,12 +1637,12 @@ namespace LabelPrint
 
         private void savePage()
         {
-            var dock = pictureBox_label.Dock;
+            //var dock = pictureBox_label.Dock;
             var sizeMode = pictureBox_label.SizeMode;
             var w = pictureBox_label.Width;
             var h = pictureBox_label.Height;
 
-            pictureBox_label.Dock = DockStyle.None;
+            //pictureBox_label.Dock = DockStyle.None;
             pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
             pictureBox_label.Width = (int)Label[0].width;
             pictureBox_label.Height = (int)Label[0].height;
@@ -1651,7 +1651,7 @@ namespace LabelPrint
             pictureBox_label.DrawToBitmap(LabelBmp, rect);
             if (LabelBmp != null) LabelBmp.Save(textBox_saveFileName.Text + dataGridView_labels.CurrentCell.RowIndex.ToString() + ".png", ImageFormat.Png);
 
-            pictureBox_label.Dock = dock;
+            //pictureBox_label.Dock = dock;
             pictureBox_label.SizeMode = sizeMode;
             pictureBox_label.Width = w;
             pictureBox_label.Height = h;
@@ -1675,14 +1675,14 @@ namespace LabelPrint
         {
             if (checkBox_scale.Checked)
             {
-                pictureBox_label.Dock = DockStyle.None;
+                //pictureBox_label.Dock = DockStyle.None;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Normal;
-                pictureBox_label.Width = (int)Label[0].width;
-                pictureBox_label.Height = (int)Label[0].height;
+                //pictureBox_label.Width = (int)Label[0].width;
+                //pictureBox_label.Height = (int)Label[0].height;
             }
             else
             {
-                pictureBox_label.Dock = DockStyle.Fill;
+                //pictureBox_label.Dock = DockStyle.Fill;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
             }
         }
@@ -1694,6 +1694,10 @@ namespace LabelPrint
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (tabControl1.SelectedIndex != 0)
+            {
+                timer1.Enabled = true;
+            }
             if (tabControl1.SelectedIndex == 0)
             {
                 timer1.Enabled = false;
@@ -1754,13 +1758,18 @@ namespace LabelPrint
                 listBox_objects.Items.Clear();
                 listBox_objects.Items.AddRange(getObjectsList());
                 listBox_objects.SelectedIndex = 0;
-                timer1.Enabled = true;
+                listBox_objects.SelectedIndex = 0;
+            }
+            else if (tabControl1.SelectedIndex == 2)
+            {
+                listBox_objectsMulti.Items.Clear();
+                listBox_objectsMulti.Items.AddRange(getObjectsList());
+                listBox_objectsMulti.SelectedIndex = 0;
             }
         }
 
         private void listBox_objects_SelectedIndexChanged(object sender, EventArgs e)
         {
-            label_number.Text = "#" + listBox_objects.SelectedIndex.ToString();
             showObject(listBox_objects.SelectedIndex);
         }
 
@@ -1839,9 +1848,11 @@ namespace LabelPrint
         private string[] getObjectsList()
         {
             List<string> objectList = new List<string>();
+            int i = 0;
             foreach (template t in Label)
             {
-                objectList.Add(t.name);
+                objectList.Add(i.ToString() + " " + t.name);
+                i++;
             }
             objectList.Add("");
             return objectList.ToArray();
@@ -2790,7 +2801,11 @@ namespace LabelPrint
         {
             if (_borderColor == Color.Black) _borderColor = Color.LightGray;
             else _borderColor = Color.Black;
-            foreach (int n in listBox_objects.SelectedIndices)
+
+            var list = listBox_objects.SelectedIndices;
+            if (tabControl1.SelectedIndex == 2) list = listBox_objectsMulti.SelectedIndices;
+
+            foreach (int n in list)
             {
                 if (n > 0 && n < Label.Count)
                 {
@@ -2878,34 +2893,12 @@ namespace LabelPrint
             }
         }
 
-        private void checkBox_allowGroup_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox_allowGroup.Checked)
-            {
-                listBox_objects.SelectionMode = SelectionMode.MultiExtended;
-                button_moveUp.Enabled = true;
-                button_moveDown.Enabled = true;
-                button_moveLeft.Enabled = true;
-                button_moveRight.Enabled = true;
-                textBox_move.Enabled = true;
-            }
-            else
-            {
-                listBox_objects.SelectionMode = SelectionMode.One;
-                button_moveUp.Enabled = false;
-                button_moveDown.Enabled = false;
-                button_moveLeft.Enabled = false;
-                button_moveRight.Enabled = false;
-                textBox_move.Enabled = false;
-            }
-        }
-
         private void button_moveUp_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
-            foreach (int n in listBox_objects.SelectedIndices)
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
-                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     template templ = Label[n];
                     float y = 0;
@@ -2916,21 +2909,21 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            listBox_objects.Items.Clear();
-            listBox_objects.Items.AddRange(getObjectsList());
-            foreach (int n in k) listBox_objects.SetSelected(n, true);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.Items.Clear();
+            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objects.SelectedIndex);
-            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            showObject(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
         }
 
         private void button_moveLeft_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
-            foreach (int n in listBox_objects.SelectedIndices)
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
-                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     template templ = Label[n];
                     float x = 0;
@@ -2941,21 +2934,21 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            listBox_objects.Items.Clear();
-            listBox_objects.Items.AddRange(getObjectsList());
-            foreach (int n in k) listBox_objects.SetSelected(n, true);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.Items.Clear();
+            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objects.SelectedIndex);
-            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            showObject(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
         }
 
         private void button_moveDown_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
-            foreach (int n in listBox_objects.SelectedIndices)
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
-                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     template templ = Label[n];
                     float y = 0;
@@ -2966,21 +2959,21 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            listBox_objects.Items.Clear();
-            listBox_objects.Items.AddRange(getObjectsList());
-            foreach (int n in k) listBox_objects.SetSelected(n, true);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.Items.Clear();
+            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objects.SelectedIndex);
-            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            showObject(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
         }
 
         private void button_moveRight_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
-            foreach (int n in listBox_objects.SelectedIndices)
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
-                if (n > 0 && n < listBox_objects.Items.Count - 1)
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     template templ = Label[n];
                     float x = 0;
@@ -2991,13 +2984,70 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
-            listBox_objects.Items.Clear();
-            listBox_objects.Items.AddRange(getObjectsList());
-            foreach (int n in k) listBox_objects.SetSelected(n, true);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.Items.Clear();
+            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objects.SelectedIndex);
-            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            showObject(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+        }
+
+        private void button_deleteGroup_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
+                {
+                    Label.RemoveAt(n);
+                    _templateChanged = true;
+                }
+            }
+            listBox_objectsMulti.Items.Clear();
+            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            listBox_objectsMulti.SelectedIndex = 0;
+            showObject(listBox_objectsMulti.SelectedIndex);
+            generateLabel(-1);
+        }
+
+        private void textBox_move_Leave(object sender, EventArgs e)
+        {
+            float n = 0;
+            float.TryParse(textBox_move.Text, out n);
+            textBox_move.Text = n.ToString();
+        }
+
+        private void pictureBox_label_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (checkBox_scale.Checked)
+            {
+
+                textBox_mX.Text = e.X.ToString();
+                textBox_mY.Text = e.Y.ToString();
+            }
+            else
+            {
+                float scaleW = (float)pictureBox_label.Width / LabelBmp.Width;
+                float scaleH = (float)pictureBox_label.Height / LabelBmp.Height;
+                if (scaleW > scaleH)
+                {
+                    textBox_mY.Text = (e.Y / scaleH).ToString();
+                    float corr = (pictureBox_label.Width - (LabelBmp.Width * scaleH)) / 2;
+                    textBox_mX.Text = ((e.X - corr) / scaleH).ToString();
+                }
+                else
+                {
+                    textBox_mX.Text = (e.X / scaleW).ToString();
+                    float corr = (pictureBox_label.Height - LabelBmp.Height * scaleW) / 2;
+                    textBox_mY.Text = ((e.Y - corr) / scaleW).ToString();
+                }
+            }
+        }
+
+        private void listBox_objectsMulti_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            showObject(listBox_objectsMulti.SelectedIndex);
         }
 
         /*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
@@ -3012,37 +3062,6 @@ namespace LabelPrint
             loDataTable.Columns.Add(loDataColumn);
             loDataTable.Rows.Add(0);
             return (long)(loDataTable.Rows[0]["Eval"]);
-        }
-
-        private void pictureBox_label_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (!checkBox_scale.Checked)
-            {
-                float scaleW = (float)pictureBox_label.Width / LabelBmp.Width;
-                float scaleH = (float)pictureBox_label.Height / LabelBmp.Height;
-                float scale = 0;
-                if (scaleW > scaleH)
-                {
-                    scale = scaleH;
-                    //float corr = (float)(pictureBox_label.Width - LabelBmp.Width) / 2;
-                    //textBox_mX.Text = ((e.X - corr) / scale).ToString();
-                    textBox_mX.Text = "";
-                    textBox_mY.Text = (e.Y / scale).ToString();
-                }
-                else
-                {
-                    scale = scaleW;
-                    textBox_mX.Text = (e.X / scale).ToString();
-                    //float corr = (float)(pictureBox_label.Height - LabelBmp.Height) / 2;
-                    //textBox_mY.Text = ((e.Y - corr) / scale).ToString();
-                    textBox_mY.Text = "";
-                }
-            }
-            else
-            {
-                textBox_mX.Text = e.X.ToString();
-                textBox_mY.Text = e.Y.ToString();
-            }
         }
 
         private bool IsInPolygon(Point[] poly, Point pnt)
