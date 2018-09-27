@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -83,6 +83,7 @@
             this.button_up = new System.Windows.Forms.Button();
             this.button_apply = new System.Windows.Forms.Button();
             this.tabPage_group = new System.Windows.Forms.TabPage();
+            this.listBox_objectsMulti = new System.Windows.Forms.ListBox();
             this.button_deleteGroup = new System.Windows.Forms.Button();
             this.button_moveLeft = new System.Windows.Forms.Button();
             this.button_moveDown = new System.Windows.Forms.Button();
@@ -106,7 +107,6 @@
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.listBox_objectsMulti = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -263,7 +263,7 @@
             this.tabPage_print.Location = new System.Drawing.Point(4, 22);
             this.tabPage_print.Name = "tabPage_print";
             this.tabPage_print.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_print.Size = new System.Drawing.Size(329, 306);
+            this.tabPage_print.Size = new System.Drawing.Size(633, 334);
             this.tabPage_print.TabIndex = 0;
             this.tabPage_print.Text = "Print labels";
             this.tabPage_print.UseVisualStyleBackColor = true;
@@ -384,7 +384,7 @@
             this.tabPage_edit.Location = new System.Drawing.Point(4, 22);
             this.tabPage_edit.Name = "tabPage_edit";
             this.tabPage_edit.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_edit.Size = new System.Drawing.Size(329, 306);
+            this.tabPage_edit.Size = new System.Drawing.Size(633, 334);
             this.tabPage_edit.TabIndex = 1;
             this.tabPage_edit.Text = "Edit template";
             this.tabPage_edit.UseVisualStyleBackColor = true;
@@ -396,7 +396,7 @@
             this.listBox_objects.FormattingEnabled = true;
             this.listBox_objects.Location = new System.Drawing.Point(7, 36);
             this.listBox_objects.Name = "listBox_objects";
-            this.listBox_objects.Size = new System.Drawing.Size(95, 173);
+            this.listBox_objects.Size = new System.Drawing.Size(95, 199);
             this.listBox_objects.TabIndex = 6;
             this.listBox_objects.SelectedIndexChanged += new System.EventHandler(this.ListBox_objects_SelectedIndexChanged);
             // 
@@ -559,7 +559,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_content.Location = new System.Drawing.Point(108, 273);
             this.textBox_content.Name = "textBox_content";
-            this.textBox_content.Size = new System.Drawing.Size(212, 20);
+            this.textBox_content.Size = new System.Drawing.Size(516, 20);
             this.textBox_content.TabIndex = 3;
             // 
             // textBox_posX
@@ -630,7 +630,7 @@
             // button_clone
             // 
             this.button_clone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_clone.Location = new System.Drawing.Point(3, 212);
+            this.button_clone.Location = new System.Drawing.Point(3, 240);
             this.button_clone.Name = "button_clone";
             this.button_clone.Size = new System.Drawing.Size(99, 23);
             this.button_clone.TabIndex = 0;
@@ -656,12 +656,12 @@
             this.button_saveTemplate.TabIndex = 0;
             this.button_saveTemplate.Text = "Save template";
             this.button_saveTemplate.UseVisualStyleBackColor = true;
-            this.button_saveTemplate.Click += new System.EventHandler(this.Button_save_Click);
+            this.button_saveTemplate.Click += new System.EventHandler(this.Button_saveTemplate_Click);
             // 
             // button_delete
             // 
             this.button_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_delete.Location = new System.Drawing.Point(6, 270);
+            this.button_delete.Location = new System.Drawing.Point(6, 298);
             this.button_delete.Name = "button_delete";
             this.button_delete.Size = new System.Drawing.Size(96, 23);
             this.button_delete.TabIndex = 0;
@@ -672,7 +672,7 @@
             // button_down
             // 
             this.button_down.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_down.Location = new System.Drawing.Point(54, 241);
+            this.button_down.Location = new System.Drawing.Point(54, 269);
             this.button_down.Name = "button_down";
             this.button_down.Size = new System.Drawing.Size(48, 23);
             this.button_down.TabIndex = 0;
@@ -683,7 +683,7 @@
             // button_up
             // 
             this.button_up.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_up.Location = new System.Drawing.Point(6, 241);
+            this.button_up.Location = new System.Drawing.Point(6, 269);
             this.button_up.Name = "button_up";
             this.button_up.Size = new System.Drawing.Size(42, 23);
             this.button_up.TabIndex = 0;
@@ -717,6 +717,18 @@
             this.tabPage_group.TabIndex = 2;
             this.tabPage_group.Text = "Group operation";
             this.tabPage_group.UseVisualStyleBackColor = true;
+            // 
+            // listBox_objectsMulti
+            // 
+            this.listBox_objectsMulti.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.listBox_objectsMulti.FormattingEnabled = true;
+            this.listBox_objectsMulti.Location = new System.Drawing.Point(6, 6);
+            this.listBox_objectsMulti.Name = "listBox_objectsMulti";
+            this.listBox_objectsMulti.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
+            this.listBox_objectsMulti.Size = new System.Drawing.Size(95, 316);
+            this.listBox_objectsMulti.TabIndex = 7;
+            this.listBox_objectsMulti.SelectedIndexChanged += new System.EventHandler(this.ListBox_objectsMulti_SelectedIndexChanged);
             // 
             // button_deleteGroup
             // 
@@ -908,16 +920,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle7.Format = "N0";
-            dataGridViewCellStyle7.NullValue = null;
-            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(954, 158);
             this.dataGridView_labels.TabIndex = 0;
@@ -940,18 +952,6 @@
             // 
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
-            // 
-            // listBox_objectsMulti
-            // 
-            this.listBox_objectsMulti.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.listBox_objectsMulti.FormattingEnabled = true;
-            this.listBox_objectsMulti.Location = new System.Drawing.Point(6, 6);
-            this.listBox_objectsMulti.Name = "listBox_objectsMulti";
-            this.listBox_objectsMulti.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.listBox_objectsMulti.Size = new System.Drawing.Size(95, 316);
-            this.listBox_objectsMulti.TabIndex = 7;
-            this.listBox_objectsMulti.SelectedIndexChanged += new System.EventHandler(this.ListBox_objectsMulti_SelectedIndexChanged);
             // 
             // Form1
             // 
