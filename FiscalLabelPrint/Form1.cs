@@ -26,7 +26,7 @@ namespace LabelPrint
         private string[] _objectNames = { "label", "text", "picture", "barcode", "line", "rectangle", "ellipse", };
         private string[] _textStyleNames = { "0=regular", "1=bold", "2=italic", "4=underline", "8=strikeout" };
 
-        private struct template
+        private struct Template
         {
             public string name;
             public Color bgColor;
@@ -49,7 +49,7 @@ namespace LabelPrint
             public float lineWidth;
         }
 
-        private List<template> Label = new List<template>();
+        private List<Template> Label = new List<Template>();
         private DataTable LabelsDatabase = new DataTable();
         private int objectsNum = 0;
         private List<string> bcFeatures = new List<string> { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
@@ -95,8 +95,8 @@ namespace LabelPrint
             InitializeComponent();
             if (cmdLine.Length >= 1)
             {
-                tabControl1.SelectedIndexChanged -= new EventHandler(tabControl1_SelectedIndexChanged);
-                listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+                tabControl1.SelectedIndexChanged -= new EventHandler(TabControl1_SelectedIndexChanged);
+                listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
                 if (cmdLine[0] == "/?" || cmdLine[0] == "/h" || cmdLine[0] == "/help")
                 {
                     Console.WriteLine("/?, /h, /help - print help\r\n" +
@@ -174,17 +174,17 @@ namespace LabelPrint
                         //import template
                         openFileDialog1.Title = "Open template .CSV file";
                         openFileDialog1.FileName = template;
-                        openFileDialog1_FileOk(this, null);
+                        OpenFileDialog1_FileOk(this, null);
                         //import labels
                         openFileDialog1.Title = "Open labels .CSV database";
                         openFileDialog1.FileName = label;
-                        openFileDialog1_FileOk(this, null);
-                        if (printAll == true) button_printAll_Click(this, EventArgs.Empty);
+                        OpenFileDialog1_FileOk(this, null);
+                        if (printAll == true) Button_printAll_Click(this, EventArgs.Empty);
                         else
                         {
                             textBox_rangeFrom.Text = from.ToString();
                             textBox_rangeTo.Text = to.ToString();
-                            button_printRange_Click(this, EventArgs.Empty);
+                            Button_printRange_Click(this, EventArgs.Empty);
                         }
                     }
                     else Console.WriteLine("Not enough parameters.\r\n");
@@ -202,23 +202,25 @@ namespace LabelPrint
             }
             comboBox_object.Items.AddRange(_objectNames);
 
-            template init_label = new template();
-            init_label.name = _objectNames[labelObject];
-            init_label.bgColor = Color.White;
-            init_label.fgColor = Color.Black;
-            init_label.width = 1;
-            init_label.height = 1;
-            init_label.dpi = 200;
-            init_label.codePage = 65001;
+            Template init_label = new Template
+            {
+                name = _objectNames[labelObject],
+                bgColor = Color.White,
+                fgColor = Color.Black,
+                width = 1,
+                height = 1,
+                dpi = 200,
+                codePage = 65001
+            };
             Label.Add(init_label);
 
-            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = 0;
             comboBox_units.SelectedIndex = 0;
             textBox_dpi.Text = Label[0].dpi.ToString("F4");
 
             comboBox_encoding.Items.Clear();
-            comboBox_encoding.Items.AddRange(getEncodingList());
+            comboBox_encoding.Items.AddRange(GetEncodingList());
             string str = Properties.Settings.Default.CodePage.ToString();
             for (int i = 0; i < comboBox_encoding.Items.Count; i++)
             {
@@ -228,10 +230,10 @@ namespace LabelPrint
                     break;
                 }
             }
-            textBox_dpi_Leave(this, EventArgs.Empty);
+            TextBox_dpi_Leave(this, EventArgs.Empty);
         }
 
-        private void fillBackground(Color bgC)
+        private void FillBackground(Color bgC)
         {
             LabelBmp = new Bitmap((int)Label[0].width, (int)Label[0].height, PixelFormat.Format32bppPArgb);
             Graphics g = Graphics.FromImage(LabelBmp);
@@ -241,7 +243,7 @@ namespace LabelPrint
             pictureBox_label.Image = LabelBmp;
         }
 
-        private Rectangle drawText(Bitmap img, Color fgC, float posX, float posY, string text, string fontName, float fontSize, float rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
+        private Rectangle DrawText(Bitmap img, Color fgC, float posX, float posY, string text, string fontName, float fontSize, float rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
             //check if font supports all the options
@@ -278,7 +280,7 @@ namespace LabelPrint
             return size;
         }
 
-        private Rectangle drawPicture(Bitmap img, Color fgC, float posX, float posY, string fileName, float rotateDeg = 0, float width = 0, float height = 0, bool makeTransparent = true)
+        private Rectangle DrawPicture(Bitmap img, Color fgC, float posX, float posY, string fileName, float rotateDeg = 0, float width = 0, float height = 0, bool makeTransparent = true)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
             Bitmap newPicture = new Bitmap(1, 1);
@@ -314,7 +316,7 @@ namespace LabelPrint
             return size;
         }
 
-        private Rectangle drawBarcode(Bitmap img, Color bgC, Color fgC, float posX, float posY, float width, float height, string BCdata, BarcodeFormat bcFormat, float rotateDeg = 0, string addFeature = "", bool makeTransparent = true)
+        private Rectangle DrawBarcode(Bitmap img, Color bgC, Color fgC, float posX, float posY, float width, float height, string BCdata, BarcodeFormat bcFormat, float rotateDeg = 0, string addFeature = "", bool makeTransparent = true)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
             Graphics g = Graphics.FromImage(img);
@@ -332,13 +334,15 @@ namespace LabelPrint
                 Rectangle rect = new Rectangle(0, 0, (int)width, (int)height);
                 g.FillRectangle(b, rect);
             }
-            var barCode = new BarcodeWriter();
-            barCode.Format = bcFormat;
-            barCode.Options = new EncodingOptions
+            var barCode = new BarcodeWriter
             {
-                PureBarcode = true,
-                Height = (int)height,
-                Width = (int)width
+                Format = bcFormat,
+                Options = new EncodingOptions
+                {
+                    PureBarcode = true,
+                    Height = (int)height,
+                    Width = (int)width
+                }
             };
             //specify the additional encoding options if there are any
             if (addFeature != "")
@@ -464,9 +468,11 @@ namespace LabelPrint
             if (fgC != Color.Black)
             {
                 ColorMap[] colorMap = new ColorMap[1];
-                colorMap[0] = new ColorMap();
-                colorMap[0].OldColor = Color.Black;
-                colorMap[0].NewColor = fgC;
+                colorMap[0] = new ColorMap
+                {
+                    OldColor = Color.Black,
+                    NewColor = fgC
+                };
                 ImageAttributes attr = new ImageAttributes();
                 attr.SetRemapTable(colorMap);
                 // Draw using the color map
@@ -483,7 +489,7 @@ namespace LabelPrint
             return size;
         }
 
-        private Rectangle drawLineCoord(Bitmap img, Color fgC, float posX, float posY, float endX, float endY, float lineWidth)
+        private Rectangle DrawLineCoord(Bitmap img, Color fgC, float posX, float posY, float endX, float endY, float lineWidth)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
             Pen p = new Pen(fgC, lineWidth);
@@ -522,7 +528,7 @@ namespace LabelPrint
             return size;
         }
 
-        private Rectangle drawLineLength(Bitmap img, Color fgC, float posX, float posY, float length, float rotateDeg, float lineWidth)
+        private Rectangle DrawLineLength(Bitmap img, Color fgC, float posX, float posY, float length, float rotateDeg, float lineWidth)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
             Pen p = new Pen(fgC, lineWidth);
@@ -571,11 +577,13 @@ namespace LabelPrint
             return size;
         }
 
-        private Rectangle drawRectangle(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
+        private Rectangle DrawRectangle(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
-            Pen p = new Pen(fgC, lineWidth);
-            p.Alignment = PenAlignment.Inset;
+            Pen p = new Pen(fgC, lineWidth)
+            {
+                Alignment = PenAlignment.Inset
+            };
             Rectangle rect = new Rectangle(0, 0, (int)width, (int)height);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -603,11 +611,13 @@ namespace LabelPrint
             return size;
         }
 
-        private Rectangle drawEllipse(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
+        private Rectangle DrawEllipse(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth, bool fill)
         {
             Rectangle size = new Rectangle(0, 0, 0, 0);
-            Pen p = new Pen(fgC, lineWidth);
-            p.Alignment = PenAlignment.Inset;
+            Pen p = new Pen(fgC, lineWidth)
+            {
+                Alignment = PenAlignment.Inset
+            };
             Rectangle rect = new Rectangle(0, 0, (int)width, (int)height);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -700,7 +710,7 @@ namespace LabelPrint
             }
         }
 
-        private void button_importLabels_Click(object sender, EventArgs e)
+        private void Button_importLabels_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
             openFileDialog1.Title = "Open labels .CSV database";
@@ -709,7 +719,7 @@ namespace LabelPrint
             openFileDialog1.ShowDialog();
         }
 
-        private void button_importTemplate_Click(object sender, EventArgs e)
+        private void Button_importTemplate_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
             openFileDialog1.Title = "Open template .CSV file";
@@ -718,7 +728,7 @@ namespace LabelPrint
             openFileDialog1.ShowDialog();
         }
 
-        private void openFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+        private void OpenFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (openFileDialog1.Title == "Open labels .CSV database")
             {
@@ -744,7 +754,7 @@ namespace LabelPrint
                     button_printRange.Enabled = true;
                     textBox_rangeFrom.Text = "0";
                     textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
-                    setRowNumber(dataGridView_labels);
+                    SetRowNumber(dataGridView_labels);
                 }
                 else
                 {
@@ -755,7 +765,7 @@ namespace LabelPrint
                     MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + dataGridView_labels.Columns.Count.ToString());
                 dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                 dataGridView_labels.Rows[0].Selected = true;
-                generateLabel(dataGridView_labels.CurrentCell.RowIndex);
+                GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
                 textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
             }
             else if (openFileDialog1.Title == "Open template .CSV file")
@@ -780,7 +790,7 @@ namespace LabelPrint
                         if (cells[cells.Count - 1] == "") cells.RemoveAt(cells.Count - 1);
                         if (cells.Count >= 7)
                         {
-                            template templ = new template();
+                            Template templ = new Template();
                             if (i == 0 && cells[0] != _objectNames[labelObject])
                             {
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
@@ -1392,9 +1402,9 @@ namespace LabelPrint
                         }
                     }
                 }
-                textBox_dpi_Leave(this, EventArgs.Empty);
+                TextBox_dpi_Leave(this, EventArgs.Empty);
                 button_importLabels.Enabled = true;
-                generateLabel(-1);
+                GenerateLabel(-1);
                 textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 //save path to template
                 path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
@@ -1417,12 +1427,12 @@ namespace LabelPrint
                 button_printRange.Enabled = false;
                 textBox_rangeFrom.Text = "0";
                 textBox_rangeTo.Text = "0";
-                setRowNumber(dataGridView_labels);
-                tabControl1_SelectedIndexChanged(this, EventArgs.Empty);
+                SetRowNumber(dataGridView_labels);
+                TabControl1_SelectedIndexChanged(this, EventArgs.Empty);
             }
         }
 
-        private void generateLabel(int gridLine)
+        private void GenerateLabel(int gridLine)
         {
             if (Label[0].name != _objectNames[labelObject])
             {
@@ -1443,7 +1453,7 @@ namespace LabelPrint
                 if (Label[i].name == _objectNames[labelObject])
                 {
                     LabelBmp = new Bitmap((int)Label[i].width, (int)Label[i].height, PixelFormat.Format32bppPArgb);
-                    fillBackground(Label[i].bgColor);
+                    FillBackground(Label[i].bgColor);
                 }
                 else if (Label[i].name == _objectNames[textObject])
                 {
@@ -1457,7 +1467,7 @@ namespace LabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    currentObject[i] = drawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
+                    currentObject[i] = DrawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
                 else if (Label[i].name == _objectNames[pictureObject])
                 {
@@ -1471,7 +1481,7 @@ namespace LabelPrint
                     string tmp = "";
                     if (gridLine > -1) tmp = path + dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
-                    currentObject[i] = drawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
+                    currentObject[i] = DrawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
                 }
                 else if (Label[i].name == _objectNames[barcodeObject])
                 {
@@ -1487,7 +1497,7 @@ namespace LabelPrint
                     if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
                     if (tmp != "") content = tmp;
                     string feature = Label[i].feature;
-                    currentObject[i] = drawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
+                    currentObject[i] = DrawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
                 else if (Label[i].name == _objectNames[lineObject])
                 {
@@ -1499,12 +1509,12 @@ namespace LabelPrint
                     {
                         float endX = Label[i].width;
                         float endY = Label[i].height;
-                        currentObject[i] = drawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
+                        currentObject[i] = DrawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
                     }
                     else
                     {
                         float length = Label[i].lineLength;
-                        currentObject[i] = drawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
+                        currentObject[i] = DrawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
                     }
                 }
                 else if (Label[i].name == _objectNames[rectangleObject])
@@ -1516,7 +1526,7 @@ namespace LabelPrint
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool fill = !Label[i].transparent;
-                    currentObject[i] = drawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    currentObject[i] = DrawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else if (Label[i].name == _objectNames[ellipseObject])
                 {
@@ -1527,14 +1537,14 @@ namespace LabelPrint
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool fill = !Label[i].transparent;
-                    currentObject[i] = drawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    currentObject[i] = DrawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else MessageBox.Show("Incorrect object: " + Label[i].name);
             }
             pictureBox_label.Image = LabelBmp;
         }
 
-        private void button_printCurrent_Click(object sender, EventArgs e)
+        private void Button_printCurrent_Click(object sender, EventArgs e)
         {
             if (pictureBox_label.Image == null) return;
             if (!checkBox_toFile.Checked)
@@ -1542,22 +1552,22 @@ namespace LabelPrint
                 printDialog1 = new PrintDialog();
                 printDocument1 = new PrintDocument();
                 printDialog1.Document = printDocument1;
-                printDocument1.PrintPage += new PrintPageEventHandler(printImages);
+                printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
                 pagesFrom = dataGridView_labels.CurrentRow.Index;
                 pagesTo = pagesFrom;
                 if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
             }
-            else savePage();
+            else SaveLabelPicture();
         }
 
-        private void button_printAll_Click(object sender, EventArgs e)
+        private void Button_printAll_Click(object sender, EventArgs e)
         {
             if (!checkBox_toFile.Checked)
             {
                 printDialog1 = new PrintDialog();
                 printDocument1 = new PrintDocument();
                 printDialog1.Document = printDocument1;
-                printDocument1.PrintPage += new PrintPageEventHandler(printImages);
+                printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
                 pagesFrom = 0;
                 pagesTo = dataGridView_labels.Rows.Count - 1;
                 if (!cmdLinePrint)
@@ -1576,13 +1586,13 @@ namespace LabelPrint
                 {
                     dataGridView_labels.CurrentCell = dataGridView_labels.Rows[i].Cells[0];
                     dataGridView_labels.Rows[i].Selected = true;
-                    generateLabel(dataGridView_labels.CurrentCell.RowIndex);
-                    savePage();
+                    GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
+                    SaveLabelPicture();
                 }
             }
         }
 
-        private void button_printRange_Click(object sender, EventArgs e)
+        private void Button_printRange_Click(object sender, EventArgs e)
         {
             pagesFrom = 0;
             pagesTo = dataGridView_labels.Rows.Count;
@@ -1596,7 +1606,7 @@ namespace LabelPrint
                 printDialog1 = new PrintDialog();
                 printDocument1 = new PrintDocument();
                 printDialog1.Document = printDocument1;
-                printDocument1.PrintPage += new PrintPageEventHandler(printImages);
+                printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
                 if (!cmdLinePrint)
                 {
                     if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
@@ -1613,18 +1623,18 @@ namespace LabelPrint
                 {
                     dataGridView_labels.CurrentCell = dataGridView_labels.Rows[pagesFrom].Cells[0];
                     dataGridView_labels.Rows[pagesFrom].Selected = true;
-                    generateLabel(dataGridView_labels.CurrentCell.RowIndex);
-                    savePage();
+                    GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
+                    SaveLabelPicture();
                 }
             }
 
         }
 
-        private void printImages(object sender, PrintPageEventArgs args)
+        private void PrintImagesHandler(object sender, PrintPageEventArgs args)
         {
             dataGridView_labels.CurrentCell = dataGridView_labels.Rows[pagesFrom].Cells[0];
             dataGridView_labels.Rows[pagesFrom].Selected = true;
-            generateLabel(dataGridView_labels.CurrentCell.RowIndex);
+            GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
             if (pictureBox_label.Image == null) return;
             args.Graphics.PageUnit = GraphicsUnit.Pixel;
             Bitmap bmp = new Bitmap((int)Label[0].width, (int)Label[0].height);
@@ -1635,7 +1645,7 @@ namespace LabelPrint
             pagesFrom++;
         }
 
-        private void savePage()
+        private void SaveLabelPicture()
         {
             //var dock = pictureBox_label.Dock;
             var sizeMode = pictureBox_label.SizeMode;
@@ -1657,7 +1667,7 @@ namespace LabelPrint
             pictureBox_label.Height = h;
         }
 
-        private void setRowNumber(DataGridView dgv)
+        private void SetRowNumber(DataGridView dgv)
         {
             foreach (DataGridViewRow row in dgv.Rows)
             {
@@ -1666,12 +1676,12 @@ namespace LabelPrint
             dgv.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders);
         }
 
-        private void checkBox_toFile_CheckedChanged(object sender, EventArgs e)
+        private void CheckBox_toFile_CheckedChanged(object sender, EventArgs e)
         {
             textBox_saveFileName.Enabled = checkBox_toFile.Checked;
         }
 
-        private void checkBox_scale_CheckedChanged(object sender, EventArgs e)
+        private void CheckBox_scale_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox_scale.Checked)
             {
@@ -1687,12 +1697,12 @@ namespace LabelPrint
             }
         }
 
-        private void dataGridView_labels_SelectionChanged(object sender, EventArgs e)
+        private void DataGridView_labels_SelectionChanged(object sender, EventArgs e)
         {
-            if (!cmdLinePrint) generateLabel(dataGridView_labels.CurrentCell.RowIndex);
+            if (!cmdLinePrint) GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
         }
 
-        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (tabControl1.SelectedIndex != 0)
             {
@@ -1703,7 +1713,7 @@ namespace LabelPrint
                 timer1.Enabled = false;
                 if (_templateChanged)
                 {
-                    dataGridView_labels.SelectionChanged -= new EventHandler(dataGridView_labels_SelectionChanged);
+                    dataGridView_labels.SelectionChanged -= new EventHandler(DataGridView_labels_SelectionChanged);
                     dataGridView_labels.DataSource = null;
                     textBox_labelsName.Clear();
                     LabelsDatabase.Clear();
@@ -1744,112 +1754,112 @@ namespace LabelPrint
                     button_printRange.Enabled = true;
                     textBox_rangeFrom.Text = "0";
                     textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
-                    setRowNumber(dataGridView_labels);
+                    SetRowNumber(dataGridView_labels);
                     dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                     dataGridView_labels.Rows[0].Selected = true;
-                    generateLabel(-1);
-                    dataGridView_labels.SelectionChanged += new EventHandler(dataGridView_labels_SelectionChanged);
+                    GenerateLabel(-1);
+                    dataGridView_labels.SelectionChanged += new EventHandler(DataGridView_labels_SelectionChanged);
                     _templateChanged = false;
                 }
-                generateLabel(-1);
+                GenerateLabel(-1);
             }
             else if (tabControl1.SelectedIndex == 1)
             {
                 listBox_objects.Items.Clear();
-                listBox_objects.Items.AddRange(getObjectsList());
+                listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = 0;
                 listBox_objects.SelectedIndex = 0;
             }
             else if (tabControl1.SelectedIndex == 2)
             {
                 listBox_objectsMulti.Items.Clear();
-                listBox_objectsMulti.Items.AddRange(getObjectsList());
+                listBox_objectsMulti.Items.AddRange(GetObjectsList());
                 listBox_objectsMulti.SelectedIndex = 0;
             }
         }
 
-        private void listBox_objects_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListBox_objects_SelectedIndexChanged(object sender, EventArgs e)
         {
-            showObject(listBox_objects.SelectedIndex);
+            ShowObjectInUI(listBox_objects.SelectedIndex);
         }
 
-        private void button_apply_Click(object sender, EventArgs e)
+        private void Button_apply_Click(object sender, EventArgs e)
         {
-            listBox_objects.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             int n = listBox_objects.SelectedIndex;
             if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
             {
-                template templ = collectObject();
+                Template templ = CollectObjectFromUI();
                 Label.Add(templ);
             }
             else
             {
-                template templ = collectObject();
+                Template templ = CollectObjectFromUI();
                 Label[n] = templ;
-                generateLabel(-1);
+                GenerateLabel(-1);
             }
             listBox_objects.Items.Clear();
-            listBox_objects.Items.AddRange(getObjectsList());
+            listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = n;
             _templateChanged = true;
-            showObject(listBox_objects.SelectedIndex);
-            listBox_objects.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            ShowObjectInUI(listBox_objects.SelectedIndex);
+            listBox_objects.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
-        private void button_delete_Click(object sender, EventArgs e)
+        private void Button_delete_Click(object sender, EventArgs e)
         {
             if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex > 0)
             {
                 int n = listBox_objects.SelectedIndex;
                 Label.RemoveAt(n);
                 listBox_objects.Items.Clear();
-                listBox_objects.Items.AddRange(getObjectsList());
+                listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n;
                 _templateChanged = true;
-                showObject(listBox_objects.SelectedIndex);
-                generateLabel(-1);
+                ShowObjectInUI(listBox_objects.SelectedIndex);
+                GenerateLabel(-1);
             }
         }
 
-        private void button_up_Click(object sender, EventArgs e)
+        private void Button_up_Click(object sender, EventArgs e)
         {
             if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex > 1)
             {
                 int n = listBox_objects.SelectedIndex;
-                template templ = Label[n];
+                Template templ = Label[n];
                 Label.RemoveAt(n);
                 Label.Insert(n - 1, templ);
                 listBox_objects.Items.Clear();
-                listBox_objects.Items.AddRange(getObjectsList());
+                listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n - 1;
                 _templateChanged = true;
-                showObject(listBox_objects.SelectedIndex);
-                generateLabel(-1);
+                ShowObjectInUI(listBox_objects.SelectedIndex);
+                GenerateLabel(-1);
             }
         }
 
-        private void button_down_Click(object sender, EventArgs e)
+        private void Button_down_Click(object sender, EventArgs e)
         {
             if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 2 && listBox_objects.SelectedIndex > 0)
             {
                 int n = listBox_objects.SelectedIndex;
-                template templ = Label[n];
+                Template templ = Label[n];
                 Label.RemoveAt(n);
                 Label.Insert(n + 1, templ);
                 listBox_objects.Items.Clear();
-                listBox_objects.Items.AddRange(getObjectsList());
+                listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n + 1;
                 _templateChanged = true;
-                showObject(listBox_objects.SelectedIndex);
-                generateLabel(-1);
+                ShowObjectInUI(listBox_objects.SelectedIndex);
+                GenerateLabel(-1);
             }
         }
 
-        private string[] getObjectsList()
+        private string[] GetObjectsList()
         {
             List<string> objectList = new List<string>();
             int i = 0;
-            foreach (template t in Label)
+            foreach (Template t in Label)
             {
                 objectList.Add(i.ToString() + " " + t.name);
                 i++;
@@ -1858,7 +1868,7 @@ namespace LabelPrint
             return objectList.ToArray();
         }
 
-        private string[] getColorList()
+        private string[] GetColorList()
         {
             List<string> colorList = new List<string>();
             foreach (Color c in new ColorConverter().GetStandardValues())
@@ -1868,7 +1878,7 @@ namespace LabelPrint
             return colorList.ToArray();
         }
 
-        private string[] getFontList()
+        private string[] GetFontList()
         {
             List<string> fontList = new List<string>();
             InstalledFontCollection installedFontCollection = new InstalledFontCollection();
@@ -1880,7 +1890,7 @@ namespace LabelPrint
             return fontList.ToArray();
         }
 
-        private string[] getBarcodeList()
+        private string[] GetBarcodeList()
         {
             List<string> barcodeList = new List<string>();
             foreach (BarcodeFormat b in BarCodeTypes)
@@ -1890,7 +1900,7 @@ namespace LabelPrint
             return barcodeList.ToArray();
         }
 
-        private string[] getEncodingList()
+        private string[] GetEncodingList()
         {
             List<string> encodeList = new List<string>();
 
@@ -1902,9 +1912,9 @@ namespace LabelPrint
             return encodeList.ToArray();
         }
 
-        private void showObject(int n)
+        private void ShowObjectInUI(int n)
         {
-            clearFields();
+            ClearFields();
             comboBox_object.SelectedItem = listBox_objects.SelectedItem.ToString();
             string str = "";
             //new object
@@ -1919,7 +1929,7 @@ namespace LabelPrint
                 comboBox_backgroundColor.Enabled = true;
                 comboBox_backgroundColor.Items.Clear();
 
-                comboBox_backgroundColor.Items.AddRange(getColorList());
+                comboBox_backgroundColor.Items.AddRange(GetColorList());
                 str = Label[n].bgColor.Name.ToString();
                 for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
                 {
@@ -1934,7 +1944,7 @@ namespace LabelPrint
                 comboBox_objectColor.Enabled = true;
                 comboBox_objectColor.Items.Clear();
                 comboBox_objectColor.Items.Add("");
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -1959,7 +1969,7 @@ namespace LabelPrint
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -1989,7 +1999,7 @@ namespace LabelPrint
                 comboBox_fontName.Enabled = true;
                 label_fontName.Text = "Font";
                 comboBox_fontName.Items.Clear();
-                comboBox_fontName.Items.AddRange(getFontList());
+                comboBox_fontName.Items.AddRange(GetFontList());
                 comboBox_fontName.SelectedIndex = 0;
                 str = Label[n].fontName.ToString();
                 for (int i = 0; i < comboBox_fontName.Items.Count; i++)
@@ -2026,7 +2036,7 @@ namespace LabelPrint
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Transparent color";
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -2071,7 +2081,7 @@ namespace LabelPrint
             {
                 comboBox_backgroundColor.Enabled = true;
                 label_backgroundColor.Text = "Background color";
-                comboBox_backgroundColor.Items.AddRange(getColorList());
+                comboBox_backgroundColor.Items.AddRange(GetColorList());
                 str = Label[n].bgColor.Name.ToString();
                 for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
                 {
@@ -2084,7 +2094,7 @@ namespace LabelPrint
 
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -2122,7 +2132,7 @@ namespace LabelPrint
                 comboBox_fontName.Enabled = true;
                 label_fontName.Text = "Barcode type";
                 comboBox_fontName.Items.Clear();
-                comboBox_fontName.Items.AddRange(getBarcodeList());
+                comboBox_fontName.Items.AddRange(GetBarcodeList());
                 comboBox_fontName.SelectedIndex = 0;
                 str = Label[n].BCformat.ToString() + "=" + ((BarcodeFormat)Label[n].BCformat).ToString();
                 for (int i = 0; i < comboBox_fontName.Items.Count; i++)
@@ -2162,7 +2172,7 @@ namespace LabelPrint
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -2206,7 +2216,7 @@ namespace LabelPrint
             {
                 comboBox_objectColor.Enabled = true;
                 label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -2251,7 +2261,7 @@ namespace LabelPrint
             {
                 label_objectColor.Text = "Default object color";
                 comboBox_objectColor.Enabled = true;
-                comboBox_objectColor.Items.AddRange(getColorList());
+                comboBox_objectColor.Items.AddRange(GetColorList());
                 str = Label[n].fgColor.Name.ToString();
                 for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                 {
@@ -2291,14 +2301,15 @@ namespace LabelPrint
                 checkBox_fill.Checked = !Label[n].transparent;
             }
 
-            generateLabel(-1);
+            GenerateLabel(-1);
         }
 
-        private template collectObject()
+        private Template CollectObjectFromUI()
         {
-            template templ = new template();
-
-            templ.name = comboBox_object.SelectedItem.ToString();
+            Template templ = new Template
+            {
+                name = comboBox_object.SelectedItem.ToString()
+            };
 
             if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
             {
@@ -2539,7 +2550,7 @@ namespace LabelPrint
             return templ;
         }
 
-        private void clearFields()
+        private void ClearFields()
         {
             comboBox_object.Enabled = false;
 
@@ -2601,7 +2612,7 @@ namespace LabelPrint
 
         }
 
-        private void button_save_Click(object sender, EventArgs e)
+        private void Button_save_Click(object sender, EventArgs e)
         {
             SaveFileDialog1.Title = "Save template as .CSV...";
             SaveFileDialog1.DefaultExt = "csv";
@@ -2611,7 +2622,7 @@ namespace LabelPrint
             SaveFileDialog1.ShowDialog();
         }
 
-        private void button_saveLabel_Click(object sender, EventArgs e)
+        private void Button_saveLabel_Click(object sender, EventArgs e)
         {
             SaveFileDialog1.Title = "Save label data as .CSV...";
             SaveFileDialog1.DefaultExt = "csv";
@@ -2620,7 +2631,7 @@ namespace LabelPrint
             SaveFileDialog1.ShowDialog();
         }
 
-        private void saveFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+        private void SaveFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
         {
             StringBuilder output = new StringBuilder();
             char div = Properties.Settings.Default.CSVdelimiter;
@@ -2751,15 +2762,17 @@ namespace LabelPrint
             }
         }
 
-        private void comboBox_encoding_SelectedIndexChanged(object sender, EventArgs e)
+        private void ComboBox_encoding_SelectedIndexChanged(object sender, EventArgs e)
         {
-            template templ = new template();
-            templ.name = _objectNames[labelObject];
-            templ.bgColor = Label[0].bgColor;
-            templ.fgColor = Label[0].fgColor;
-            templ.width = Label[0].width;
-            templ.height = Label[0].height;
-            templ.dpi = 1;
+            Template templ = new Template
+            {
+                name = _objectNames[labelObject],
+                bgColor = Label[0].bgColor,
+                fgColor = Label[0].fgColor,
+                width = Label[0].width,
+                height = Label[0].height,
+                dpi = 1
+            };
             float.TryParse(textBox_dpi.Text, out templ.dpi);
             int cp = Properties.Settings.Default.CodePage;
             if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out cp)) Properties.Settings.Default.CodePage = cp;
@@ -2768,15 +2781,17 @@ namespace LabelPrint
             Label.Insert(0, templ);
         }
 
-        private void textBox_dpi_Leave(object sender, EventArgs e)
+        private void TextBox_dpi_Leave(object sender, EventArgs e)
         {
-            template templ = new template();
-            templ.name = _objectNames[labelObject];
-            templ.bgColor = Label[0].bgColor;
-            templ.fgColor = Label[0].fgColor;
-            templ.width = Label[0].width;
-            templ.height = Label[0].height;
-            templ.dpi = 1;
+            Template templ = new Template
+            {
+                name = _objectNames[labelObject],
+                bgColor = Label[0].bgColor,
+                fgColor = Label[0].fgColor,
+                width = Label[0].width,
+                height = Label[0].height,
+                dpi = 1
+            };
             float.TryParse(textBox_dpi.Text, out templ.dpi);
             templ.codePage = Properties.Settings.Default.CodePage;
             if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out templ.codePage)) Properties.Settings.Default.CodePage = templ.codePage;
@@ -2789,15 +2804,15 @@ namespace LabelPrint
             mult = units[comboBox_units.SelectedIndex];
         }
 
-        private void comboBox_units_SelectedIndexChanged(object sender, EventArgs e)
+        private void ComboBox_units_SelectedIndexChanged(object sender, EventArgs e)
         {
             mult = units[comboBox_units.SelectedIndex];
             if (comboBox_units.SelectedIndex == 0) textBox_dpi.Enabled = false;
             else textBox_dpi.Enabled = true;
-            showObject(listBox_objects.SelectedIndex);
+            ShowObjectInUI(listBox_objects.SelectedIndex);
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
+        private void Timer1_Tick(object sender, EventArgs e)
         {
             if (_borderColor == Color.Black) _borderColor = Color.LightGray;
             else _borderColor = Color.Black;
@@ -2811,19 +2826,21 @@ namespace LabelPrint
                 {
 
                     if (Label[n].name == _objectNames[lineObject])
-                        drawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, 0, 1);
+                        DrawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, 0, 1);
                     else
-                        drawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, Label[n].rotate, 1);
+                        DrawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, Label[n].rotate, 1);
                 }
             }
             pictureBox_label.Image = LabelBmp;
         }
 
-        private void drawSelection(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth)
+        private void DrawSelection(Bitmap img, Color fgC, float posX, float posY, float width, float height, float rotateDeg, float lineWidth)
         {
-            Pen p = new Pen(fgC, lineWidth);
-            p.Alignment = PenAlignment.Outset;
-            p.DashStyle = DashStyle.Dash;
+            Pen p = new Pen(fgC, lineWidth)
+            {
+                Alignment = PenAlignment.Outset,
+                DashStyle = DashStyle.Dash
+            };
             Rectangle rect = new Rectangle(-2, -2, (int)width + 4, (int)height + 4);
             Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -2852,32 +2869,32 @@ namespace LabelPrint
             return e;
         }
 
-        private void textBox_posX_Leave(object sender, EventArgs e)
+        private void TextBox_posX_Leave(object sender, EventArgs e)
         {
             textBox_posX.Text = Evaluate(textBox_posX.Text).ToString();
         }
 
-        private void textBox_posY_Leave(object sender, EventArgs e)
+        private void TextBox_posY_Leave(object sender, EventArgs e)
         {
             textBox_posY.Text = Evaluate(textBox_posY.Text).ToString();
         }
 
-        private void textBox_width_Leave(object sender, EventArgs e)
+        private void TextBox_width_Leave(object sender, EventArgs e)
         {
             textBox_width.Text = Evaluate(textBox_width.Text).ToString();
         }
 
-        private void textBox_height_Leave(object sender, EventArgs e)
+        private void TextBox_height_Leave(object sender, EventArgs e)
         {
             textBox_height.Text = Evaluate(textBox_height.Text).ToString();
         }
 
-        private void textBox_rotate_Leave(object sender, EventArgs e)
+        private void TextBox_rotate_Leave(object sender, EventArgs e)
         {
             textBox_rotate.Text = Evaluate(textBox_rotate.Text).ToString();
         }
 
-        private void button_clone_Click(object sender, EventArgs e)
+        private void Button_clone_Click(object sender, EventArgs e)
         {
             if (listBox_objects.SelectedIndex < listBox_objects.Items.Count - 1 && listBox_objects.SelectedIndex > 0)
             {
@@ -2885,22 +2902,22 @@ namespace LabelPrint
 
                 Label.Insert(listBox_objects.Items.Count - 1, Label[listBox_objects.SelectedIndex]);
                 listBox_objects.Items.Clear();
-                listBox_objects.Items.AddRange(getObjectsList());
+                listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n;
                 _templateChanged = true;
-                showObject(listBox_objects.SelectedIndex);
-                generateLabel(-1);
+                ShowObjectInUI(listBox_objects.SelectedIndex);
+                GenerateLabel(-1);
             }
         }
 
-        private void button_moveUp_Click(object sender, EventArgs e)
+        private void Button_moveUp_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
             foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
-                    template templ = Label[n];
+                    Template templ = Label[n];
                     float y = 0;
                     float.TryParse(textBox_move.Text, out y);
                     templ.posY -= y;
@@ -2909,23 +2926,23 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objectsMulti.SelectedIndex);
-            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
-        private void button_moveLeft_Click(object sender, EventArgs e)
+        private void Button_moveLeft_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
             foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
-                    template templ = Label[n];
+                    Template templ = Label[n];
                     float x = 0;
                     float.TryParse(textBox_move.Text, out x);
                     templ.posX -= x;
@@ -2934,23 +2951,23 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objectsMulti.SelectedIndex);
-            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
-        private void button_moveDown_Click(object sender, EventArgs e)
+        private void Button_moveDown_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
             foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
-                    template templ = Label[n];
+                    Template templ = Label[n];
                     float y = 0;
                     float.TryParse(textBox_move.Text, out y);
                     templ.posY += y;
@@ -2959,23 +2976,23 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objectsMulti.SelectedIndex);
-            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
-        private void button_moveRight_Click(object sender, EventArgs e)
+        private void Button_moveRight_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
             foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
-                    template templ = Label[n];
+                    Template templ = Label[n];
                     float x = 0;
                     float.TryParse(textBox_move.Text, out x);
                     templ.posX += x;
@@ -2984,16 +3001,16 @@ namespace LabelPrint
                     k.Add(n);
                 }
             }
-            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(listBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            showObject(listBox_objectsMulti.SelectedIndex);
-            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(listBox_objects_SelectedIndexChanged);
+            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
-        private void button_deleteGroup_Click(object sender, EventArgs e)
+        private void Button_deleteGroup_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
             foreach (int n in listBox_objectsMulti.SelectedIndices)
@@ -3005,20 +3022,20 @@ namespace LabelPrint
                 }
             }
             listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(getObjectsList());
+            listBox_objectsMulti.Items.AddRange(GetObjectsList());
             listBox_objectsMulti.SelectedIndex = 0;
-            showObject(listBox_objectsMulti.SelectedIndex);
-            generateLabel(-1);
+            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            GenerateLabel(-1);
         }
 
-        private void textBox_move_Leave(object sender, EventArgs e)
+        private void TextBox_move_Leave(object sender, EventArgs e)
         {
             float n = 0;
             float.TryParse(textBox_move.Text, out n);
             textBox_move.Text = n.ToString();
         }
 
-        private void pictureBox_label_MouseMove(object sender, MouseEventArgs e)
+        private void PictureBox_label_MouseMove(object sender, MouseEventArgs e)
         {
             if (checkBox_scale.Checked)
             {
@@ -3045,9 +3062,9 @@ namespace LabelPrint
             }
         }
 
-        private void listBox_objectsMulti_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListBox_objectsMulti_SelectedIndexChanged(object sender, EventArgs e)
         {
-            showObject(listBox_objectsMulti.SelectedIndex);
+            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
         }
 
         /*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula

@@ -192,7 +192,7 @@
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
-            this.pictureBox_label.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox_label_MouseMove);
+            this.pictureBox_label.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_label_MouseMove);
             // 
             // textBox_mX
             // 
@@ -224,7 +224,7 @@
             this.checkBox_scale.TabIndex = 2;
             this.checkBox_scale.Text = "Scale picture 1:1";
             this.checkBox_scale.UseVisualStyleBackColor = true;
-            this.checkBox_scale.CheckedChanged += new System.EventHandler(this.checkBox_scale_CheckedChanged);
+            this.checkBox_scale.CheckedChanged += new System.EventHandler(this.CheckBox_scale_CheckedChanged);
             // 
             // label5
             // 
@@ -248,7 +248,7 @@
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(641, 360);
             this.tabControl1.TabIndex = 4;
-            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
+            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.TabControl1_SelectedIndexChanged);
             // 
             // tabPage_print
             // 
@@ -277,7 +277,7 @@
             this.button_printRange.TabIndex = 0;
             this.button_printRange.Text = "Print range";
             this.button_printRange.UseVisualStyleBackColor = true;
-            this.button_printRange.Click += new System.EventHandler(this.button_printRange_Click);
+            this.button_printRange.Click += new System.EventHandler(this.Button_printRange_Click);
             // 
             // label1
             // 
@@ -297,7 +297,7 @@
             this.button_printCurrent.TabIndex = 0;
             this.button_printCurrent.Text = "Print current";
             this.button_printCurrent.UseVisualStyleBackColor = true;
-            this.button_printCurrent.Click += new System.EventHandler(this.button_printCurrent_Click);
+            this.button_printCurrent.Click += new System.EventHandler(this.Button_printCurrent_Click);
             // 
             // button_printAll
             // 
@@ -308,7 +308,7 @@
             this.button_printAll.TabIndex = 0;
             this.button_printAll.Text = "Print all";
             this.button_printAll.UseVisualStyleBackColor = true;
-            this.button_printAll.Click += new System.EventHandler(this.button_printAll_Click);
+            this.button_printAll.Click += new System.EventHandler(this.Button_printAll_Click);
             // 
             // textBox_rangeFrom
             // 
@@ -327,7 +327,7 @@
             this.checkBox_toFile.TabIndex = 2;
             this.checkBox_toFile.Text = "Print to .PNG file";
             this.checkBox_toFile.UseVisualStyleBackColor = true;
-            this.checkBox_toFile.CheckedChanged += new System.EventHandler(this.checkBox_toFile_CheckedChanged);
+            this.checkBox_toFile.CheckedChanged += new System.EventHandler(this.CheckBox_toFile_CheckedChanged);
             // 
             // textBox_saveFileName
             // 
@@ -398,7 +398,7 @@
             this.listBox_objects.Name = "listBox_objects";
             this.listBox_objects.Size = new System.Drawing.Size(95, 173);
             this.listBox_objects.TabIndex = 6;
-            this.listBox_objects.SelectedIndexChanged += new System.EventHandler(this.listBox_objects_SelectedIndexChanged);
+            this.listBox_objects.SelectedIndexChanged += new System.EventHandler(this.ListBox_objects_SelectedIndexChanged);
             // 
             // label_content
             // 
@@ -516,7 +516,7 @@
             this.textBox_height.Name = "textBox_height";
             this.textBox_height.Size = new System.Drawing.Size(67, 20);
             this.textBox_height.TabIndex = 3;
-            this.textBox_height.Leave += new System.EventHandler(this.textBox_height_Leave);
+            this.textBox_height.Leave += new System.EventHandler(this.TextBox_height_Leave);
             // 
             // textBox_fontSize
             // 
@@ -533,7 +533,7 @@
             this.textBox_rotate.Name = "textBox_rotate";
             this.textBox_rotate.Size = new System.Drawing.Size(67, 20);
             this.textBox_rotate.TabIndex = 3;
-            this.textBox_rotate.Leave += new System.EventHandler(this.textBox_rotate_Leave);
+            this.textBox_rotate.Leave += new System.EventHandler(this.TextBox_rotate_Leave);
             // 
             // textBox_width
             // 
@@ -542,7 +542,7 @@
             this.textBox_width.Name = "textBox_width";
             this.textBox_width.Size = new System.Drawing.Size(67, 20);
             this.textBox_width.TabIndex = 3;
-            this.textBox_width.Leave += new System.EventHandler(this.textBox_width_Leave);
+            this.textBox_width.Leave += new System.EventHandler(this.TextBox_width_Leave);
             // 
             // textBox_posY
             // 
@@ -551,7 +551,7 @@
             this.textBox_posY.Name = "textBox_posY";
             this.textBox_posY.Size = new System.Drawing.Size(67, 20);
             this.textBox_posY.TabIndex = 3;
-            this.textBox_posY.Leave += new System.EventHandler(this.textBox_posY_Leave);
+            this.textBox_posY.Leave += new System.EventHandler(this.TextBox_posY_Leave);
             // 
             // textBox_content
             // 
@@ -569,7 +569,7 @@
             this.textBox_posX.Name = "textBox_posX";
             this.textBox_posX.Size = new System.Drawing.Size(67, 20);
             this.textBox_posX.TabIndex = 3;
-            this.textBox_posX.Leave += new System.EventHandler(this.textBox_posX_Leave);
+            this.textBox_posX.Leave += new System.EventHandler(this.TextBox_posX_Leave);
             // 
             // comboBox_objectColor
             // 
@@ -636,7 +636,7 @@
             this.button_clone.TabIndex = 0;
             this.button_clone.Text = "Clone object";
             this.button_clone.UseVisualStyleBackColor = true;
-            this.button_clone.Click += new System.EventHandler(this.button_clone_Click);
+            this.button_clone.Click += new System.EventHandler(this.Button_clone_Click);
             // 
             // button_saveLabel
             // 
@@ -646,7 +646,7 @@
             this.button_saveLabel.TabIndex = 0;
             this.button_saveLabel.Text = "Save label data";
             this.button_saveLabel.UseVisualStyleBackColor = true;
-            this.button_saveLabel.Click += new System.EventHandler(this.button_saveLabel_Click);
+            this.button_saveLabel.Click += new System.EventHandler(this.Button_saveLabel_Click);
             // 
             // button_saveTemplate
             // 
@@ -656,7 +656,7 @@
             this.button_saveTemplate.TabIndex = 0;
             this.button_saveTemplate.Text = "Save template";
             this.button_saveTemplate.UseVisualStyleBackColor = true;
-            this.button_saveTemplate.Click += new System.EventHandler(this.button_save_Click);
+            this.button_saveTemplate.Click += new System.EventHandler(this.Button_save_Click);
             // 
             // button_delete
             // 
@@ -667,7 +667,7 @@
             this.button_delete.TabIndex = 0;
             this.button_delete.Text = "Delete object";
             this.button_delete.UseVisualStyleBackColor = true;
-            this.button_delete.Click += new System.EventHandler(this.button_delete_Click);
+            this.button_delete.Click += new System.EventHandler(this.Button_delete_Click);
             // 
             // button_down
             // 
@@ -678,7 +678,7 @@
             this.button_down.TabIndex = 0;
             this.button_down.Text = "Down";
             this.button_down.UseVisualStyleBackColor = true;
-            this.button_down.Click += new System.EventHandler(this.button_down_Click);
+            this.button_down.Click += new System.EventHandler(this.Button_down_Click);
             // 
             // button_up
             // 
@@ -689,7 +689,7 @@
             this.button_up.TabIndex = 0;
             this.button_up.Text = "Up";
             this.button_up.UseVisualStyleBackColor = true;
-            this.button_up.Click += new System.EventHandler(this.button_up_Click);
+            this.button_up.Click += new System.EventHandler(this.Button_up_Click);
             // 
             // button_apply
             // 
@@ -699,7 +699,7 @@
             this.button_apply.TabIndex = 0;
             this.button_apply.Text = "Apply changes";
             this.button_apply.UseVisualStyleBackColor = true;
-            this.button_apply.Click += new System.EventHandler(this.button_apply_Click);
+            this.button_apply.Click += new System.EventHandler(this.Button_apply_Click);
             // 
             // tabPage_group
             // 
@@ -726,7 +726,7 @@
             this.button_deleteGroup.TabIndex = 5;
             this.button_deleteGroup.Text = "Delete objects";
             this.button_deleteGroup.UseVisualStyleBackColor = true;
-            this.button_deleteGroup.Click += new System.EventHandler(this.button_deleteGroup_Click);
+            this.button_deleteGroup.Click += new System.EventHandler(this.Button_deleteGroup_Click);
             // 
             // button_moveLeft
             // 
@@ -736,7 +736,7 @@
             this.button_moveLeft.TabIndex = 0;
             this.button_moveLeft.Text = "Left";
             this.button_moveLeft.UseVisualStyleBackColor = true;
-            this.button_moveLeft.Click += new System.EventHandler(this.button_moveLeft_Click);
+            this.button_moveLeft.Click += new System.EventHandler(this.Button_moveLeft_Click);
             // 
             // button_moveDown
             // 
@@ -746,7 +746,7 @@
             this.button_moveDown.TabIndex = 0;
             this.button_moveDown.Text = "Down";
             this.button_moveDown.UseVisualStyleBackColor = true;
-            this.button_moveDown.Click += new System.EventHandler(this.button_moveDown_Click);
+            this.button_moveDown.Click += new System.EventHandler(this.Button_moveDown_Click);
             // 
             // button_moveUp
             // 
@@ -756,7 +756,7 @@
             this.button_moveUp.TabIndex = 0;
             this.button_moveUp.Text = "Up";
             this.button_moveUp.UseVisualStyleBackColor = true;
-            this.button_moveUp.Click += new System.EventHandler(this.button_moveUp_Click);
+            this.button_moveUp.Click += new System.EventHandler(this.Button_moveUp_Click);
             // 
             // textBox_move
             // 
@@ -767,7 +767,7 @@
             this.textBox_move.TabIndex = 3;
             this.textBox_move.Text = "1";
             this.textBox_move.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.textBox_move.Leave += new System.EventHandler(this.textBox_move_Leave);
+            this.textBox_move.Leave += new System.EventHandler(this.TextBox_move_Leave);
             // 
             // button_moveRight
             // 
@@ -777,7 +777,7 @@
             this.button_moveRight.TabIndex = 0;
             this.button_moveRight.Text = "Right";
             this.button_moveRight.UseVisualStyleBackColor = true;
-            this.button_moveRight.Click += new System.EventHandler(this.button_moveRight_Click);
+            this.button_moveRight.Click += new System.EventHandler(this.Button_moveRight_Click);
             // 
             // label4
             // 
@@ -797,7 +797,7 @@
             this.textBox_dpi.TabIndex = 8;
             this.textBox_dpi.Text = "200";
             this.textBox_dpi.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.textBox_dpi.Leave += new System.EventHandler(this.textBox_dpi_Leave);
+            this.textBox_dpi.Leave += new System.EventHandler(this.TextBox_dpi_Leave);
             // 
             // checkBox_columnNames
             // 
@@ -845,7 +845,7 @@
             this.comboBox_units.Name = "comboBox_units";
             this.comboBox_units.Size = new System.Drawing.Size(50, 21);
             this.comboBox_units.TabIndex = 6;
-            this.comboBox_units.SelectedIndexChanged += new System.EventHandler(this.comboBox_units_SelectedIndexChanged);
+            this.comboBox_units.SelectedIndexChanged += new System.EventHandler(this.ComboBox_units_SelectedIndexChanged);
             // 
             // textBox_templateName
             // 
@@ -865,7 +865,7 @@
             this.button_importTemplate.TabIndex = 0;
             this.button_importTemplate.Text = "Import template";
             this.button_importTemplate.UseVisualStyleBackColor = true;
-            this.button_importTemplate.Click += new System.EventHandler(this.button_importTemplate_Click);
+            this.button_importTemplate.Click += new System.EventHandler(this.Button_importTemplate_Click);
             // 
             // button_importLabels
             // 
@@ -876,7 +876,7 @@
             this.button_importLabels.TabIndex = 0;
             this.button_importLabels.Text = "Import labels";
             this.button_importLabels.UseVisualStyleBackColor = true;
-            this.button_importLabels.Click += new System.EventHandler(this.button_importLabels_Click);
+            this.button_importLabels.Click += new System.EventHandler(this.Button_importLabels_Click);
             // 
             // comboBox_encoding
             // 
@@ -887,7 +887,7 @@
             this.comboBox_encoding.Name = "comboBox_encoding";
             this.comboBox_encoding.Size = new System.Drawing.Size(185, 21);
             this.comboBox_encoding.TabIndex = 2;
-            this.comboBox_encoding.SelectedIndexChanged += new System.EventHandler(this.comboBox_encoding_SelectedIndexChanged);
+            this.comboBox_encoding.SelectedIndexChanged += new System.EventHandler(this.ComboBox_encoding_SelectedIndexChanged);
             // 
             // label2
             // 
@@ -921,12 +921,12 @@
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(954, 158);
             this.dataGridView_labels.TabIndex = 0;
-            this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.dataGridView_labels_SelectionChanged);
+            this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.DataGridView_labels_SelectionChanged);
             // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
+            this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.OpenFileDialog1_FileOk);
             // 
             // printDialog1
             // 
@@ -934,12 +934,12 @@
             // 
             // SaveFileDialog1
             // 
-            this.SaveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.saveFileDialog1_FileOk);
+            this.SaveFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.SaveFileDialog1_FileOk);
             // 
             // timer1
             // 
             this.timer1.Interval = 500;
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
             // 
             // listBox_objectsMulti
             // 
@@ -951,7 +951,7 @@
             this.listBox_objectsMulti.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
             this.listBox_objectsMulti.Size = new System.Drawing.Size(95, 316);
             this.listBox_objectsMulti.TabIndex = 7;
-            this.listBox_objectsMulti.SelectedIndexChanged += new System.EventHandler(this.listBox_objectsMulti_SelectedIndexChanged);
+            this.listBox_objectsMulti.SelectedIndexChanged += new System.EventHandler(this.ListBox_objectsMulti_SelectedIndexChanged);
             // 
             // Form1
             // 
