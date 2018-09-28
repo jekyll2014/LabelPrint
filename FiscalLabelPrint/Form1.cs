@@ -84,8 +84,9 @@ namespace LabelPrint
         private bool _templateChanged = false;
         private bool cmdLinePrint = false;
         private string printerName = "";
+        private string pictureName = "";
         private Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
-        private List<Rectangle> currentObject = new List<Rectangle>();
+        private List<Rectangle> currentObjectsPositions = new List<Rectangle>();
         private Color _borderColor = Color.Black;
         private string path = "";
         private Bitmap objectBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
@@ -95,110 +96,7 @@ namespace LabelPrint
             InitializeComponent();
             if (cmdLine.Length >= 1)
             {
-                tabControl1.SelectedIndexChanged -= new EventHandler(TabControl1_SelectedIndexChanged);
-                listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
-                if (cmdLine[0] == "/?" || cmdLine[0] == "/h" || cmdLine[0] == "/help")
-                {
-                    Console.WriteLine("/?, /h, /help - print help\r\n" +
-                        "/T=file.csv - load template data from file\r\n" +
-                        "/L=file.csv - load label data from file\r\n" +
-                        "/C - 1st string of label file is column names (default = no)\r\n" +
-                        "/PRN=SystemPrinterName - output to printer (replace spaces with \'_\')\r\n" +
-                        "/PIC=pictureName - output to pictures\r\n" +
-                        "/P=A - print all labels\r\n" +
-                        "/P=xxx - print label #xxx\r\n" +
-                        "/P=xxx-yyy - print labels from xxx to yyy");
-                }
-                else
-                {
-                    string template = "";
-                    string label = "";
-                    int from = -1;
-                    int to = -1;
-                    bool printAll = false;
-
-                    for (int i = 0; i < cmdLine.Length; i++)
-                    {
-                        cmdLine[i] = cmdLine[i].Trim();
-                        if (cmdLine[i].ToLower().StartsWith("/t="))
-                        {
-
-                            template = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
-                        }
-                        else if (cmdLine[i].ToLower().StartsWith("/c"))
-                        {
-                            checkBox_columnNames.Checked = true;
-                        }
-                        else if (cmdLine[i].ToLower().StartsWith("/l="))
-                        {
-                            label = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
-                        }
-                        else if (cmdLine[i].ToLower().StartsWith("/p="))
-                        {
-                            cmdLine[i] = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
-                            if (cmdLine[i] == "a")
-                            {
-                                printAll = true;
-                                from = to = 0;
-                            }
-                            else if (cmdLine[i].IndexOf('-') > 0)
-                            {
-                                int.TryParse(cmdLine[i].Substring(0, cmdLine[i].IndexOf('-')), out from);
-                                int.TryParse(cmdLine[i].Substring(cmdLine[i].IndexOf('-') + 1), out to);
-                            }
-                            else
-                            {
-                                int.TryParse(cmdLine[i], out from);
-                                to = from;
-                            }
-                        }
-                        else if (cmdLine[i].ToLower().StartsWith("/prn="))
-                        {
-                            printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).Replace("_", " ");
-                        }
-                        else if (cmdLine[i].ToLower().StartsWith("/pic="))
-                        {
-                            printerName = " ";
-                            textBox_saveFileName.Text = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
-                            checkBox_toFile.Checked = true;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Unknown parameter: " + cmdLine[i]);
-                        }
-                    }
-                    //check we have enough data to print
-                    if (template != "" && label != "" && from != -1 && to != -1 && printerName != "")
-                    {
-                        cmdLinePrint = true;
-                        //import template
-                        openFileDialog1.Title = "Open template .CSV file";
-                        openFileDialog1.FileName = template;
-                        OpenFileDialog1_FileOk(this, null);
-                        //import labels
-                        openFileDialog1.Title = "Open labels .CSV database";
-                        openFileDialog1.FileName = label;
-                        OpenFileDialog1_FileOk(this, null);
-                        if (printAll == true) Button_printAll_Click(this, EventArgs.Empty);
-                        else
-                        {
-                            textBox_rangeFrom.Text = from.ToString();
-                            textBox_rangeTo.Text = to.ToString();
-                            Button_printRange_Click(this, EventArgs.Empty);
-                        }
-                    }
-                    else Console.WriteLine("Not enough parameters.\r\n");
-                }
-                if (Application.MessageLoop)
-                {
-                    // WinForms app
-                    Application.Exit();
-                }
-                else
-                {
-                    // Console app
-                    Environment.Exit(1);
-                }
+                cmdLineOperation(cmdLine);
             }
             comboBox_object.Items.AddRange(_objectNames);
 
@@ -221,16 +119,125 @@ namespace LabelPrint
 
             comboBox_encoding.Items.Clear();
             comboBox_encoding.Items.AddRange(GetEncodingList());
-            string str = Properties.Settings.Default.CodePage.ToString();
+
+            //select codepage set in the template file
             for (int i = 0; i < comboBox_encoding.Items.Count; i++)
             {
-                if (comboBox_encoding.Items[i].ToString().StartsWith(str))
+                if (comboBox_encoding.Items[i].ToString().StartsWith(Properties.Settings.Default.CodePage.ToString()))
                 {
                     comboBox_encoding.SelectedIndex = i;
                     break;
                 }
             }
+
             TextBox_dpi_Leave(this, EventArgs.Empty);
+        }
+
+        private void cmdLineOperation(string[] cmdLine)
+        {
+            tabControl1.SelectedIndexChanged -= new EventHandler(TabControl1_SelectedIndexChanged);
+            listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            if (cmdLine[0].StartsWith("/?") || cmdLine[0].StartsWith("/h") || cmdLine[0].StartsWith("/help"))
+            {
+                Console.WriteLine("/?, /h, /help - print help\r\n" +
+                    "/t=file.csv - load template data from file\r\n" +
+                    "/l=file.csv - load label data from file\r\n" +
+                    "/c - 1st string of label file is column names (default = no)\r\n" +
+                    "/prn=SystemPrinterName - output to printer (replace spaces with \'_\')\r\n" +
+                    "/pic=pictureName - output to pictures\r\n" +
+                    "/p=A - print all labels\r\n" +
+                    "/p=xxx - print label #xxx\r\n" +
+                    "/p=xxx-yyy - print labels from xxx to yyy");
+            }
+            else
+            {
+                string templateFile = "";
+                bool columnNames = false;
+                string labelFile = "";
+                int printFrom = -1;
+                int printTo = -1;
+                bool printAll = false;
+
+                for (int i = 0; i < cmdLine.Length; i++)
+                {
+                    cmdLine[i] = cmdLine[i].Trim();
+                    if (cmdLine[i].ToLower().StartsWith("/t="))
+                    {
+
+                        templateFile = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                    }
+                    else if (cmdLine[i].ToLower().StartsWith("/l="))
+                    {
+                        labelFile = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                    }
+                    else if (cmdLine[i].ToLower().StartsWith("/c"))
+                    {
+                        columnNames = true;
+                    }
+                    else if (cmdLine[i].ToLower().StartsWith("/prn="))
+                    {
+                        printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).Replace("_", " ");
+                    }
+                    else if (cmdLine[i].ToLower().StartsWith("/pic="))
+                    {
+                        pictureName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                    }
+                    else if (cmdLine[i].ToLower().StartsWith("/p="))
+                    {
+                        cmdLine[i] = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        if (cmdLine[i] == "a")
+                        {
+                            printAll = true;
+                            printFrom = printTo = 0;
+                        }
+                        else if (cmdLine[i].IndexOf('-') > 0)
+                        {
+                            int.TryParse(cmdLine[i].Substring(0, cmdLine[i].IndexOf('-')), out printFrom);
+                            int.TryParse(cmdLine[i].Substring(cmdLine[i].IndexOf('-') + 1), out printTo);
+                        }
+                        else
+                        {
+                            int.TryParse(cmdLine[i], out printFrom);
+                            printTo = printFrom;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Unknown parameter: " + cmdLine[i]);
+                    }
+                }
+                //check we have enough data to print
+                if (templateFile != "" && labelFile != "" && printFrom > 0 && printTo > 0 && (printerName != "" || pictureName != ""))
+                {
+                    cmdLinePrint = true;
+                    //import template
+                    Label = loadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+
+                    //import labels
+                    ReadCsv(labelFile, LabelsDatabase, columnNames);
+
+                    if (printAll)
+                    {
+                        pagesFrom = 0;
+                        pagesTo = LabelsDatabase.Rows.Count - 1;
+                    }
+                    if (pagesTo >= LabelsDatabase.Rows.Count) pagesTo = LabelsDatabase.Rows.Count - 1;
+
+                    if (printerName != "") sendToPrinter(pagesFrom, pagesTo, printerName);
+                    if (pictureName != "") sendToFile(pagesFrom, pagesTo, pictureName);
+                }
+                else Console.WriteLine("Not enough parameters.\r\n");
+            }
+            if (Application.MessageLoop)
+            {
+                // WinForms app
+                Application.Exit();
+            }
+            else
+            {
+                // Console app
+                Environment.Exit(1);
+            }
         }
 
         #region Drawing
@@ -757,10 +764,51 @@ namespace LabelPrint
 
         private void OpenFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (openFileDialog1.Title == "Open labels .CSV database")
+            if (openFileDialog1.Title == "Open template .CSV file")
+            {
+                objectsNum = 0;
+                dataGridView_labels.DataSource = null;
+                LabelsDatabase.Clear();
+                LabelsDatabase.Columns.Clear();
+                LabelsDatabase.Rows.Clear();
+                textBox_labelsName.Clear();
+                Label.Clear();
+
+                Label = loadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+
+                TextBox_dpi_Leave(this, EventArgs.Empty);
+                button_importLabels.Enabled = true;
+                GenerateLabel(-1);
+                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //save path to template
+                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //create colums and fill 1 row with default values
+                for (int i = 1; i < objectsNum; i++)
+                {
+                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].name);
+                }
+                DataRow row = LabelsDatabase.NewRow();
+                for (int i = 1; i < objectsNum; i++)
+                {
+                    row[i - 1] = Label[i].content;
+                }
+                LabelsDatabase.Rows.Add(row);
+                dataGridView_labels.DataSource = LabelsDatabase;
+                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                button_printCurrent.Enabled = true;
+                button_printAll.Enabled = false;
+                button_printRange.Enabled = false;
+                textBox_rangeFrom.Text = "0";
+                textBox_rangeTo.Text = "0";
+                SetRowNumber(dataGridView_labels);
+                TabControl1_SelectedIndexChanged(this, EventArgs.Empty);
+            }
+            else if (openFileDialog1.Title == "Open labels .CSV database")
             {
                 dataGridView_labels.DataSource = null;
+
                 ReadCsv(openFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked);
+
                 if (LabelsDatabase.Rows.Count > 0)
                 {
                     dataGridView_labels.DataSource = LabelsDatabase;
@@ -795,38 +843,263 @@ namespace LabelPrint
                 GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
                 textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
             }
-            else if (openFileDialog1.Title == "Open template .CSV file")
+        }
+
+        private List<Template> loadTemplate(string fileName, int codePage)
+        {
+            List<Template> tmpLabel = new List<Template>();
+            string[] inputStr = File.ReadAllLines(openFileDialog1.FileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+            for (int i = 0; i < inputStr.Length; i++)
             {
-                objectsNum = 0;
-                dataGridView_labels.DataSource = null;
-                LabelsDatabase.Clear();
-                LabelsDatabase.Columns.Clear();
-                LabelsDatabase.Rows.Clear();
-                textBox_labelsName.Clear();
-                string[] inputStr = File.ReadAllLines(openFileDialog1.FileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage));
-                Label.Clear();
-                for (int i = 0; i < inputStr.Length; i++)
+                if (inputStr[i].Trim() != "")
                 {
-                    if (inputStr[i].Trim() != "")
+                    List<string> cells = new List<string>();
+                    foreach (string str in inputStr[i].Split(Properties.Settings.Default.CSVdelimiter))
                     {
-                        List<string> cells = new List<string>();
-                        foreach (string str in inputStr[i].Split(Properties.Settings.Default.CSVdelimiter))
+                        cells.Add(str.Trim());
+                    }
+                    while (cells[cells.Count - 1] == "") cells.RemoveAt(cells.Count - 1);
+                    if (cells.Count >= 7)
+                    {
+                        Template templ = new Template();
+                        if (i == 0 && cells[0] != _objectNames[labelObject])
                         {
-                            cells.Add(str.Trim());
+                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                            return tmpLabel;
                         }
-                        if (cells[cells.Count - 1] == "") cells.RemoveAt(cells.Count - 1);
-                        if (cells.Count >= 7)
+                        templ.name = cells[0];
+                        objectsNum++;
+                        // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
+                        if (templ.name == _objectNames[labelObject])
                         {
-                            Template templ = new Template();
-                            if (i == 0 && cells[0] != _objectNames[labelObject])
+                            if (cells[1] != "")
+                            {
+                                templ.bgColor = Color.FromName(cells[1]);
+                            }
+                            else
+                            {
+                                templ.bgColor = Color.White;
+                            }
+
+                            if (cells[2] != "")
+                            {
+                                templ.fgColor = Color.FromName(cells[2]);
+                            }
+                            else
+                            {
+                                templ.fgColor = Color.Black;
+                            }
+                            if (templ.bgColor == templ.fgColor)
                             {
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                return;
                             }
-                            templ.name = cells[0];
-                            objectsNum++;
-                            // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
-                            if (templ.name == _objectNames[labelObject])
+
+                            float.TryParse(cells[3], out templ.width);
+                            if (templ.width <= 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect label width: " + templ.width.ToString());
+                                templ.width = 1;
+                            }
+
+                            float.TryParse(cells[4], out templ.height);
+                            if (templ.height <= 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect label height: " + templ.height.ToString());
+                                templ.height = 1;
+                            }
+
+                            templ.dpi = 0;
+                            float.TryParse(cells[5], out templ.dpi);
+                            if (templ.dpi == 0) float.TryParse(textBox_dpi.Text, out templ.dpi); //-V3024
+                            else if (templ.dpi < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect resolution: " + templ.dpi.ToString());
+                                templ.height = 1;
+                            }
+                            textBox_dpi.Text = templ.dpi.ToString("F4");
+
+                            int.TryParse(cells[6], out templ.codePage);
+                            if (templ.codePage == 0) templ.codePage = Properties.Settings.Default.CodePage;
+                            else if (templ.codePage < 0)
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incorrect codepage: " + templ.codePage.ToString());
+                                templ.height = 1;
+                            }
+                            for (int j = 0; j < comboBox_encoding.Items.Count; j++)
+                            {
+                                if (comboBox_encoding.Items[j].ToString().StartsWith(templ.codePage.ToString()))
+                                {
+                                    comboBox_encoding.SelectedIndex = j;
+                                    break;
+                                }
+                            }
+                        }
+                        // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
+                        else if (templ.name == _objectNames[textObject])
+                        {
+                            if (cells.Count >= 9)
+                            {
+                                if (cells[1] != "")
+                                {
+                                    templ.fgColor = Color.FromName(cells[1]);
+                                }
+                                else
+                                {
+                                    templ.fgColor = tmpLabel[0].fgColor;
+                                }
+                                if (templ.bgColor == templ.fgColor)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                }
+
+                                float.TryParse(cells[2], out templ.posX);
+                                if (templ.posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                }
+
+                                float.TryParse(cells[3], out templ.posY);
+                                if (templ.posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                }
+
+                                float.TryParse(cells[4], out templ.rotate);
+
+                                templ.content = cells[5];
+
+                                templ.fontName = cells[6];
+                                // Check if the font is present
+                                InstalledFontCollection installedFontCollection = new InstalledFontCollection();
+                                bool _fontPresent = false;
+                                foreach (FontFamily fontFamily in installedFontCollection.Families)
+                                {
+                                    if (fontFamily.Name == templ.fontName)
+                                    {
+                                        _fontPresent = true;
+                                        break;
+                                    }
+                                }
+                                if (_fontPresent == false)
+                                {
+                                    MessageBox.Show("Incorrect font name: " + templ.fontName + "\r\nchanged to default: " + this.Font.Name);
+                                    templ.fontName = this.Font.Name;
+                                }
+                                installedFontCollection.Dispose();
+
+                                float.TryParse(cells[7], out templ.fontSize);
+
+                                byte.TryParse(cells[8], out templ.fontStyle);
+                                if (templ.fontStyle != 0 && templ.fontStyle != 1 && templ.fontStyle != 2 && templ.fontStyle != 4 && templ.fontStyle != 8)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect font style: " + templ.fontStyle);
+                                    templ.fontStyle = 0;
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                        }
+                        // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
+                        else if (templ.name == _objectNames[pictureObject])
+                        {
+                            if (cells.Count >= 9)
+                            {
+                                if (cells[1] != "")
+                                {
+                                    templ.fgColor = Color.FromName(cells[1]);
+                                }
+                                else
+                                {
+                                    templ.fgColor = tmpLabel[0].fgColor;
+                                }
+                                if (templ.bgColor == templ.fgColor)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                }
+
+                                float.TryParse(cells[2], out templ.posX);
+                                if (templ.posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                }
+
+                                float.TryParse(cells[3], out templ.posY);
+                                if (templ.posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                }
+
+                                float.TryParse(cells[4], out templ.rotate);
+
+                                templ.content = cells[5];
+                                if (!File.Exists(path + templ.content))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + path + templ.content);
+                                }
+
+                                float.TryParse(cells[6], out templ.width);
+                                if (templ.width < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = 0;
+                                }
+                                /*else if (templ.width >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                float.TryParse(cells[7], out templ.height);
+                                if (templ.height < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = 0;
+                                }
+                                /*else if (templ.height >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                byte t = 0;
+                                byte.TryParse(cells[8], out t);
+                                templ.transparent = (t > 0);
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                        }
+                        // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
+                        else if (templ.name == _objectNames[barcodeObject])
+                        {
+                            if (cells.Count >= 11)
                             {
                                 if (cells[1] != "")
                                 {
@@ -834,7 +1107,7 @@ namespace LabelPrint
                                 }
                                 else
                                 {
-                                    templ.bgColor = Color.White;
+                                    templ.bgColor = tmpLabel[0].bgColor;
                                 }
 
                                 if (cells[2] != "")
@@ -843,620 +1116,364 @@ namespace LabelPrint
                                 }
                                 else
                                 {
-                                    templ.fgColor = Color.Black;
+                                    templ.fgColor = tmpLabel[0].fgColor;
                                 }
                                 if (templ.bgColor == templ.fgColor)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
                                 }
 
-                                float.TryParse(cells[3], out templ.width);
-                                if (templ.width <= 0)
+                                float.TryParse(cells[3], out templ.posX);
+                                if (templ.posX < 0)
                                 {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect label width: " + templ.width.ToString());
-                                    templ.width = 1;
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = (int)tmpLabel[0].width - 1;
                                 }
 
-                                float.TryParse(cells[4], out templ.height);
-                                if (templ.height <= 0)
+                                float.TryParse(cells[4], out templ.posY);
+                                if (templ.posY < 0)
                                 {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect label height: " + templ.height.ToString());
-                                    templ.height = 1;
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = (int)tmpLabel[0].height - 1;
                                 }
 
-                                templ.dpi = 0;
-                                float.TryParse(cells[5], out templ.dpi);
-                                if (templ.dpi == 0) float.TryParse(textBox_dpi.Text, out templ.dpi); //-V3024
-                                else if (templ.dpi < 0)
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect resolution: " + templ.dpi.ToString());
-                                    templ.height = 1;
-                                }
-                                textBox_dpi.Text = templ.dpi.ToString("F4");
+                                float.TryParse(cells[5], out templ.rotate);
 
-                                int.TryParse(cells[6], out templ.codePage);
-                                if (templ.codePage == 0) templ.codePage = Properties.Settings.Default.CodePage;
-                                else if (templ.codePage < 0)
+                                templ.content = cells[6];
+
+                                float.TryParse(cells[7], out templ.width);
+                                if (templ.width < 0)
                                 {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect codepage: " + templ.codePage.ToString());
-                                    templ.height = 1;
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = 0;
                                 }
-                                for (int j = 0; j < comboBox_encoding.Items.Count; j++)
+                                /*else if (templ.width >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
                                 {
-                                    if (comboBox_encoding.Items[j].ToString().StartsWith(templ.codePage.ToString()))
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                float.TryParse(cells[8], out templ.height);
+                                if (templ.height < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = 0;
+                                }
+                                /*else if (templ.height >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                int.TryParse(cells[9], out templ.BCformat);
+                                if (!BarCodeTypes.Contains(templ.BCformat))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + templ.BCformat.ToString());
+                                    templ.BCformat = (int)BarcodeFormat.QR_CODE;
+                                }
+
+                                byte t = 0;
+                                byte.TryParse(cells[10], out t);
+                                templ.transparent = (t > 0);
+
+                                if (cells.Count >= 12 && cells[11].Contains("="))
+                                {
+                                    if (bcFeatures.Contains(cells[11].Substring(0, cells[11].IndexOf('=')).Trim()))
                                     {
-                                        comboBox_encoding.SelectedIndex = j;
-                                        break;
+                                        templ.feature = cells[11];
                                     }
+                                    else if (templ.feature == "0") templ.feature = "";
                                 }
+                                else templ.feature = "";
                             }
-                            // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
-                            else if (templ.name == _objectNames[textObject])
+                            else
                             {
-                                if (cells.Count >= 9)
-                                {
-                                    if (cells[1] != "")
-                                    {
-                                        templ.fgColor = Color.FromName(cells[1]);
-                                    }
-                                    else
-                                    {
-                                        templ.fgColor = Label[0].fgColor;
-                                    }
-                                    if (templ.bgColor == templ.fgColor)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                    }
-
-                                    float.TryParse(cells[2], out templ.posX);
-                                    if (templ.posX < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = 0;
-                                    }
-                                    else if (templ.posX >= (int)Label[0].width)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = (int)Label[0].width - 1;
-                                    }
-
-                                    float.TryParse(cells[3], out templ.posY);
-                                    if (templ.posY < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = 0;
-                                    }
-                                    else if (templ.posY >= (int)Label[0].height)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = (int)Label[0].height - 1;
-                                    }
-
-                                    float.TryParse(cells[4], out templ.rotate);
-
-                                    templ.content = cells[5];
-
-                                    templ.fontName = cells[6];
-                                    // Check if the font is present
-                                    InstalledFontCollection installedFontCollection = new InstalledFontCollection();
-                                    bool _fontPresent = false;
-                                    foreach (FontFamily fontFamily in installedFontCollection.Families)
-                                    {
-                                        if (fontFamily.Name == templ.fontName)
-                                        {
-                                            _fontPresent = true;
-                                            break;
-                                        }
-                                    }
-                                    if (_fontPresent == false)
-                                    {
-                                        MessageBox.Show("Incorrect font name: " + templ.fontName + "\r\nchanged to default: " + this.Font.Name);
-                                        templ.fontName = this.Font.Name;
-                                    }
-                                    installedFontCollection.Dispose();
-
-                                    float.TryParse(cells[7], out templ.fontSize);
-
-                                    byte.TryParse(cells[8], out templ.fontStyle);
-                                    if (templ.fontStyle != 0 && templ.fontStyle != 1 && templ.fontStyle != 2 && templ.fontStyle != 4 && templ.fontStyle != 8)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect font style: " + templ.fontStyle);
-                                        templ.fontStyle = 0;
-                                    }
-                                }
-                                else
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
-                                }
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
                             }
-                            // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
-                            else if (templ.name == _objectNames[pictureObject])
-                            {
-                                if (cells.Count >= 9)
-                                {
-                                    if (cells[1] != "")
-                                    {
-                                        templ.fgColor = Color.FromName(cells[1]);
-                                    }
-                                    else
-                                    {
-                                        templ.fgColor = Label[0].fgColor;
-                                    }
-                                    if (templ.bgColor == templ.fgColor)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                    }
-
-                                    float.TryParse(cells[2], out templ.posX);
-                                    if (templ.posX < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = 0;
-                                    }
-                                    else if (templ.posX >= (int)Label[0].width)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = (int)Label[0].width - 1;
-                                    }
-
-                                    float.TryParse(cells[3], out templ.posY);
-                                    if (templ.posY < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = 0;
-                                    }
-                                    else if (templ.posY >= (int)Label[0].height)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = (int)Label[0].height - 1;
-                                    }
-
-                                    float.TryParse(cells[4], out templ.rotate);
-
-                                    templ.content = cells[5];
-                                    if (!File.Exists(path + templ.content))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + path + templ.content);
-                                    }
-
-                                    float.TryParse(cells[6], out templ.width);
-                                    if (templ.width < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = 0;
-                                    }
-                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    float.TryParse(cells[7], out templ.height);
-                                    if (templ.height < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = 0;
-                                    }
-                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    byte t = 0;
-                                    byte.TryParse(cells[8], out t);
-                                    templ.transparent = (t > 0);
-                                }
-                                else
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
-                                }
-                            }
-                            // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
-                            else if (templ.name == _objectNames[barcodeObject])
-                            {
-                                if (cells.Count >= 11)
-                                {
-                                    if (cells[1] != "")
-                                    {
-                                        templ.bgColor = Color.FromName(cells[1]);
-                                    }
-                                    else
-                                    {
-                                        templ.bgColor = Label[0].bgColor;
-                                    }
-
-                                    if (cells[2] != "")
-                                    {
-                                        templ.fgColor = Color.FromName(cells[2]);
-                                    }
-                                    else
-                                    {
-                                        templ.fgColor = Label[0].fgColor;
-                                    }
-                                    if (templ.bgColor == templ.fgColor)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                    }
-
-                                    float.TryParse(cells[3], out templ.posX);
-                                    if (templ.posX < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = 0;
-                                    }
-                                    else if (templ.posX >= (int)Label[0].width)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = (int)Label[0].width - 1;
-                                    }
-
-                                    float.TryParse(cells[4], out templ.posY);
-                                    if (templ.posY < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = 0;
-                                    }
-                                    else if (templ.posY >= (int)Label[0].height)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = (int)Label[0].height - 1;
-                                    }
-
-                                    float.TryParse(cells[5], out templ.rotate);
-
-                                    templ.content = cells[6];
-
-                                    float.TryParse(cells[7], out templ.width);
-                                    if (templ.width < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = 0;
-                                    }
-                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    float.TryParse(cells[8], out templ.height);
-                                    if (templ.height < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = 0;
-                                    }
-                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    int.TryParse(cells[9], out templ.BCformat);
-                                    if (!BarCodeTypes.Contains(templ.BCformat))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + templ.BCformat.ToString());
-                                        templ.BCformat = (int)BarcodeFormat.QR_CODE;
-                                    }
-
-                                    byte t = 0;
-                                    byte.TryParse(cells[10], out t);
-                                    templ.transparent = (t > 0);
-
-                                    if (cells.Count >= 12 && cells[11].Contains("="))
-                                    {
-                                        if (bcFeatures.Contains(cells[11].Substring(0, cells[11].IndexOf('=')).Trim()))
-                                        {
-                                            templ.feature = cells[11];
-                                        }
-                                        else if (templ.feature == "0") templ.feature = "";
-                                    }
-                                    else templ.feature = "";
-                                }
-                                else
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
-                                }
-                            }
-                            // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY;
-                            // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
-                            else if (templ.name == _objectNames[lineObject])
-                            {
-                                if (cells.Count >= 7) //-V3022
-                                {
-                                    if (cells[1] != "")
-                                    {
-                                        templ.fgColor = Color.FromName(cells[1]);
-                                    }
-                                    else
-                                    {
-                                        templ.fgColor = Label[0].fgColor;
-                                    }
-                                    if (templ.bgColor == templ.fgColor)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                    }
-
-                                    float.TryParse(cells[2], out templ.posX);
-                                    if (templ.posX < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = 0;
-                                    }
-                                    else if (templ.posX >= (int)Label[0].width)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = (int)Label[0].width - 1;
-                                    }
-
-                                    float.TryParse(cells[3], out templ.posY);
-                                    if (templ.posY < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = 0;
-                                    }
-                                    else if (templ.posY >= (int)Label[0].height)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = (int)Label[0].height - 1;
-                                    }
-
-                                    float.TryParse(cells[5], out templ.lineWidth);
-                                    if (templ.lineWidth < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
-                                        templ.lineWidth = 0;
-                                    }
-
-                                    if (cells[4] != "")
-                                    {
-                                        float.TryParse(cells[4], out templ.rotate);
-
-                                        float.TryParse(cells[6], out templ.lineLength);
-                                        if (templ.lineLength < 0)
-                                        {
-                                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
-                                            templ.lineLength = 0;
-                                        }
-                                        /*else if (templ.lineLength >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                        {
-                                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
-                                            templ.lineLength = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                        }*/
-                                    }
-                                    else
-                                    {
-                                        float.TryParse(cells[6], out templ.width);
-                                        if (templ.width < 0)
-                                        {
-                                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                            templ.width = 0;
-                                        }
-                                        /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                        {
-                                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                            templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                        }*/
-
-                                        float.TryParse(cells[7], out templ.height);
-                                        if (templ.height < 0)
-                                        {
-                                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                            templ.height = 0;
-                                        }
-                                        /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                        {
-                                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                            templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                        }*/
-
-                                        templ.lineLength = -1;
-                                    }
-                                }
-                                else
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
-                                }
-                            }
-                            // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
-                            else if (templ.name == _objectNames[rectangleObject])
-                            {
-                                if (cells.Count >= 9)
-                                {
-                                    if (cells[1] != "")
-                                    {
-                                        templ.fgColor = Color.FromName(cells[1]);
-                                    }
-                                    else
-                                    {
-                                        templ.fgColor = Label[0].fgColor;
-                                    }
-                                    if (templ.bgColor == templ.fgColor)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                    }
-
-                                    float.TryParse(cells[2], out templ.posX);
-                                    if (templ.posX < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = 0;
-                                    }
-                                    else if (templ.posX >= (int)Label[0].width)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = (int)Label[0].width - 1;
-                                    }
-
-                                    float.TryParse(cells[3], out templ.posY);
-                                    if (templ.posY < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = 0;
-                                    }
-                                    else if (templ.posY >= (int)Label[0].height)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = (int)Label[0].height - 1;
-                                    }
-
-                                    float.TryParse(cells[4], out templ.rotate);
-
-                                    float.TryParse(cells[5], out templ.lineWidth);
-                                    if (templ.lineWidth < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
-                                        templ.lineWidth = 0;
-                                    }
-
-                                    float.TryParse(cells[6], out templ.width);
-                                    if (templ.width < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = 0;
-                                    }
-                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    float.TryParse(cells[7], out templ.height);
-                                    if (templ.height < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = 0;
-                                    }
-                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    byte t = 0;
-                                    byte.TryParse(cells[8], out t);
-                                    templ.transparent = (t > 0);
-                                }
-                                else
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
-                                }
-                            }
-                            // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                            else if (templ.name == _objectNames[ellipseObject])
-                            {
-                                if (cells.Count >= 9)
-                                {
-                                    if (cells[1] != "")
-                                    {
-                                        templ.fgColor = Color.FromName(cells[1]);
-                                    }
-                                    else
-                                    {
-                                        templ.fgColor = Label[0].fgColor;
-                                    }
-                                    if (templ.bgColor == templ.fgColor)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                                    }
-
-                                    float.TryParse(cells[2], out templ.posX);
-                                    if (templ.posX < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = 0;
-                                    }
-                                    else if (templ.posX >= (int)Label[0].width)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                        templ.posX = (int)Label[0].width - 1;
-                                    }
-
-                                    float.TryParse(cells[3], out templ.posY);
-                                    if (templ.posY < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = 0;
-                                    }
-                                    else if (templ.posY >= (int)Label[0].height)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                        templ.posY = (int)Label[0].height - 1;
-                                    }
-
-                                    float.TryParse(cells[4], out templ.rotate);
-
-                                    float.TryParse(cells[5], out templ.lineWidth);
-                                    if (templ.lineWidth < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
-                                        templ.lineWidth = 0;
-                                    }
-
-                                    float.TryParse(cells[6], out templ.width);
-                                    if (templ.width < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = 0;
-                                    }
-                                    /*else if (templ.width >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    float.TryParse(cells[7], out templ.height);
-                                    if (templ.height < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = 0;
-                                    }
-                                    /*else if (templ.height >= Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt((int)Label[0].width * (int)Label[0].width + (int)Label[0].height * (int)Label[0].height);
-                                    }*/
-
-                                    byte t = 0;
-                                    byte.TryParse(cells[8], out t);
-                                    templ.transparent = (t > 0);
-                                }
-                                else
-                                {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
-                                }
-                            }
-                            Label.Add(templ);
                         }
+                        // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY;
+                        // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
+                        else if (templ.name == _objectNames[lineObject])
+                        {
+                            if (cells.Count >= 7) //-V3022
+                            {
+                                if (cells[1] != "")
+                                {
+                                    templ.fgColor = Color.FromName(cells[1]);
+                                }
+                                else
+                                {
+                                    templ.fgColor = tmpLabel[0].fgColor;
+                                }
+                                if (templ.bgColor == templ.fgColor)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                }
+
+                                float.TryParse(cells[2], out templ.posX);
+                                if (templ.posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                }
+
+                                float.TryParse(cells[3], out templ.posY);
+                                if (templ.posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                }
+
+                                float.TryParse(cells[5], out templ.lineWidth);
+                                if (templ.lineWidth < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
+                                    templ.lineWidth = 0;
+                                }
+
+                                if (cells[4] != "")
+                                {
+                                    float.TryParse(cells[4], out templ.rotate);
+
+                                    float.TryParse(cells[6], out templ.lineLength);
+                                    if (templ.lineLength < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
+                                        templ.lineLength = 0;
+                                    }
+                                    /*else if (templ.lineLength >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
+                                        templ.lineLength = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                    }*/
+                                }
+                                else
+                                {
+                                    float.TryParse(cells[6], out templ.width);
+                                    if (templ.width < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                        templ.width = 0;
+                                    }
+                                    /*else if (templ.width >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                        templ.width = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                    }*/
+
+                                    float.TryParse(cells[7], out templ.height);
+                                    if (templ.height < 0)
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                        templ.height = 0;
+                                    }
+                                    /*else if (templ.height >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                    {
+                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                        templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                    }*/
+
+                                    templ.lineLength = -1;
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                        }
+                        // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
+                        else if (templ.name == _objectNames[rectangleObject])
+                        {
+                            if (cells.Count >= 9)
+                            {
+                                if (cells[1] != "")
+                                {
+                                    templ.fgColor = Color.FromName(cells[1]);
+                                }
+                                else
+                                {
+                                    templ.fgColor = tmpLabel[0].fgColor;
+                                }
+                                if (templ.bgColor == templ.fgColor)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                }
+
+                                float.TryParse(cells[2], out templ.posX);
+                                if (templ.posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                }
+
+                                float.TryParse(cells[3], out templ.posY);
+                                if (templ.posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                }
+
+                                float.TryParse(cells[4], out templ.rotate);
+
+                                float.TryParse(cells[5], out templ.lineWidth);
+                                if (templ.lineWidth < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
+                                    templ.lineWidth = 0;
+                                }
+
+                                float.TryParse(cells[6], out templ.width);
+                                if (templ.width < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = 0;
+                                }
+                                /*else if (templ.width >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                float.TryParse(cells[7], out templ.height);
+                                if (templ.height < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = 0;
+                                }
+                                /*else if (templ.height >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                byte t = 0;
+                                byte.TryParse(cells[8], out t);
+                                templ.transparent = (t > 0);
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                        }
+                        // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+                        else if (templ.name == _objectNames[ellipseObject])
+                        {
+                            if (cells.Count >= 9)
+                            {
+                                if (cells[1] != "")
+                                {
+                                    templ.fgColor = Color.FromName(cells[1]);
+                                }
+                                else
+                                {
+                                    templ.fgColor = tmpLabel[0].fgColor;
+                                }
+                                if (templ.bgColor == templ.fgColor)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                }
+
+                                float.TryParse(cells[2], out templ.posX);
+                                if (templ.posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                }
+
+                                float.TryParse(cells[3], out templ.posY);
+                                if (templ.posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                }
+
+                                float.TryParse(cells[4], out templ.rotate);
+
+                                float.TryParse(cells[5], out templ.lineWidth);
+                                if (templ.lineWidth < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
+                                    templ.lineWidth = 0;
+                                }
+
+                                float.TryParse(cells[6], out templ.width);
+                                if (templ.width < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = 0;
+                                }
+                                /*else if (templ.width >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                float.TryParse(cells[7], out templ.height);
+                                if (templ.height < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = 0;
+                                }
+                                /*else if (templ.height >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
+
+                                byte t = 0;
+                                byte.TryParse(cells[8], out t);
+                                templ.transparent = (t > 0);
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                        }
+                        tmpLabel.Add(templ);
                     }
                 }
-                TextBox_dpi_Leave(this, EventArgs.Empty);
-                button_importLabels.Enabled = true;
-                GenerateLabel(-1);
-                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                //save path to template
-                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                //create colums and fill 1 row with default values
-                for (int i = 1; i < objectsNum; i++)
-                {
-                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].name);
-                }
-                DataRow row = LabelsDatabase.NewRow();
-                for (int i = 1; i < objectsNum; i++)
-                {
-                    row[i - 1] = Label[i].content;
-                }
-                LabelsDatabase.Rows.Add(row);
-                dataGridView_labels.DataSource = LabelsDatabase;
-                dataGridView_labels.DataSource = LabelsDatabase;
-                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                button_printCurrent.Enabled = true;
-                button_printAll.Enabled = false;
-                button_printRange.Enabled = false;
-                textBox_rangeFrom.Text = "0";
-                textBox_rangeTo.Text = "0";
-                SetRowNumber(dataGridView_labels);
-                TabControl1_SelectedIndexChanged(this, EventArgs.Empty);
             }
+            return tmpLabel;
         }
 
         private void Button_saveTemplate_Click(object sender, EventArgs e)
@@ -1611,119 +1628,221 @@ namespace LabelPrint
         #endregion
 
         #region Result output
-        private void GenerateLabel(int gridLine)
+        private bool GenerateLabel(int gridLine)
         {
             if (Label[0].name != _objectNames[labelObject])
             {
                 MessageBox.Show("1st object must be \"label\"");
-                return;
+                return false;
             }
-            if (checkBox_scale.Checked)
-            {
-                //pictureBox_label.Dock = DockStyle.None;
-                //pictureBox_label.Width = (int)Label[0].width;
-                //pictureBox_label.Height = (int)Label[0].height;
-            }
-            //else pictureBox_label.Dock = DockStyle.Fill;
-            currentObject.Clear();
+            currentObjectsPositions.Clear();
             for (int i = 0; i < Label.Count; i++)
             {
-                currentObject.Add(new Rectangle());
+                currentObjectsPositions.Add(new Rectangle());
                 if (Label[i].name == _objectNames[labelObject])
                 {
-                    LabelBmp = new Bitmap((int)Label[i].width, (int)Label[i].height, PixelFormat.Format32bppPArgb);
-                    FillBackground(Label[i].bgColor);
+                    Color bColor = Label[i].bgColor;
+                    int width = (int)Label[i].width;
+                    int height = (int)Label[i].height;
+
+                    LabelBmp = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
+                    FillBackground(bColor);
                 }
                 else if (Label[i].name == _objectNames[textObject])
                 {
-                    string fontname = Label[i].fontName;
-                    float fontSize = Label[i].fontSize;
+                    Color fColor = Label[i].fgColor;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
-                    float rotate = Label[i].rotate;
+
                     string content = Label[i].content;
+                    if (gridLine > -1)
+                        if (dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString() != "")
+                            content = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+
+                    string fontname = Label[i].fontName;
+                    float fontSize = Label[i].fontSize;
+                    float rotate = Label[i].rotate;
                     FontStyle fontStyle = (FontStyle)Label[i].fontStyle;
-                    string tmp = "";
-                    if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
-                    if (tmp != "") content = tmp;
-                    currentObject[i] = DrawText(LabelBmp, Label[i].fgColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
+
+                    currentObjectsPositions[i] = DrawText(LabelBmp, fColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
                 else if (Label[i].name == _objectNames[pictureObject])
                 {
+                    Color fColor = Label[i].fgColor;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
-                    float rotate = Label[i].rotate;
+
                     string content = path + Label[i].content;
+                    if (gridLine > -1)
+                        if (dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString() != "")
+                            content = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+
+                    float rotate = Label[i].rotate;
                     float width = Label[i].width;
                     float height = Label[i].height;
                     bool transparent = Label[i].transparent;
-                    string tmp = "";
-                    if (gridLine > -1) tmp = path + dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
-                    if (tmp != "") content = tmp;
-                    currentObject[i] = DrawPicture(LabelBmp, Label[i].fgColor, posX, posY, content, rotate, width, height, transparent);
+
+                    currentObjectsPositions[i] = DrawPicture(LabelBmp, fColor, posX, posY, content, rotate, width, height, transparent);
                 }
                 else if (Label[i].name == _objectNames[barcodeObject])
                 {
+                    Color bColor = Label[i].bgColor;
+                    Color fColor = Label[i].fgColor;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
-                    float rotate = Label[i].rotate;
-                    string content = Label[i].content;
                     float width = Label[i].width;
                     float height = Label[i].height;
-                    bool transparent = Label[i].transparent;
+
+                    string content = Label[i].content;
+                    if (gridLine > -1)
+                        if (dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString() != "")
+                            content = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+
                     BarcodeFormat BCformat = (BarcodeFormat)Label[i].BCformat;
-                    string tmp = "";
-                    if (gridLine > -1) tmp = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
-                    if (tmp != "") content = tmp;
+                    float rotate = Label[i].rotate;
                     string feature = Label[i].feature;
-                    currentObject[i] = DrawBarcode(LabelBmp, Label[i].bgColor, Label[i].fgColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
+                    bool transparent = Label[i].transparent;
+
+                    currentObjectsPositions[i] = DrawBarcode(LabelBmp, bColor, fColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
                 else if (Label[i].name == _objectNames[lineObject])
                 {
+                    Color fColor = Label[i].fgColor;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
                     float rotate = Label[i].rotate;
                     float lineWidth = Label[i].lineWidth;
-                    if (Label[i].lineLength == -1) //-V3024
+                    float length = Label[i].lineLength;
+
+                    if (length == -1) //line on start/end coordinates
                     {
                         float endX = Label[i].width;
                         float endY = Label[i].height;
-                        currentObject[i] = DrawLineCoord(LabelBmp, Label[i].fgColor, posX, posY, endX, endY, lineWidth);
+                        currentObjectsPositions[i] = DrawLineCoord(LabelBmp, fColor, posX, posY, endX, endY, lineWidth);
                     }
-                    else
+                    else //line on start coordinates and length+rotate angle
                     {
-                        float length = Label[i].lineLength;
-                        currentObject[i] = DrawLineLength(LabelBmp, Label[i].fgColor, posX, posY, length, rotate, lineWidth);
+                        currentObjectsPositions[i] = DrawLineLength(LabelBmp, fColor, posX, posY, length, rotate, lineWidth);
                     }
                 }
                 else if (Label[i].name == _objectNames[rectangleObject])
                 {
+                    Color fColor = Label[i].fgColor;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
-                    float rotate = Label[i].rotate;
-                    float lineWidth = Label[i].lineWidth;
                     float width = Label[i].width;
                     float height = Label[i].height;
+                    float rotate = Label[i].rotate;
+                    float lineWidth = Label[i].lineWidth;
                     bool fill = !Label[i].transparent;
-                    currentObject[i] = DrawRectangle(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+
+                    currentObjectsPositions[i] = DrawRectangle(LabelBmp, fColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else if (Label[i].name == _objectNames[ellipseObject])
                 {
+                    Color fColor = Label[i].fgColor;
                     float posX = Label[i].posX;
                     float posY = Label[i].posY;
-                    float rotate = Label[i].rotate;
-                    float lineWidth = Label[i].lineWidth;
                     float width = Label[i].width;
                     float height = Label[i].height;
+                    float rotate = Label[i].rotate;
+                    float lineWidth = Label[i].lineWidth;
                     bool fill = !Label[i].transparent;
-                    currentObject[i] = DrawEllipse(LabelBmp, Label[i].fgColor, posX, posY, width, height, rotate, lineWidth, fill);
+
+                    currentObjectsPositions[i] = DrawEllipse(LabelBmp, fColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
-                else MessageBox.Show("Incorrect object: " + Label[i].name);
+                else
+                {
+                    MessageBox.Show("Incorrect object: " + Label[i].name);
+                    return false;
+                }
             }
             pictureBox_label.Image = LabelBmp;
+            return true;
         }
 
-        private void SaveLabelPicture()
+        private void Button_printCurrent_Click(object sender, EventArgs e)
+        {
+            //if (pictureBox_label.Image == null) return;
+            pagesFrom = dataGridView_labels.CurrentRow.Index;
+            pagesTo = pagesFrom;
+
+            if (!checkBox_toFile.Checked)
+            {
+                sendToPrinter(pagesFrom, pagesTo);
+            }
+            else
+            {
+                sendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
+            }
+        }
+
+        private void Button_printAll_Click(object sender, EventArgs e)
+        {
+            pagesFrom = 0;
+            pagesTo = dataGridView_labels.Rows.Count - 1;
+
+            if (!checkBox_toFile.Checked)
+            {
+                sendToPrinter(pagesFrom, pagesTo);
+            }
+            else
+            {
+                sendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
+            }
+        }
+
+        private void Button_printRange_Click(object sender, EventArgs e)
+        {
+            pagesFrom = 0;
+            pagesTo = dataGridView_labels.Rows.Count;
+
+            int.TryParse(textBox_rangeFrom.Text, out pagesFrom);
+            int.TryParse(textBox_rangeTo.Text, out pagesTo);
+            if (pagesFrom < 0) pagesFrom = 0;
+            if (pagesTo >= dataGridView_labels.Rows.Count) pagesTo = dataGridView_labels.Rows.Count - 1;
+
+            if (!checkBox_toFile.Checked)
+            {
+                sendToPrinter(pagesFrom, pagesTo);
+            }
+            else
+            {
+                sendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
+            }
+        }
+
+        private void sendToPrinter(int _pageFrom, int _pageTo, string prnName = "")
+        {
+            pagesFrom = _pageFrom;
+            pagesTo = _pageTo;
+            printDialog1 = new PrintDialog();
+            printDocument1 = new PrintDocument();
+            printDialog1.Document = printDocument1;
+            printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
+            if (prnName == "")
+            {
+                if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
+            }
+            else
+            {
+                printDocument1.PrinterSettings.PrinterName = prnName;
+                printDocument1.Print();
+            }
+        }
+
+        private void sendToFile(int _pageFrom, int _pageTo, string filename)
+        {
+            for (; _pageFrom <= _pageTo; _pageFrom++)
+            {
+                dataGridView_labels.CurrentCell = dataGridView_labels.Rows[_pageFrom].Cells[0];
+                dataGridView_labels.Rows[_pageFrom].Selected = true;
+                GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
+                SaveLabelToFile(filename + dataGridView_labels.CurrentCell.RowIndex.ToString() + ".png");
+            }
+        }
+
+        private void SaveLabelToFile(string pictureName)
         {
             //var dock = pictureBox_label.Dock;
             var sizeMode = pictureBox_label.SizeMode;
@@ -1737,98 +1856,12 @@ namespace LabelPrint
 
             Rectangle rect = new Rectangle(0, 0, pictureBox_label.Image.Width, pictureBox_label.Image.Height);
             pictureBox_label.DrawToBitmap(LabelBmp, rect);
-            if (LabelBmp != null) LabelBmp.Save(textBox_saveFileName.Text + dataGridView_labels.CurrentCell.RowIndex.ToString() + ".png", ImageFormat.Png);
+            if (LabelBmp != null) LabelBmp.Save(pictureName, ImageFormat.Png);
 
             //pictureBox_label.Dock = dock;
             pictureBox_label.SizeMode = sizeMode;
             pictureBox_label.Width = w;
             pictureBox_label.Height = h;
-        }
-
-        private void Button_printCurrent_Click(object sender, EventArgs e)
-        {
-            if (pictureBox_label.Image == null) return;
-            if (!checkBox_toFile.Checked)
-            {
-                printDialog1 = new PrintDialog();
-                printDocument1 = new PrintDocument();
-                printDialog1.Document = printDocument1;
-                printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
-                pagesFrom = dataGridView_labels.CurrentRow.Index;
-                pagesTo = pagesFrom;
-                if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-            }
-            else SaveLabelPicture();
-        }
-
-        private void Button_printAll_Click(object sender, EventArgs e)
-        {
-            if (!checkBox_toFile.Checked)
-            {
-                printDialog1 = new PrintDialog();
-                printDocument1 = new PrintDocument();
-                printDialog1.Document = printDocument1;
-                printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
-                pagesFrom = 0;
-                pagesTo = dataGridView_labels.Rows.Count - 1;
-                if (!cmdLinePrint)
-                {
-                    if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                }
-                else
-                {
-                    printDocument1.PrinterSettings.PrinterName = printerName;
-                    printDocument1.Print();
-                }
-            }
-            else
-            {
-                for (int i = 0; i < dataGridView_labels.Rows.Count; i++)
-                {
-                    dataGridView_labels.CurrentCell = dataGridView_labels.Rows[i].Cells[0];
-                    dataGridView_labels.Rows[i].Selected = true;
-                    GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
-                    SaveLabelPicture();
-                }
-            }
-        }
-
-        private void Button_printRange_Click(object sender, EventArgs e)
-        {
-            pagesFrom = 0;
-            pagesTo = dataGridView_labels.Rows.Count;
-            int.TryParse(textBox_rangeFrom.Text, out pagesFrom);
-            int.TryParse(textBox_rangeTo.Text, out pagesTo);
-            if (pagesFrom < 0) pagesFrom = 0;
-            if (pagesTo >= dataGridView_labels.Rows.Count) pagesTo = dataGridView_labels.Rows.Count - 1;
-
-            if (!checkBox_toFile.Checked)
-            {
-                printDialog1 = new PrintDialog();
-                printDocument1 = new PrintDocument();
-                printDialog1.Document = printDocument1;
-                printDocument1.PrintPage += new PrintPageEventHandler(PrintImagesHandler);
-                if (!cmdLinePrint)
-                {
-                    if (printDialog1.ShowDialog() == DialogResult.OK) printDocument1.Print();
-                }
-                else
-                {
-                    printDocument1.PrinterSettings.PrinterName = printerName;
-                    printDocument1.Print();
-                }
-            }
-            else
-            {
-                for (; pagesFrom <= pagesTo; pagesFrom++)
-                {
-                    dataGridView_labels.CurrentCell = dataGridView_labels.Rows[pagesFrom].Cells[0];
-                    dataGridView_labels.Rows[pagesFrom].Selected = true;
-                    GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
-                    SaveLabelPicture();
-                }
-            }
-
         }
 
         private void PrintImagesHandler(object sender, PrintPageEventArgs args)
@@ -1844,7 +1877,7 @@ namespace LabelPrint
             args.Graphics.DrawImage(pictureBox_label.Image, rect);
             args.HasMorePages = pagesFrom < pagesTo;
             pagesFrom++;
-        }        
+        }
         #endregion
 
         #region Utilities
@@ -2918,9 +2951,9 @@ namespace LabelPrint
                 {
 
                     if (Label[n].name == _objectNames[lineObject])
-                        DrawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, 0, 1);
+                        DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, 0, 1);
                     else
-                        DrawSelection(LabelBmp, _borderColor, currentObject[n].X, currentObject[n].Y, currentObject[n].Width, currentObject[n].Height, Label[n].rotate, 1);
+                        DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, Label[n].rotate, 1);
                 }
             }
             pictureBox_label.Image = LabelBmp;
