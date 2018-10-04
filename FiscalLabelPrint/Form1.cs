@@ -96,7 +96,7 @@ namespace LabelPrint
             InitializeComponent();
             if (cmdLine.Length >= 1)
             {
-                cmdLineOperation(cmdLine);
+                CmdLineOperation(cmdLine);
             }
             comboBox_object.Items.AddRange(_objectNames);
 
@@ -133,7 +133,7 @@ namespace LabelPrint
             TextBox_dpi_Leave(this, EventArgs.Empty);
         }
 
-        private void cmdLineOperation(string[] cmdLine)
+        private void CmdLineOperation(string[] cmdLine)
         {
             tabControl1.SelectedIndexChanged -= new EventHandler(TabControl1_SelectedIndexChanged);
             listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
@@ -211,7 +211,7 @@ namespace LabelPrint
                 {
                     cmdLinePrint = true;
                     //import template
-                    Label = loadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+                    Label = LoadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
 
                     //import labels
                     ReadCsv(labelFile, LabelsDatabase, columnNames);
@@ -223,8 +223,8 @@ namespace LabelPrint
                     }
                     if (pagesTo >= LabelsDatabase.Rows.Count) pagesTo = LabelsDatabase.Rows.Count - 1;
 
-                    if (printerName != "") sendToPrinter(pagesFrom, pagesTo, printerName);
-                    if (pictureName != "") sendToFile(pagesFrom, pagesTo, pictureName);
+                    if (printerName != "") SendToPrinter(pagesFrom, pagesTo, printerName);
+                    if (pictureName != "") SendToFile(pagesFrom, pagesTo, pictureName);
                 }
                 else Console.WriteLine("Not enough parameters.\r\n");
             }
@@ -774,7 +774,7 @@ namespace LabelPrint
                 textBox_labelsName.Clear();
                 Label.Clear();
 
-                Label = loadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+                Label = LoadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
 
                 TextBox_dpi_Leave(this, EventArgs.Empty);
                 button_importLabels.Enabled = true;
@@ -845,7 +845,7 @@ namespace LabelPrint
             }
         }
 
-        private List<Template> loadTemplate(string fileName, int codePage)
+        private List<Template> LoadTemplate(string fileName, int codePage)
         {
             List<Template> tmpLabel = new List<Template>();
             string[] inputStr = File.ReadAllLines(openFileDialog1.FileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage));
@@ -1769,11 +1769,11 @@ namespace LabelPrint
 
             if (!checkBox_toFile.Checked)
             {
-                sendToPrinter(pagesFrom, pagesTo);
+                SendToPrinter(pagesFrom, pagesTo);
             }
             else
             {
-                sendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
+                SendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
             }
         }
 
@@ -1784,11 +1784,11 @@ namespace LabelPrint
 
             if (!checkBox_toFile.Checked)
             {
-                sendToPrinter(pagesFrom, pagesTo);
+                SendToPrinter(pagesFrom, pagesTo);
             }
             else
             {
-                sendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
+                SendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
             }
         }
 
@@ -1804,15 +1804,15 @@ namespace LabelPrint
 
             if (!checkBox_toFile.Checked)
             {
-                sendToPrinter(pagesFrom, pagesTo);
+                SendToPrinter(pagesFrom, pagesTo);
             }
             else
             {
-                sendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
+                SendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
             }
         }
 
-        private void sendToPrinter(int _pageFrom, int _pageTo, string prnName = "")
+        private void SendToPrinter(int _pageFrom, int _pageTo, string prnName = "")
         {
             pagesFrom = _pageFrom;
             pagesTo = _pageTo;
@@ -1831,7 +1831,7 @@ namespace LabelPrint
             }
         }
 
-        private void sendToFile(int _pageFrom, int _pageTo, string filename)
+        private void SendToFile(int _pageFrom, int _pageTo, string filename)
         {
             for (; _pageFrom <= _pageTo; _pageFrom++)
             {
