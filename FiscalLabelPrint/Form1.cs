@@ -83,8 +83,8 @@ namespace LabelPrint
         private int pagesTo = 0;
         private bool _templateChanged = false;
         private bool cmdLinePrint = false;
-        private string printerName = "";
-        private string pictureName = "";
+        private string printerName = null;
+        private string pictureName = null;
         private Bitmap LabelBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
         private List<Rectangle> currentObjectsPositions = new List<Rectangle>();
         private Color _borderColor = Color.Black;
@@ -146,16 +146,16 @@ namespace LabelPrint
                     "/prn=SystemPrinterName - output to printer (replace spaces with \'_\')\r\n" +
                     "/pic=pictureName - output to pictures\r\n" +
                     "/p=A - print all labels\r\n" +
-                    "/p=xxx - print label #xxx\r\n" +
-                    "/p=xxx-yyy - print labels from xxx to yyy");
+                    "/p=xxx - print label #xxx (starts from 1)\r\n" +
+                    "/p=xxx-yyy - print labels from xxx to yyy (starts from 1)");
             }
             else
             {
-                string templateFile = "";
+                string templateFile = null;
                 bool columnNames = false;
-                string labelFile = "";
-                int printFrom = -1;
-                int printTo = -1;
+                string labelFile = null;
+                int _printFrom = -1;
+                int _printTo = -1;
                 bool printAll = false;
 
                 for (int i = 0; i < cmdLine.Length; i++)
@@ -163,12 +163,22 @@ namespace LabelPrint
                     cmdLine[i] = cmdLine[i].Trim();
                     if (cmdLine[i].ToLower().StartsWith("/t="))
                     {
-
                         templateFile = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        //check if file exists
+                        if (!File.Exists(templateFile))
+                        {
+                            Console.WriteLine("Template file \"" + templateFile + "\" doesn't exist.");
+                        }
                     }
                     else if (cmdLine[i].ToLower().StartsWith("/l="))
                     {
                         labelFile = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        //check if file exists
+                        if (!File.Exists(labelFile))
+                        {
+                            Console.WriteLine("label file \"" + labelFile + "\" doesn't exist.");
+                            labelFile = null;
+                        }
                     }
                     else if (cmdLine[i].ToLower().StartsWith("/c"))
                     {
@@ -177,28 +187,42 @@ namespace LabelPrint
                     else if (cmdLine[i].ToLower().StartsWith("/prn="))
                     {
                         printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).Replace("_", " ");
+                        //check if printer exists
                     }
                     else if (cmdLine[i].ToLower().StartsWith("/pic="))
                     {
                         pictureName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        //check if file name correct
                     }
                     else if (cmdLine[i].ToLower().StartsWith("/p="))
                     {
-                        cmdLine[i] = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
+                        cmdLine[i] = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).ToLower();
                         if (cmdLine[i] == "a")
                         {
                             printAll = true;
-                            printFrom = printTo = 0;
+                            _printFrom = _printTo = 1;
                         }
                         else if (cmdLine[i].IndexOf('-') > 0)
                         {
-                            int.TryParse(cmdLine[i].Substring(0, cmdLine[i].IndexOf('-')), out printFrom);
-                            int.TryParse(cmdLine[i].Substring(cmdLine[i].IndexOf('-') + 1), out printTo);
+                            if (!int.TryParse(cmdLine[i].Substring(0, cmdLine[i].IndexOf('-')), out _printFrom))
+                            {
+                                Console.WriteLine("Incorrect print range \"from\" parameter.");
+                            }
+                            if (!int.TryParse(cmdLine[i].Substring(cmdLine[i].IndexOf('-') + 1), out _printTo))
+                            {
+                                Console.WriteLine("Incorrect print range \"to\" parameter.");
+                            }
                         }
                         else
                         {
-                            int.TryParse(cmdLine[i], out printFrom);
-                            printTo = printFrom;
+                            if (int.TryParse(cmdLine[i], out _printFrom))
+                            {
+                                _printTo = _printFrom;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Incorrect print range parameter.");
+                            }
                         }
                     }
                     else
@@ -207,24 +231,40 @@ namespace LabelPrint
                     }
                 }
                 //check we have enough data to print
-                if (templateFile != "" && labelFile != "" && printFrom > 0 && printTo > 0 && (printerName != "" || pictureName != ""))
+                if (templateFile != null && labelFile != null && _printFrom > 0 && _printTo > 0 && (printerName != null || pictureName != null))
                 {
                     cmdLinePrint = true;
                     //import template
-                    Label = LoadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+                    Label = LoadCsvTemplate(templateFile, Properties.Settings.Default.CodePage);
 
                     //import labels
-                    ReadCsv(labelFile, LabelsDatabase, columnNames);
+                    LabelsDatabase = LoadCsvLabel(labelFile, columnNames);
 
                     if (printAll)
                     {
-                        pagesFrom = 0;
-                        pagesTo = LabelsDatabase.Rows.Count - 1;
+                        _printTo = LabelsDatabase.Rows.Count;
                     }
-                    if (pagesTo >= LabelsDatabase.Rows.Count) pagesTo = LabelsDatabase.Rows.Count - 1;
+                    else if (_printTo < _printFrom)
+                    {
+                        int t = _printTo;
+                        _printTo = _printFrom;
+                        _printFrom = t;
+                    }
+                    else if (_printFrom > LabelsDatabase.Rows.Count)
+                    {
+                        Console.WriteLine("Print range oversize.\r\n");
+                        printerName = null;
+                        pictureName = null;
+                    }
+                    else if (_printTo > LabelsDatabase.Rows.Count)
+                    {
+                        Console.WriteLine("Print range oversize.\r\n");
+                        printerName = null;
+                        pictureName = null;
+                    }
 
-                    if (printerName != "") SendToPrinter(pagesFrom, pagesTo, printerName);
-                    if (pictureName != "") SendToFile(pagesFrom, pagesTo, pictureName);
+                    if (printerName != null) PrintLabels(_printFrom - 1, _printTo - 1, printerName);
+                    if (pictureName != null) SaveLabels(_printFrom - 1, _printTo - 1, pictureName);
                 }
                 else Console.WriteLine("Not enough parameters.\r\n");
             }
@@ -241,14 +281,13 @@ namespace LabelPrint
         }
 
         #region Drawing
-        private void FillBackground(Color bgC)
+
+        private void FillBackground(Bitmap img, Color bgC, float width, float height)
         {
-            LabelBmp = new Bitmap((int)Label[0].width, (int)Label[0].height, PixelFormat.Format32bppPArgb);
-            Graphics g = Graphics.FromImage(LabelBmp);
-            Rectangle rect = new Rectangle(0, 0, (int)Label[0].width, (int)Label[0].height);
+            Graphics g = Graphics.FromImage(img);
+            Rectangle rect = new Rectangle(0, 0, (int)width, (int)height);
             SolidBrush b = new SolidBrush(bgC);
             g.FillRectangle(b, rect);
-            pictureBox_label.Image = LabelBmp;
         }
 
         private Rectangle DrawText(Bitmap img, Color fgC, float posX, float posY, string text, string fontName, float fontSize, float rotateDeg = 0, FontStyle fontStyle = FontStyle.Regular)
@@ -265,7 +304,7 @@ namespace LabelPrint
                 MessageBox.Show("Font error: " + ex.Message);
                 return size;
             }
-            Graphics g = Graphics.FromImage(pictureBox_label.Image);
+            Graphics g = Graphics.FromImage(img);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             // Save the graphics state.
@@ -676,13 +715,16 @@ namespace LabelPrint
             // Restore the graphics state.
             g.Restore(state);
         }
+
         #endregion
 
         #region file management
-        private void ReadCsv(string fileName, DataTable table, bool createColumnsNames = false)
+
+        private DataTable LoadCsvLabel(string fileName, bool createColumnsNames = false)
         {
-            table.Clear();
-            table.Rows.Clear();
+            DataTable table = new DataTable();
+            //table.Clear();
+            //table.Rows.Clear();
             List<string> inputStr = new List<string>();
             try
             {
@@ -691,7 +733,7 @@ namespace LabelPrint
             catch (Exception ex)
             {
                 MessageBox.Show("Error opening file:" + fileName + " : " + ex.Message);
-                return;
+                return table;
             }
 
             //read headers
@@ -742,113 +784,13 @@ namespace LabelPrint
                     table.Rows.Add(row);
                 }
             }
+            return table;
         }
 
-        private void Button_importLabels_Click(object sender, EventArgs e)
-        {
-            openFileDialog1.FileName = "";
-            openFileDialog1.Title = "Open labels .CSV database";
-            openFileDialog1.DefaultExt = "csv";
-            openFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
-            openFileDialog1.ShowDialog();
-        }
-
-        private void Button_importTemplate_Click(object sender, EventArgs e)
-        {
-            openFileDialog1.FileName = "";
-            openFileDialog1.Title = "Open template .CSV file";
-            openFileDialog1.DefaultExt = "csv";
-            openFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
-            openFileDialog1.ShowDialog();
-        }
-
-        private void OpenFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            if (openFileDialog1.Title == "Open template .CSV file")
-            {
-                objectsNum = 0;
-                dataGridView_labels.DataSource = null;
-                LabelsDatabase.Clear();
-                LabelsDatabase.Columns.Clear();
-                LabelsDatabase.Rows.Clear();
-                textBox_labelsName.Clear();
-                Label.Clear();
-
-                Label = LoadTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
-
-                TextBox_dpi_Leave(this, EventArgs.Empty);
-                button_importLabels.Enabled = true;
-                GenerateLabel(-1);
-                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                //save path to template
-                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                //create colums and fill 1 row with default values
-                for (int i = 1; i < objectsNum; i++)
-                {
-                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].name);
-                }
-                DataRow row = LabelsDatabase.NewRow();
-                for (int i = 1; i < objectsNum; i++)
-                {
-                    row[i - 1] = Label[i].content;
-                }
-                LabelsDatabase.Rows.Add(row);
-                dataGridView_labels.DataSource = LabelsDatabase;
-                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                button_printCurrent.Enabled = true;
-                button_printAll.Enabled = false;
-                button_printRange.Enabled = false;
-                textBox_rangeFrom.Text = "0";
-                textBox_rangeTo.Text = "0";
-                SetRowNumber(dataGridView_labels);
-                TabControl1_SelectedIndexChanged(this, EventArgs.Empty);
-            }
-            else if (openFileDialog1.Title == "Open labels .CSV database")
-            {
-                dataGridView_labels.DataSource = null;
-
-                ReadCsv(openFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked);
-
-                if (LabelsDatabase.Rows.Count > 0)
-                {
-                    dataGridView_labels.DataSource = LabelsDatabase;
-                    foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                    //check for picture file existence
-                    foreach (DataGridViewRow row in dataGridView_labels.Rows)
-                    {
-                        for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
-                        {
-                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(path + row.Cells[i].Value.ToString()))
-                            {
-                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
-                            }
-                        }
-                    }
-                    button_printCurrent.Enabled = true;
-                    button_printAll.Enabled = true;
-                    button_printRange.Enabled = true;
-                    textBox_rangeFrom.Text = "0";
-                    textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
-                    SetRowNumber(dataGridView_labels);
-                }
-                else
-                {
-                    MessageBox.Show("Error: No label data loaded.");
-                    return;
-                }
-                if (dataGridView_labels.Columns.Count != Label.Count - 1)
-                    MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + dataGridView_labels.Columns.Count.ToString());
-                dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
-                dataGridView_labels.Rows[0].Selected = true;
-                GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
-                textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
-            }
-        }
-
-        private List<Template> LoadTemplate(string fileName, int codePage)
+        private List<Template> LoadCsvTemplate(string fileName, int codePage)
         {
             List<Template> tmpLabel = new List<Template>();
-            string[] inputStr = File.ReadAllLines(openFileDialog1.FileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+            string[] inputStr = File.ReadAllLines(fileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage));
             for (int i = 0; i < inputStr.Length; i++)
             {
                 if (inputStr[i].Trim() != "")
@@ -1476,343 +1418,300 @@ namespace LabelPrint
             return tmpLabel;
         }
 
-        private void Button_saveTemplate_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog1.Title = "Save template as .CSV...";
-            SaveFileDialog1.DefaultExt = "csv";
-            SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
-            if (textBox_templateName.Text == "") SaveFileDialog1.FileName = "template_" + DateTime.Today.ToShortDateString().Replace("/", "_") + ".csv";
-            else SaveFileDialog1.FileName = textBox_templateName.Text;
-            SaveFileDialog1.ShowDialog();
-        }
-
-        private void Button_saveLabel_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog1.Title = "Save label data as .CSV...";
-            SaveFileDialog1.DefaultExt = "csv";
-            SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
-            SaveFileDialog1.FileName = "label_" + textBox_templateName.Text;
-            SaveFileDialog1.ShowDialog();
-        }
-
-        private void SaveFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+        private bool saveTemplateToCSV(string fileName, List<Template> _label, int codePage)
         {
             StringBuilder output = new StringBuilder();
             char div = Properties.Settings.Default.CSVdelimiter;
-            if (SaveFileDialog1.Title == "Save template as .CSV...")
+            for (int i = 0; i < _label.Count; i++)
             {
-                for (int i = 0; i < Label.Count; i++)
+                // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
+                if (_label[i].name == _objectNames[labelObject])
                 {
-                    // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
-                    if (Label[i].name == _objectNames[labelObject])
+                    output.AppendLine(_label[i].name.ToString() + div +
+                        _label[i].bgColor.Name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].width.ToString() + div +
+                        _label[i].height.ToString() + div +
+                        _label[i].dpi.ToString() + div +
+                        _label[i].codePage.ToString() + div);
+                }
+                // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
+                else if (_label[i].name == _objectNames[textObject])
+                {
+                    output.AppendLine(_label[i].name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div +
+                        _label[i].rotate.ToString() + div +
+                        _label[i].content.ToString() + div +
+                        _label[i].fontName.ToString() + div +
+                        _label[i].fontSize.ToString() + div +
+                        _label[i].fontStyle.ToString() + div);
+                }
+                // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
+                else if (_label[i].name == _objectNames[pictureObject])
+                {
+                    output.AppendLine(_label[i].name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div +
+                        _label[i].rotate.ToString() + div +
+                        _label[i].content.ToString() + div +
+                        _label[i].width.ToString() + div +
+                        _label[i].height.ToString() + div +
+                        Convert.ToInt32(_label[i].transparent).ToString() + div);
+                }
+                // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
+                else if (_label[i].name == _objectNames[barcodeObject])
+                {
+                    output.AppendLine(_label[i].name.ToString() + div +
+                        _label[i].bgColor.Name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div +
+                        _label[i].rotate.ToString() + div +
+                        _label[i].content.ToString() + div +
+                        _label[i].width.ToString() + div +
+                        _label[i].height.ToString() + div +
+                        _label[i].BCformat.ToString() + div +
+                        Convert.ToInt32(_label[i].transparent).ToString() + div +
+                        _label[i].feature.ToString() + div);
+                }
+                // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY; (lineLength = -1)
+                // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
+                else if (_label[i].name == _objectNames[lineObject])
+                {
+                    output.Append(_label[i].name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div);
+                    if (_label[i].lineLength == -1) //-V3024
                     {
-                        output.AppendLine(Label[i].name.ToString() + div +
-                            Label[i].bgColor.Name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].width.ToString() + div +
-                            Label[i].height.ToString() + div +
-                            Label[i].dpi.ToString() + div +
-                            Label[i].codePage.ToString() + div);
+                        output.AppendLine("" + div +
+                            _label[i].lineWidth.ToString() + div +
+                            _label[i].width.ToString() + div +
+                            _label[i].height.ToString() + div);
                     }
-                    // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
-                    else if (Label[i].name == _objectNames[textObject])
+                    else
                     {
-                        output.AppendLine(Label[i].name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div +
-                            Label[i].rotate.ToString() + div +
-                            Label[i].content.ToString() + div +
-                            Label[i].fontName.ToString() + div +
-                            Label[i].fontSize.ToString() + div +
-                            Label[i].fontStyle.ToString() + div);
-                    }
-                    // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
-                    else if (Label[i].name == _objectNames[pictureObject])
-                    {
-                        output.AppendLine(Label[i].name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div +
-                            Label[i].rotate.ToString() + div +
-                            Label[i].content.ToString() + div +
-                            Label[i].width.ToString() + div +
-                            Label[i].height.ToString() + div +
-                            Convert.ToInt32(Label[i].transparent).ToString() + div);
-                    }
-                    // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
-                    else if (Label[i].name == _objectNames[barcodeObject])
-                    {
-                        output.AppendLine(Label[i].name.ToString() + div +
-                            Label[i].bgColor.Name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div +
-                            Label[i].rotate.ToString() + div +
-                            Label[i].content.ToString() + div +
-                            Label[i].width.ToString() + div +
-                            Label[i].height.ToString() + div +
-                            Label[i].BCformat.ToString() + div +
-                            Convert.ToInt32(Label[i].transparent).ToString() + div +
-                            Label[i].feature.ToString() + div);
-                    }
-                    // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY; (lineLength = -1)
-                    // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
-                    else if (Label[i].name == _objectNames[lineObject])
-                    {
-                        output.Append(Label[i].name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div);
-                        if (Label[i].lineLength == -1) //-V3024
-                        {
-                            output.AppendLine("" + div +
-                                Label[i].lineWidth.ToString() + div +
-                                Label[i].width.ToString() + div +
-                                Label[i].height.ToString() + div);
-                        }
-                        else
-                        {
-                            output.AppendLine(Label[i].rotate.ToString() + div +
-                                Label[i].lineWidth.ToString() + div +
-                                Label[i].lineLength.ToString() + div);
-                        }
-                    }
-                    // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
-                    else if (Label[i].name == _objectNames[rectangleObject])
-                    {
-                        output.AppendLine(Label[i].name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div +
-                            Label[i].rotate.ToString() + div +
-                            Label[i].lineWidth.ToString() + div +
-                            Label[i].width.ToString() + div +
-                            Label[i].height.ToString() + div +
-                            Convert.ToInt32(Label[i].transparent).ToString() + div);
-                    }
-                    // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
-                    else if (Label[i].name == _objectNames[ellipseObject])
-                    {
-                        output.AppendLine(Label[i].name.ToString() + div +
-                            Label[i].fgColor.Name.ToString() + div +
-                            Label[i].posX.ToString() + div +
-                            Label[i].posY.ToString() + div +
-                            Label[i].rotate.ToString() + div +
-                            Label[i].lineWidth.ToString() + div +
-                            Label[i].width.ToString() + div +
-                            Label[i].height.ToString() + div +
-                            Convert.ToInt32(Label[i].transparent).ToString() + div);
+                        output.AppendLine(_label[i].rotate.ToString() + div +
+                            _label[i].lineWidth.ToString() + div +
+                            _label[i].lineLength.ToString() + div);
                     }
                 }
-            }
-            else if (SaveFileDialog1.Title == "Save label data as .CSV...")
-            {
-                if (checkBox_columnNames.Checked)
+                // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
+                else if (_label[i].name == _objectNames[rectangleObject])
                 {
-                    for (int i = 0; i < dataGridView_labels.ColumnCount; i++) output.Append(dataGridView_labels.Columns[i].Name + div);
-                    output.AppendLine();
+                    output.AppendLine(_label[i].name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div +
+                        _label[i].rotate.ToString() + div +
+                        _label[i].lineWidth.ToString() + div +
+                        _label[i].width.ToString() + div +
+                        _label[i].height.ToString() + div +
+                        Convert.ToInt32(_label[i].transparent).ToString() + div);
                 }
-                for (int i = 0; i < dataGridView_labels.ColumnCount; i++) output.Append(dataGridView_labels.Rows[0].Cells[i].Value.ToString() + div);
-                output.AppendLine();
+                // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
+                else if (_label[i].name == _objectNames[ellipseObject])
+                {
+                    output.AppendLine(_label[i].name.ToString() + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div +
+                        _label[i].rotate.ToString() + div +
+                        _label[i].lineWidth.ToString() + div +
+                        _label[i].width.ToString() + div +
+                        _label[i].height.ToString() + div +
+                        Convert.ToInt32(_label[i].transparent).ToString() + div);
+                }
             }
+            bool err = true;
             try
             {
-                File.WriteAllText(SaveFileDialog1.FileName, output.ToString(), Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+                File.WriteAllText(fileName, output.ToString(), Encoding.GetEncoding(codePage));
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
+                //MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
+                err = false;
             }
+            return err;
         }
+
+        // *BUG - saves 3 additional byte in the beginning of a file
+        private bool saveTableToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
+        {
+            if (codePage == -1) codePage = Encoding.UTF8.CodePage;
+            StringBuilder output = new StringBuilder();
+            if (saveColumnNames)
+            {
+                for (int i = 0; i < dataTable.Columns.Count; i++) output.Append(dataTable.Columns[i].ColumnName + csvDivider);
+                output.AppendLine();
+            }
+
+            for (int j = 0; j < dataTable.Rows.Count; j++)
+            {
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    output.Append(dataTable.Rows[0].ItemArray[i].ToString() + csvDivider);
+                }
+                output.AppendLine();
+            }
+
+            bool err = true;
+            try
+            {
+                File.WriteAllText(fileName, output.ToString(), Encoding.GetEncoding(codePage));
+            }
+            catch (Exception ex)
+            {
+                //MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
+                err = false;
+            }
+            return err;
+        }
+
         #endregion
 
         #region Result output
-        private bool GenerateLabel(int gridLine)
+
+        private Bitmap GenerateLabel(List<Template> _label, DataTable dataTable, int lineNumber, Bitmap img)
         {
-            if (Label[0].name != _objectNames[labelObject])
+            if (lineNumber >= dataTable.Rows.Count) return null;
+            if (_label[0].name != _objectNames[labelObject])
             {
                 MessageBox.Show("1st object must be \"label\"");
-                return false;
+                return null;
             }
             currentObjectsPositions.Clear();
-            for (int i = 0; i < Label.Count; i++)
+            for (int i = 0; i < _label.Count; i++)
             {
                 currentObjectsPositions.Add(new Rectangle());
-                if (Label[i].name == _objectNames[labelObject])
+                if (_label[i].name == _objectNames[labelObject])
                 {
-                    Color bColor = Label[i].bgColor;
-                    int width = (int)Label[i].width;
-                    int height = (int)Label[i].height;
+                    Color bColor = _label[i].bgColor;
+                    float width = _label[i].width;
+                    float height = _label[i].height;
 
-                    LabelBmp = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
-                    FillBackground(bColor);
+                    img = new Bitmap((int)width, (int)height, PixelFormat.Format32bppPArgb);
+                    FillBackground(img, bColor, width, height);
+                    pictureBox_label.Image = img;
                 }
-                else if (Label[i].name == _objectNames[textObject])
+                else if (_label[i].name == _objectNames[textObject])
                 {
-                    Color fColor = Label[i].fgColor;
-                    float posX = Label[i].posX;
-                    float posY = Label[i].posY;
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
 
-                    string content = Label[i].content;
-                    if (gridLine > -1)
-                        if (dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString() != "")
-                            content = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+                    string content = _label[i].content;
+                    if (lineNumber > -1)
+                        if (dataTable.Rows[lineNumber].ItemArray[i - 1].ToString() != "")
+                            content = dataTable.Rows[lineNumber].ItemArray[i - 1].ToString();
 
-                    string fontname = Label[i].fontName;
-                    float fontSize = Label[i].fontSize;
-                    float rotate = Label[i].rotate;
-                    FontStyle fontStyle = (FontStyle)Label[i].fontStyle;
+                    string fontname = _label[i].fontName;
+                    float fontSize = _label[i].fontSize;
+                    float rotate = _label[i].rotate;
+                    FontStyle fontStyle = (FontStyle)_label[i].fontStyle;
 
-                    currentObjectsPositions[i] = DrawText(LabelBmp, fColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
+                    currentObjectsPositions[i] = DrawText(img, fColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
-                else if (Label[i].name == _objectNames[pictureObject])
+                else if (_label[i].name == _objectNames[pictureObject])
                 {
-                    Color fColor = Label[i].fgColor;
-                    float posX = Label[i].posX;
-                    float posY = Label[i].posY;
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
 
-                    string content = path + Label[i].content;
-                    if (gridLine > -1)
-                        if (dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString() != "")
-                            content = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+                    string content = path + _label[i].content;
+                    if (lineNumber > -1)
+                        if (dataTable.Rows[lineNumber].ItemArray[i - 1].ToString() != "")
+                            content = dataTable.Rows[lineNumber].ItemArray[i - 1].ToString();
 
-                    float rotate = Label[i].rotate;
-                    float width = Label[i].width;
-                    float height = Label[i].height;
-                    bool transparent = Label[i].transparent;
+                    float rotate = _label[i].rotate;
+                    float width = _label[i].width;
+                    float height = _label[i].height;
+                    bool transparent = _label[i].transparent;
 
-                    currentObjectsPositions[i] = DrawPicture(LabelBmp, fColor, posX, posY, content, rotate, width, height, transparent);
+                    currentObjectsPositions[i] = DrawPicture(img, fColor, posX, posY, content, rotate, width, height, transparent);
                 }
-                else if (Label[i].name == _objectNames[barcodeObject])
+                else if (_label[i].name == _objectNames[barcodeObject])
                 {
-                    Color bColor = Label[i].bgColor;
-                    Color fColor = Label[i].fgColor;
-                    float posX = Label[i].posX;
-                    float posY = Label[i].posY;
-                    float width = Label[i].width;
-                    float height = Label[i].height;
+                    Color bColor = _label[i].bgColor;
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
+                    float width = _label[i].width;
+                    float height = _label[i].height;
 
-                    string content = Label[i].content;
-                    if (gridLine > -1)
-                        if (dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString() != "")
-                            content = dataGridView_labels.Rows[gridLine].Cells[i - 1].Value.ToString();
+                    string content = _label[i].content;
+                    if (lineNumber > -1)
+                        if (dataTable.Rows[lineNumber].ItemArray[i - 1].ToString() != "")
+                            content = dataTable.Rows[lineNumber].ItemArray[i - 1].ToString();
 
-                    BarcodeFormat BCformat = (BarcodeFormat)Label[i].BCformat;
-                    float rotate = Label[i].rotate;
-                    string feature = Label[i].feature;
-                    bool transparent = Label[i].transparent;
+                    BarcodeFormat BCformat = (BarcodeFormat)_label[i].BCformat;
+                    float rotate = _label[i].rotate;
+                    string feature = _label[i].feature;
+                    bool transparent = _label[i].transparent;
 
-                    currentObjectsPositions[i] = DrawBarcode(LabelBmp, bColor, fColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
+                    currentObjectsPositions[i] = DrawBarcode(img, bColor, fColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
-                else if (Label[i].name == _objectNames[lineObject])
+                else if (_label[i].name == _objectNames[lineObject])
                 {
-                    Color fColor = Label[i].fgColor;
-                    float posX = Label[i].posX;
-                    float posY = Label[i].posY;
-                    float rotate = Label[i].rotate;
-                    float lineWidth = Label[i].lineWidth;
-                    float length = Label[i].lineLength;
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
+                    float rotate = _label[i].rotate;
+                    float lineWidth = _label[i].lineWidth;
+                    float length = _label[i].lineLength;
 
                     if (length == -1) //line on start/end coordinates
                     {
-                        float endX = Label[i].width;
-                        float endY = Label[i].height;
-                        currentObjectsPositions[i] = DrawLineCoord(LabelBmp, fColor, posX, posY, endX, endY, lineWidth);
+                        float endX = _label[i].width;
+                        float endY = _label[i].height;
+                        currentObjectsPositions[i] = DrawLineCoord(img, fColor, posX, posY, endX, endY, lineWidth);
                     }
                     else //line on start coordinates and length+rotate angle
                     {
-                        currentObjectsPositions[i] = DrawLineLength(LabelBmp, fColor, posX, posY, length, rotate, lineWidth);
+                        currentObjectsPositions[i] = DrawLineLength(img, fColor, posX, posY, length, rotate, lineWidth);
                     }
                 }
-                else if (Label[i].name == _objectNames[rectangleObject])
+                else if (_label[i].name == _objectNames[rectangleObject])
                 {
-                    Color fColor = Label[i].fgColor;
-                    float posX = Label[i].posX;
-                    float posY = Label[i].posY;
-                    float width = Label[i].width;
-                    float height = Label[i].height;
-                    float rotate = Label[i].rotate;
-                    float lineWidth = Label[i].lineWidth;
-                    bool fill = !Label[i].transparent;
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
+                    float width = _label[i].width;
+                    float height = _label[i].height;
+                    float rotate = _label[i].rotate;
+                    float lineWidth = _label[i].lineWidth;
+                    bool fill = !_label[i].transparent;
 
-                    currentObjectsPositions[i] = DrawRectangle(LabelBmp, fColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    currentObjectsPositions[i] = DrawRectangle(img, fColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
-                else if (Label[i].name == _objectNames[ellipseObject])
+                else if (_label[i].name == _objectNames[ellipseObject])
                 {
-                    Color fColor = Label[i].fgColor;
-                    float posX = Label[i].posX;
-                    float posY = Label[i].posY;
-                    float width = Label[i].width;
-                    float height = Label[i].height;
-                    float rotate = Label[i].rotate;
-                    float lineWidth = Label[i].lineWidth;
-                    bool fill = !Label[i].transparent;
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
+                    float width = _label[i].width;
+                    float height = _label[i].height;
+                    float rotate = _label[i].rotate;
+                    float lineWidth = _label[i].lineWidth;
+                    bool fill = !_label[i].transparent;
 
-                    currentObjectsPositions[i] = DrawEllipse(LabelBmp, fColor, posX, posY, width, height, rotate, lineWidth, fill);
+                    currentObjectsPositions[i] = DrawEllipse(img, fColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
                 else
                 {
-                    MessageBox.Show("Incorrect object: " + Label[i].name);
-                    return false;
+                    MessageBox.Show("Incorrect object: " + _label[i].name);
+                    return null;
                 }
             }
-            pictureBox_label.Image = LabelBmp;
-            return true;
+            //pictureBox_label.Image = (Bitmap)img.Clone();
+            return img;
         }
 
-        private void Button_printCurrent_Click(object sender, EventArgs e)
-        {
-            //if (pictureBox_label.Image == null) return;
-            pagesFrom = dataGridView_labels.CurrentRow.Index;
-            pagesTo = pagesFrom;
-
-            if (!checkBox_toFile.Checked)
-            {
-                SendToPrinter(pagesFrom, pagesTo);
-            }
-            else
-            {
-                SendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
-            }
-        }
-
-        private void Button_printAll_Click(object sender, EventArgs e)
-        {
-            pagesFrom = 0;
-            pagesTo = dataGridView_labels.Rows.Count - 1;
-
-            if (!checkBox_toFile.Checked)
-            {
-                SendToPrinter(pagesFrom, pagesTo);
-            }
-            else
-            {
-                SendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
-            }
-        }
-
-        private void Button_printRange_Click(object sender, EventArgs e)
-        {
-            pagesFrom = 0;
-            pagesTo = dataGridView_labels.Rows.Count;
-
-            int.TryParse(textBox_rangeFrom.Text, out pagesFrom);
-            int.TryParse(textBox_rangeTo.Text, out pagesTo);
-            if (pagesFrom < 0) pagesFrom = 0;
-            if (pagesTo >= dataGridView_labels.Rows.Count) pagesTo = dataGridView_labels.Rows.Count - 1;
-
-            if (!checkBox_toFile.Checked)
-            {
-                SendToPrinter(pagesFrom, pagesTo);
-            }
-            else
-            {
-                SendToFile(pagesFrom, pagesTo, textBox_saveFileName.Text);
-            }
-        }
-
-        private void SendToPrinter(int _pageFrom, int _pageTo, string prnName = "")
+        private void PrintLabels(int _pageFrom, int _pageTo, string prnName = "")
         {
             pagesFrom = _pageFrom;
             pagesTo = _pageTo;
@@ -1831,44 +1730,10 @@ namespace LabelPrint
             }
         }
 
-        private void SendToFile(int _pageFrom, int _pageTo, string filename)
-        {
-            for (; _pageFrom <= _pageTo; _pageFrom++)
-            {
-                dataGridView_labels.CurrentCell = dataGridView_labels.Rows[_pageFrom].Cells[0];
-                dataGridView_labels.Rows[_pageFrom].Selected = true;
-                GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
-                SaveLabelToFile(filename + dataGridView_labels.CurrentCell.RowIndex.ToString() + ".png");
-            }
-        }
-
-        private void SaveLabelToFile(string pictureName)
-        {
-            //var dock = pictureBox_label.Dock;
-            var sizeMode = pictureBox_label.SizeMode;
-            var w = pictureBox_label.Width;
-            var h = pictureBox_label.Height;
-
-            //pictureBox_label.Dock = DockStyle.None;
-            pictureBox_label.SizeMode = PictureBoxSizeMode.CenterImage;
-            pictureBox_label.Width = (int)Label[0].width;
-            pictureBox_label.Height = (int)Label[0].height;
-
-            Rectangle rect = new Rectangle(0, 0, pictureBox_label.Image.Width, pictureBox_label.Image.Height);
-            pictureBox_label.DrawToBitmap(LabelBmp, rect);
-            if (LabelBmp != null) LabelBmp.Save(pictureName, ImageFormat.Png);
-
-            //pictureBox_label.Dock = dock;
-            pictureBox_label.SizeMode = sizeMode;
-            pictureBox_label.Width = w;
-            pictureBox_label.Height = h;
-        }
-
         private void PrintImagesHandler(object sender, PrintPageEventArgs args)
         {
-            dataGridView_labels.CurrentCell = dataGridView_labels.Rows[pagesFrom].Cells[0];
-            dataGridView_labels.Rows[pagesFrom].Selected = true;
-            GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, pagesFrom, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
             if (pictureBox_label.Image == null) return;
             args.Graphics.PageUnit = GraphicsUnit.Pixel;
             Bitmap bmp = new Bitmap((int)Label[0].width, (int)Label[0].height);
@@ -1878,9 +1743,25 @@ namespace LabelPrint
             args.HasMorePages = pagesFrom < pagesTo;
             pagesFrom++;
         }
+
+        private void SaveLabels(int _pageFrom, int _pageTo, string filename)
+        {
+            for (; _pageFrom <= _pageTo; _pageFrom++)
+            {
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, _pageFrom, LabelBmp);
+                SaveLabelToFile(LabelBmp, filename + _pageFrom.ToString() + ".png");
+            }
+        }
+
+        private void SaveLabelToFile(Bitmap img, string pictureName)
+        {
+            if (LabelBmp != null) img.Save(pictureName, ImageFormat.Png);
+        }
+
         #endregion
 
         #region Utilities
+
         private void ClearFields()
         {
             comboBox_object.Enabled = false;
@@ -1943,15 +1824,14 @@ namespace LabelPrint
 
         }
 
-        private Template CollectObjectFromUI()
+        private Template CollectObjectFromGUI(int n)
         {
-            Template templ = new Template
-            {
-                name = comboBox_object.SelectedItem.ToString()
-            };
+            Template templ = new Template();
+            if (n < 0) return templ;
 
-            if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
+            if (n == listBox_objects.Items.Count - 1)
             {
+                templ.name = comboBox_object.SelectedItem.ToString();
                 if (Label[0].name == _objectNames[labelObject])
                 {
                     templ.bgColor = Label[0].bgColor;
@@ -1980,605 +1860,612 @@ namespace LabelPrint
                 templ.lineWidth = 1;
             }
             // label; [bgColor]; [objectColor]; width; height;
-            else if (templ.name == _objectNames[labelObject])
+            else
             {
-                if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
-                else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
-
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
-
-                float f = 0;
-                float.TryParse(textBox_width.Text, out f);
-                templ.width = f * mult;
-
-                float.TryParse(textBox_height.Text, out f);
-                templ.height = f * mult;
-            }
-
-            // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
-            else if (templ.name == _objectNames[textObject])
-            {
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
-
-                float f = 0;
-                float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f * mult;
-
-                float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f * mult;
-
-                float.TryParse(textBox_rotate.Text, out f);
-                templ.rotate = f;
-
-                templ.content = textBox_content.Text;
-
-                float b = 0;
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
-                float.TryParse(textBox_fontSize.Text, out b);
-                templ.fontSize = b * mult;
-
-                byte s = 0;
-                byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
-                templ.fontStyle = s;
-
-                templ.fontName = comboBox_fontName.SelectedItem.ToString();
-            }
-
-            // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
-            else if (templ.name == _objectNames[pictureObject])
-            {
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
-
-                float f = 0;
-                float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f * mult;
-
-                float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f * mult;
-
-                float.TryParse(textBox_rotate.Text, out f);
-                templ.rotate = f;
-
-                templ.content = textBox_content.Text;
-
-                float.TryParse(textBox_width.Text, out f);
-                templ.width = f * mult;
-
-                float.TryParse(textBox_height.Text, out f);
-                templ.height = f * mult;
-
-                templ.transparent = checkBox_fill.Checked;
-            }
-
-            // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
-            else if (templ.name == _objectNames[barcodeObject])
-            {
-                if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
-                else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
-
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
-
-                float f = 0;
-                float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f * mult;
-
-                float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f * mult;
-
-                float.TryParse(textBox_rotate.Text, out f);
-                templ.rotate = f;
-
-                templ.content = textBox_content.Text;
-
-                float.TryParse(textBox_width.Text, out f);
-                templ.width = f * mult;
-
-                float.TryParse(textBox_height.Text, out f);
-                templ.height = f * mult;
-
-                templ.transparent = checkBox_fill.Checked;
-
-                int i = 0;
-                int.TryParse(comboBox_fontName.SelectedItem.ToString().Substring(0, comboBox_fontName.SelectedItem.ToString().IndexOf('=')), out i);
-                templ.BCformat = i;
-
-                if (comboBox_fontStyle.SelectedItem.ToString() != "") templ.feature = comboBox_fontStyle.SelectedItem.ToString() + "=" + textBox_fontSize.Text;
-                else templ.feature = "";
-            }
-
-            // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
-            // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
-            else if (templ.name == _objectNames[lineObject])
-            {
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
-
-                float f = 0;
-                float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f * mult;
-
-                float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f * mult;
-
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
-                float.TryParse(textBox_fontSize.Text, out f);
-                templ.lineWidth = f * mult;
-
-                if ((textBox_rotate.Text == "" || textBox_content.Text == "" || templ.lineLength == -1) && textBox_width.Text != "" && textBox_height.Text != "") //-V3024
+                templ = Label[n];
+                if (templ.name == _objectNames[labelObject])
                 {
+                    if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
+                    else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
+
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                    float f = 0;
+                    float.TryParse(textBox_width.Text, out f);
+                    templ.width = f * mult;
+
+                    float.TryParse(textBox_height.Text, out f);
+                    templ.height = f * mult;
+                }
+
+                // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
+                else if (templ.name == _objectNames[textObject])
+                {
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
+
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
+
+                    float.TryParse(textBox_rotate.Text, out f);
+                    templ.rotate = f;
+
+                    templ.content = textBox_content.Text;
+
+                    float b = 0;
+                    textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
+                    float.TryParse(textBox_fontSize.Text, out b);
+                    templ.fontSize = b * mult;
+
+                    byte s = 0;
+                    byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
+                    templ.fontStyle = s;
+
+                    templ.fontName = comboBox_fontName.SelectedItem.ToString();
+                }
+
+                // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
+                else if (templ.name == _objectNames[pictureObject])
+                {
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
+
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
+
+                    float.TryParse(textBox_rotate.Text, out f);
+                    templ.rotate = f;
+
+                    templ.content = textBox_content.Text;
+
                     float.TryParse(textBox_width.Text, out f);
                     templ.width = f * mult;
 
                     float.TryParse(textBox_height.Text, out f);
                     templ.height = f * mult;
 
-                    templ.lineLength = -1;
+                    templ.transparent = checkBox_fill.Checked;
                 }
-                else if (textBox_rotate.Text != "" && textBox_content.Text != "")
+
+                // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
+                else if (templ.name == _objectNames[barcodeObject])
                 {
+                    if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
+                    else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
+
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
+
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
+
                     float.TryParse(textBox_rotate.Text, out f);
                     templ.rotate = f;
 
-                    textBox_content.Text = Evaluate(textBox_content.Text).ToString();
-                    float.TryParse(textBox_content.Text, out f);
-                    templ.lineLength = f * mult;
+                    templ.content = textBox_content.Text;
+
+                    float.TryParse(textBox_width.Text, out f);
+                    templ.width = f * mult;
+
+                    float.TryParse(textBox_height.Text, out f);
+                    templ.height = f * mult;
+
+                    templ.transparent = checkBox_fill.Checked;
+
+                    int i = 0;
+                    int.TryParse(comboBox_fontName.SelectedItem.ToString().Substring(0, comboBox_fontName.SelectedItem.ToString().IndexOf('=')), out i);
+                    templ.BCformat = i;
+
+                    if (comboBox_fontStyle.SelectedItem.ToString() != "") templ.feature = comboBox_fontStyle.SelectedItem.ToString() + "=" + textBox_fontSize.Text;
+                    else templ.feature = "";
                 }
-            }
 
-            // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-            else if (templ.name == _objectNames[rectangleObject])
-            {
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+                // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
+                // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
+                else if (templ.name == _objectNames[lineObject])
+                {
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                float f = 0;
-                float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f * mult;
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
 
-                float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f * mult;
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
 
-                float.TryParse(textBox_rotate.Text, out f);
-                templ.rotate = f;
+                    textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
+                    float.TryParse(textBox_fontSize.Text, out f);
+                    templ.lineWidth = f * mult;
 
-                float.TryParse(textBox_width.Text, out f);
-                templ.width = f * mult;
+                    if ((textBox_rotate.Text == "" || textBox_content.Text == "" || templ.lineLength == -1) && textBox_width.Text != "" && textBox_height.Text != "") //-V3024
+                    {
+                        float.TryParse(textBox_width.Text, out f);
+                        templ.width = f * mult;
 
-                float.TryParse(textBox_height.Text, out f);
-                templ.height = f * mult;
+                        float.TryParse(textBox_height.Text, out f);
+                        templ.height = f * mult;
 
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
-                float.TryParse(textBox_fontSize.Text, out f);
-                templ.lineWidth = f * mult;
+                        templ.lineLength = -1;
+                    }
+                    else if (textBox_rotate.Text != "" && textBox_content.Text != "")
+                    {
+                        float.TryParse(textBox_rotate.Text, out f);
+                        templ.rotate = f;
 
-                templ.transparent = !checkBox_fill.Checked;
-            }
+                        textBox_content.Text = Evaluate(textBox_content.Text).ToString();
+                        float.TryParse(textBox_content.Text, out f);
+                        templ.lineLength = f * mult;
+                    }
+                }
 
-            // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-            else if (templ.name == _objectNames[ellipseObject])
-            {
-                if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
-                else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+                // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+                else if (templ.name == _objectNames[rectangleObject])
+                {
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                float f = 0;
-                float.TryParse(textBox_posX.Text, out f);
-                templ.posX = f * mult;
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
 
-                float.TryParse(textBox_posY.Text, out f);
-                templ.posY = f * mult;
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
 
-                float.TryParse(textBox_rotate.Text, out f);
-                templ.rotate = f;
+                    float.TryParse(textBox_rotate.Text, out f);
+                    templ.rotate = f;
 
-                float.TryParse(textBox_width.Text, out f);
-                templ.width = f * mult;
+                    float.TryParse(textBox_width.Text, out f);
+                    templ.width = f * mult;
 
-                float.TryParse(textBox_height.Text, out f);
-                templ.height = f * mult;
+                    float.TryParse(textBox_height.Text, out f);
+                    templ.height = f * mult;
 
-                textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
-                float.TryParse(textBox_fontSize.Text, out f);
-                templ.lineWidth = f * mult;
+                    textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
+                    float.TryParse(textBox_fontSize.Text, out f);
+                    templ.lineWidth = f * mult;
 
-                templ.transparent = !checkBox_fill.Checked;
+                    templ.transparent = !checkBox_fill.Checked;
+                }
+
+                // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+                else if (templ.name == _objectNames[ellipseObject])
+                {
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
+
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
+
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
+
+                    float.TryParse(textBox_rotate.Text, out f);
+                    templ.rotate = f;
+
+                    float.TryParse(textBox_width.Text, out f);
+                    templ.width = f * mult;
+
+                    float.TryParse(textBox_height.Text, out f);
+                    templ.height = f * mult;
+
+                    textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
+                    float.TryParse(textBox_fontSize.Text, out f);
+                    templ.lineWidth = f * mult;
+
+                    templ.transparent = !checkBox_fill.Checked;
+                }
             }
             return templ;
         }
 
-        private void ShowObjectInUI(int n)
+        private void ShowObjectInGUI(int n)
         {
+            if (n < 0) return;
             ClearFields();
-            comboBox_object.SelectedItem = listBox_objects.SelectedItem.ToString();
+
             string str = "";
             //new object
             if (n >= Label.Count)
             {
                 comboBox_object.Enabled = true;
             }
-            // label; [bgColor]; [objectColor]; width; height;
-            else if (Label[n].name == _objectNames[labelObject])
+            else
             {
-                label_backgroundColor.Text = "Background color";
-                comboBox_backgroundColor.Enabled = true;
-                comboBox_backgroundColor.Items.Clear();
-
-                comboBox_backgroundColor.Items.AddRange(GetColorList());
-                str = Label[n].bgColor.Name.ToString();
-                for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
+                comboBox_object.SelectedItem = Label[n].name;
+                // label; [bgColor]; [objectColor]; width; height;
+                if (Label[n].name == _objectNames[labelObject])
                 {
-                    if (comboBox_backgroundColor.Items[i].ToString() == str)
+                    label_backgroundColor.Text = "Background color";
+                    comboBox_backgroundColor.Enabled = true;
+                    comboBox_backgroundColor.Items.Clear();
+
+                    comboBox_backgroundColor.Items.AddRange(GetColorList());
+                    str = Label[n].bgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
                     {
-                        comboBox_backgroundColor.SelectedIndex = i;
-                        i = comboBox_backgroundColor.Items.Count;
+                        if (comboBox_backgroundColor.Items[i].ToString() == str)
+                        {
+                            comboBox_backgroundColor.SelectedIndex = i;
+                            i = comboBox_backgroundColor.Items.Count;
+                        }
                     }
+
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Enabled = true;
+                    comboBox_objectColor.Items.Clear();
+                    comboBox_objectColor.Items.Add("");
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+
+                    label_width.Text = "Width";
+                    textBox_width.Enabled = true;
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    label_height.Text = "Height";
+                    textBox_height.Enabled = true;
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
                 }
 
-                label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Enabled = true;
-                comboBox_objectColor.Items.Clear();
-                comboBox_objectColor.Items.Add("");
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
+                else if (Label[n].name == _objectNames[textObject])
                 {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
+                    comboBox_objectColor.Enabled = true;
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
                     {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
                     }
+
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_rotate.Enabled = true;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = Label[n].rotate.ToString();
+
+                    textBox_content.Enabled = true;
+                    label_content.Text = "Data string";
+                    textBox_content.Text = Label[n].content;
+
+                    comboBox_fontName.Enabled = true;
+                    label_fontName.Text = "Font";
+                    comboBox_fontName.Items.Clear();
+                    comboBox_fontName.Items.AddRange(GetFontList());
+                    comboBox_fontName.SelectedIndex = 0;
+                    str = Label[n].fontName.ToString();
+                    for (int i = 0; i < comboBox_fontName.Items.Count; i++)
+                    {
+                        if (comboBox_fontName.Items[i].ToString() == str)
+                        {
+                            comboBox_fontName.SelectedIndex = i;
+                            i = comboBox_fontName.Items.Count;
+                        }
+                    }
+
+                    comboBox_fontStyle.Enabled = true;
+                    label_fontStyle.Text = "Text style";
+                    comboBox_fontStyle.Items.Clear();
+                    comboBox_fontStyle.Items.AddRange(_textStyleNames);
+                    comboBox_fontStyle.SelectedIndex = 0;
+                    str = Label[n].fontStyle.ToString();
+                    for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
+                    {
+                        if (comboBox_fontStyle.Items[i].ToString().StartsWith(str))
+                        {
+                            comboBox_fontStyle.SelectedIndex = i;
+                            i = comboBox_fontStyle.Items.Count;
+                        }
+                    }
+
+                    textBox_fontSize.Enabled = true;
+                    label_fontSize.Text = "Font size";
+                    textBox_fontSize.Text = (Label[n].fontSize / mult).ToString("F4");
                 }
 
-                label_width.Text = "Width";
-                textBox_width.Enabled = true;
-                textBox_width.Text = (Label[n].width / mult).ToString("F4");
+                // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
+                else if (Label[n].name == _objectNames[pictureObject])
+                {
+                    comboBox_objectColor.Enabled = true;
+                    label_objectColor.Text = "Transparent color";
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
 
-                label_height.Text = "Height";
-                textBox_height.Enabled = true;
-                textBox_height.Text = (Label[n].height / mult).ToString("F4");
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_width.Enabled = true;
+                    label_width.Text = "Width";
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    textBox_height.Enabled = true;
+                    label_height.Text = "Height";
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
+
+                    textBox_rotate.Enabled = true;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = Label[n].rotate.ToString();
+
+                    textBox_content.Enabled = true;
+                    label_content.Text = "Picture file";
+                    textBox_content.Text = Label[n].content;
+
+                    checkBox_fill.Enabled = true;
+                    checkBox_fill.Text = "Transparent";
+                    checkBox_fill.Checked = Label[n].transparent;
+                }
+
+                // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
+                else if (Label[n].name == _objectNames[barcodeObject])
+                {
+                    comboBox_backgroundColor.Enabled = true;
+                    label_backgroundColor.Text = "Background color";
+                    comboBox_backgroundColor.Items.AddRange(GetColorList());
+                    str = Label[n].bgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
+                    {
+                        if (comboBox_backgroundColor.Items[i].ToString() == str)
+                        {
+                            comboBox_backgroundColor.SelectedIndex = i;
+                            i = comboBox_backgroundColor.Items.Count;
+                        }
+                    }
+
+                    comboBox_objectColor.Enabled = true;
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_width.Enabled = true;
+                    label_width.Text = "Width";
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    textBox_height.Enabled = true;
+                    label_height.Text = "Height";
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
+
+                    textBox_rotate.Enabled = true;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = Label[n].rotate.ToString();
+
+                    textBox_content.Enabled = true;
+                    label_content.Text = "Data string";
+                    textBox_content.Text = Label[n].content;
+
+                    comboBox_fontName.Enabled = true;
+                    label_fontName.Text = "Barcode type";
+                    comboBox_fontName.Items.Clear();
+                    comboBox_fontName.Items.AddRange(GetBarcodeList());
+                    comboBox_fontName.SelectedIndex = 0;
+                    str = Label[n].BCformat.ToString() + "=" + ((BarcodeFormat)Label[n].BCformat).ToString();
+                    for (int i = 0; i < comboBox_fontName.Items.Count; i++)
+                    {
+                        if (comboBox_fontName.Items[i].ToString() == str)
+                        {
+                            comboBox_fontName.SelectedIndex = i;
+                            i = comboBox_fontName.Items.Count;
+                        }
+                    }
+
+                    comboBox_fontStyle.Enabled = true;
+                    label_fontStyle.Text = "Additional feature";
+                    comboBox_fontStyle.Items.AddRange(bcFeatures.ToArray());
+                    comboBox_fontStyle.SelectedIndex = 0;
+                    str = Label[n].feature;
+                    for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
+                    {
+                        if (str.StartsWith(comboBox_fontStyle.Items[i].ToString()))
+                        {
+                            comboBox_fontStyle.SelectedIndex = i;
+                        }
+                    }
+
+                    textBox_fontSize.Enabled = true;
+                    label_fontSize.Text = "Feature value";
+                    textBox_fontSize.Text = Label[n].feature.Substring(Label[n].feature.IndexOf('=') + 1);
+
+                    checkBox_fill.Enabled = true;
+                    checkBox_fill.Text = "Transparent";
+                    checkBox_fill.Checked = Label[n].transparent;
+                }
+
+                // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
+                // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
+                else if (Label[n].name == _objectNames[lineObject])
+                {
+                    comboBox_objectColor.Enabled = true;
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_fontSize.Enabled = true;
+                    label_fontSize.Text = "Line width";
+                    textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
+
+                    textBox_width.Enabled = true;
+                    label_width.Text = "endX";
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    textBox_height.Enabled = true;
+                    label_height.Text = "endY";
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
+                    textBox_rotate.Enabled = true;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = Label[n].rotate.ToString();
+
+                    textBox_content.Enabled = true;
+                    label_content.Text = "Line length (empty to use coordinates)";
+                    if (Label[n].lineLength != -1) textBox_content.Text = (Label[n].lineLength / mult).ToString("F4"); //-V3024
+                }
+
+                // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+                else if (Label[n].name == _objectNames[rectangleObject])
+                {
+                    comboBox_objectColor.Enabled = true;
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_width.Enabled = true;
+                    label_width.Text = "Width";
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    textBox_height.Enabled = true;
+                    label_height.Text = "Height";
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
+
+                    textBox_rotate.Enabled = true;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = Label[n].rotate.ToString();
+
+                    textBox_fontSize.Enabled = true;
+                    label_fontSize.Text = "Line width";
+                    textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
+
+                    checkBox_fill.Enabled = true;
+                    checkBox_fill.Text = "Fill with objectColor";
+                    checkBox_fill.Checked = !Label[n].transparent;
+                }
+
+                // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+                else if (Label[n].name == _objectNames[ellipseObject])
+                {
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Enabled = true;
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_width.Enabled = true;
+                    label_width.Text = "Width";
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    textBox_height.Enabled = true;
+                    label_height.Text = "Height";
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
+
+                    textBox_rotate.Enabled = true;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = Label[n].rotate.ToString();
+
+                    textBox_fontSize.Enabled = true;
+                    label_fontSize.Text = "Line width";
+                    textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
+
+                    checkBox_fill.Enabled = true;
+                    checkBox_fill.Text = "Fill with objectColor";
+                    checkBox_fill.Checked = !Label[n].transparent;
+                }
             }
-
-            // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
-            else if (Label[n].name == _objectNames[textObject])
-            {
-                comboBox_objectColor.Enabled = true;
-                label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
-                {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
-                    {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
-                    }
-                }
-
-                textBox_posX.Enabled = true;
-                label_posX.Text = "posX";
-                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
-
-                textBox_posY.Enabled = true;
-                label_posY.Text = "posY";
-                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
-
-                textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[n].rotate.ToString();
-
-                textBox_content.Enabled = true;
-                label_content.Text = "Data string";
-                textBox_content.Text = Label[n].content;
-
-                comboBox_fontName.Enabled = true;
-                label_fontName.Text = "Font";
-                comboBox_fontName.Items.Clear();
-                comboBox_fontName.Items.AddRange(GetFontList());
-                comboBox_fontName.SelectedIndex = 0;
-                str = Label[n].fontName.ToString();
-                for (int i = 0; i < comboBox_fontName.Items.Count; i++)
-                {
-                    if (comboBox_fontName.Items[i].ToString() == str)
-                    {
-                        comboBox_fontName.SelectedIndex = i;
-                        i = comboBox_fontName.Items.Count;
-                    }
-                }
-
-                comboBox_fontStyle.Enabled = true;
-                label_fontStyle.Text = "Text style";
-                comboBox_fontStyle.Items.Clear();
-                comboBox_fontStyle.Items.AddRange(_textStyleNames);
-                comboBox_fontStyle.SelectedIndex = 0;
-                str = Label[n].fontStyle.ToString();
-                for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
-                {
-                    if (comboBox_fontStyle.Items[i].ToString().StartsWith(str))
-                    {
-                        comboBox_fontStyle.SelectedIndex = i;
-                        i = comboBox_fontStyle.Items.Count;
-                    }
-                }
-
-                textBox_fontSize.Enabled = true;
-                label_fontSize.Text = "Font size";
-                textBox_fontSize.Text = (Label[n].fontSize / mult).ToString("F4");
-            }
-
-            // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
-            else if (Label[n].name == _objectNames[pictureObject])
-            {
-                comboBox_objectColor.Enabled = true;
-                label_objectColor.Text = "Transparent color";
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
-                {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
-                    {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
-                    }
-                }
-
-                textBox_posX.Enabled = true;
-                label_posX.Text = "posX";
-                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
-
-                textBox_posY.Enabled = true;
-                label_posY.Text = "posY";
-                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
-
-                textBox_width.Enabled = true;
-                label_width.Text = "Width";
-                textBox_width.Text = (Label[n].width / mult).ToString("F4");
-
-                textBox_height.Enabled = true;
-                label_height.Text = "Height";
-                textBox_height.Text = (Label[n].height / mult).ToString("F4");
-
-                textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[n].rotate.ToString();
-
-                textBox_content.Enabled = true;
-                label_content.Text = "Picture file";
-                textBox_content.Text = Label[n].content;
-
-                checkBox_fill.Enabled = true;
-                checkBox_fill.Text = "Transparent";
-                checkBox_fill.Checked = Label[n].transparent;
-            }
-
-            // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
-            else if (Label[n].name == _objectNames[barcodeObject])
-            {
-                comboBox_backgroundColor.Enabled = true;
-                label_backgroundColor.Text = "Background color";
-                comboBox_backgroundColor.Items.AddRange(GetColorList());
-                str = Label[n].bgColor.Name.ToString();
-                for (int i = 0; i < comboBox_backgroundColor.Items.Count; i++)
-                {
-                    if (comboBox_backgroundColor.Items[i].ToString() == str)
-                    {
-                        comboBox_backgroundColor.SelectedIndex = i;
-                        i = comboBox_backgroundColor.Items.Count;
-                    }
-                }
-
-                comboBox_objectColor.Enabled = true;
-                label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
-                {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
-                    {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
-                    }
-                }
-
-                textBox_posX.Enabled = true;
-                label_posX.Text = "posX";
-                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
-
-                textBox_posY.Enabled = true;
-                label_posY.Text = "posY";
-                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
-
-                textBox_width.Enabled = true;
-                label_width.Text = "Width";
-                textBox_width.Text = (Label[n].width / mult).ToString("F4");
-
-                textBox_height.Enabled = true;
-                label_height.Text = "Height";
-                textBox_height.Text = (Label[n].height / mult).ToString("F4");
-
-                textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[n].rotate.ToString();
-
-                textBox_content.Enabled = true;
-                label_content.Text = "Data string";
-                textBox_content.Text = Label[n].content;
-
-                comboBox_fontName.Enabled = true;
-                label_fontName.Text = "Barcode type";
-                comboBox_fontName.Items.Clear();
-                comboBox_fontName.Items.AddRange(GetBarcodeList());
-                comboBox_fontName.SelectedIndex = 0;
-                str = Label[n].BCformat.ToString() + "=" + ((BarcodeFormat)Label[n].BCformat).ToString();
-                for (int i = 0; i < comboBox_fontName.Items.Count; i++)
-                {
-                    if (comboBox_fontName.Items[i].ToString() == str)
-                    {
-                        comboBox_fontName.SelectedIndex = i;
-                        i = comboBox_fontName.Items.Count;
-                    }
-                }
-
-                comboBox_fontStyle.Enabled = true;
-                label_fontStyle.Text = "Additional feature";
-                comboBox_fontStyle.Items.AddRange(bcFeatures.ToArray());
-                comboBox_fontStyle.SelectedIndex = 0;
-                str = Label[n].feature;
-                for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
-                {
-                    if (str.StartsWith(comboBox_fontStyle.Items[i].ToString()))
-                    {
-                        comboBox_fontStyle.SelectedIndex = i;
-                    }
-                }
-
-                textBox_fontSize.Enabled = true;
-                label_fontSize.Text = "Feature value";
-                textBox_fontSize.Text = Label[n].feature.Substring(Label[n].feature.IndexOf('=') + 1);
-
-                checkBox_fill.Enabled = true;
-                checkBox_fill.Text = "Transparent";
-                checkBox_fill.Checked = Label[n].transparent;
-            }
-
-            // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
-            // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
-            else if (Label[n].name == _objectNames[lineObject])
-            {
-                comboBox_objectColor.Enabled = true;
-                label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
-                {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
-                    {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
-                    }
-                }
-
-                textBox_posX.Enabled = true;
-                label_posX.Text = "posX";
-                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
-
-                textBox_posY.Enabled = true;
-                label_posY.Text = "posY";
-                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
-
-                textBox_fontSize.Enabled = true;
-                label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
-
-                textBox_width.Enabled = true;
-                label_width.Text = "endX";
-                textBox_width.Text = (Label[n].width / mult).ToString("F4");
-
-                textBox_height.Enabled = true;
-                label_height.Text = "endY";
-                textBox_height.Text = (Label[n].height / mult).ToString("F4");
-                textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[n].rotate.ToString();
-
-                textBox_content.Enabled = true;
-                label_content.Text = "Line length (empty to use coordinates)";
-                if (Label[n].lineLength != -1) textBox_content.Text = (Label[n].lineLength / mult).ToString("F4"); //-V3024
-            }
-
-            // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-            else if (Label[n].name == _objectNames[rectangleObject])
-            {
-                comboBox_objectColor.Enabled = true;
-                label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
-                {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
-                    {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
-                    }
-                }
-
-                textBox_posX.Enabled = true;
-                label_posX.Text = "posX";
-                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
-
-                textBox_posY.Enabled = true;
-                label_posY.Text = "posY";
-                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
-
-                textBox_width.Enabled = true;
-                label_width.Text = "Width";
-                textBox_width.Text = (Label[n].width / mult).ToString("F4");
-
-                textBox_height.Enabled = true;
-                label_height.Text = "Height";
-                textBox_height.Text = (Label[n].height / mult).ToString("F4");
-
-                textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[n].rotate.ToString();
-
-                textBox_fontSize.Enabled = true;
-                label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
-
-                checkBox_fill.Enabled = true;
-                checkBox_fill.Text = "Fill with objectColor";
-                checkBox_fill.Checked = !Label[n].transparent;
-            }
-
-            // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-            else if (Label[n].name == _objectNames[ellipseObject])
-            {
-                label_objectColor.Text = "Default object color";
-                comboBox_objectColor.Enabled = true;
-                comboBox_objectColor.Items.AddRange(GetColorList());
-                str = Label[n].fgColor.Name.ToString();
-                for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
-                {
-                    if (comboBox_objectColor.Items[i].ToString() == str)
-                    {
-                        comboBox_objectColor.SelectedIndex = i;
-                        i = comboBox_objectColor.Items.Count;
-                    }
-                }
-
-                textBox_posX.Enabled = true;
-                label_posX.Text = "posX";
-                textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
-
-                textBox_posY.Enabled = true;
-                label_posY.Text = "posY";
-                textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
-
-                textBox_width.Enabled = true;
-                label_width.Text = "Width";
-                textBox_width.Text = (Label[n].width / mult).ToString("F4");
-
-                textBox_height.Enabled = true;
-                label_height.Text = "Height";
-                textBox_height.Text = (Label[n].height / mult).ToString("F4");
-
-                textBox_rotate.Enabled = true;
-                label_rotate.Text = "Rotate";
-                textBox_rotate.Text = Label[n].rotate.ToString();
-
-                textBox_fontSize.Enabled = true;
-                label_fontSize.Text = "Line width";
-                textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
-
-                checkBox_fill.Enabled = true;
-                checkBox_fill.Text = "Fill with objectColor";
-                checkBox_fill.Checked = !Label[n].transparent;
-            }
-
-            GenerateLabel(-1);
         }
 
         private string[] GetObjectsList()
@@ -2642,7 +2529,7 @@ namespace LabelPrint
         {
             foreach (DataGridViewRow row in dgv.Rows)
             {
-                row.HeaderCell.Value = row.Index.ToString();
+                row.HeaderCell.Value = (row.Index + 1).ToString();
             }
             dgv.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders);
         }
@@ -2658,56 +2545,147 @@ namespace LabelPrint
             return e;
         }
 
-        /*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
-        {
-            if (variables != null)
-            {
-                if (variables.Length != values.Length) return 0;
-                for (int i = 0; i < variables.Length; i++) expression = expression.Replace(variables[i], values[i]);
-            }
-            var loDataTable = new DataTable();
-            var loDataColumn = new DataColumn("Eval", typeof(long), expression);
-            loDataTable.Columns.Add(loDataColumn);
-            loDataTable.Rows.Add(0);
-            return (long)(loDataTable.Rows[0]["Eval"]);
-        }
-
-        private bool IsInPolygon(Point[] poly, Point pnt)
-        {
-            int i, j;
-            int nvert = poly.Length;
-            bool c = false;
-            for (i = 0, j = nvert - 1; i < nvert; j = i++)
-            {
-                if (((poly[i].Y > pnt.Y) != (poly[j].Y > pnt.Y)) &&
-                 (pnt.X < (poly[j].X - poly[i].X) * (pnt.Y - poly[i].Y) / (poly[j].Y - poly[i].Y) + poly[i].X))
-                    c = !c;
-            }
-            return c;
-        }
-
-        private PointF[] rotatePolygon(PointF zeroPoint, PointF[] poly, float angle)
-        {
-            PointF[] p = new PointF[poly.Length];
-            for (int i = 0; i < poly.Length; i++)
-            {
-                double xn = 0, yn = 0;
-                rotateLine(zeroPoint.X, zeroPoint.Y, poly[i].X, poly[i].Y, angle, out xn, out yn);
-                p[i].X = (float)xn;
-                p[i].X = (float)yn;
-            }
-            return p;
-        }
-
-        private void rotateLine(double xc, double yc, double x, double y, double a, out double xn, out double yn)
-        {
-            xn = (x - xc) * Math.Cos(a) - (y - yc) * Math.Sin(a) + xc;
-            yn = (x - xc) * Math.Sin(a) + (y - yc) * Math.Cos(a) + yc;
-        }
-        */
         #endregion
 
         #region GUI management
+
+        private void Button_importLabels_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Title = "Open labels .CSV database";
+            openFileDialog1.DefaultExt = "csv";
+            openFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            openFileDialog1.ShowDialog();
+        }
+
+        private void Button_importTemplate_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Title = "Open template .CSV file";
+            openFileDialog1.DefaultExt = "csv";
+            openFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            openFileDialog1.ShowDialog();
+        }
+
+        private void OpenFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (openFileDialog1.Title == "Open template .CSV file")
+            {
+                objectsNum = 0;
+                dataGridView_labels.DataSource = null;
+                LabelsDatabase.Clear();
+                LabelsDatabase.Columns.Clear();
+                LabelsDatabase.Rows.Clear();
+                textBox_labelsName.Clear();
+                Label.Clear();
+
+                Label = LoadCsvTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+
+                TextBox_dpi_Leave(this, EventArgs.Empty);
+                button_importLabels.Enabled = true;
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
+
+                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //save path to template
+                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //create colums and fill 1 row with default values
+                for (int i = 1; i < objectsNum; i++)
+                {
+                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].name);
+                }
+                DataRow row = LabelsDatabase.NewRow();
+                for (int i = 1; i < objectsNum; i++)
+                {
+                    row[i - 1] = Label[i].content;
+                }
+                LabelsDatabase.Rows.Add(row);
+                dataGridView_labels.DataSource = LabelsDatabase;
+                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                button_printCurrent.Enabled = true;
+                button_printAll.Enabled = false;
+                button_printRange.Enabled = false;
+                textBox_rangeFrom.Text = "0";
+                textBox_rangeTo.Text = "0";
+                SetRowNumber(dataGridView_labels);
+                TabControl1_SelectedIndexChanged(this, EventArgs.Empty);
+            }
+            else if (openFileDialog1.Title == "Open labels .CSV database")
+            {
+                dataGridView_labels.DataSource = null;
+
+                LabelsDatabase = LoadCsvLabel(openFileDialog1.FileName, checkBox_columnNames.Checked);
+
+                if (LabelsDatabase.Rows.Count > 0)
+                {
+                    dataGridView_labels.DataSource = LabelsDatabase;
+                    foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                    //check for picture file existence
+                    foreach (DataGridViewRow row in dataGridView_labels.Rows)
+                    {
+                        for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
+                        {
+                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(path + row.Cells[i].Value.ToString()))
+                            {
+                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
+                            }
+                        }
+                    }
+                    button_printCurrent.Enabled = true;
+                    button_printAll.Enabled = true;
+                    button_printRange.Enabled = true;
+                    textBox_rangeFrom.Text = "0";
+                    textBox_rangeTo.Text = (LabelsDatabase.Rows.Count).ToString();
+                    SetRowNumber(dataGridView_labels);
+                }
+                else
+                {
+                    MessageBox.Show("Error: No label data loaded.");
+                    return;
+                }
+                if (dataGridView_labels.Columns.Count != Label.Count - 1)
+                    MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + dataGridView_labels.Columns.Count.ToString());
+                dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
+                dataGridView_labels.Rows[0].Selected = true;
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
+                textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+            }
+        }
+
+        private void Button_saveTemplate_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog1.Title = "Save template as .CSV...";
+            SaveFileDialog1.DefaultExt = "csv";
+            SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            if (textBox_templateName.Text == "") SaveFileDialog1.FileName = "template_" + DateTime.Today.ToShortDateString().Replace("/", "_") + ".csv";
+            else SaveFileDialog1.FileName = textBox_templateName.Text;
+            SaveFileDialog1.ShowDialog();
+        }
+
+        private void Button_saveLabel_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog1.Title = "Save label data as .CSV...";
+            SaveFileDialog1.DefaultExt = "csv";
+            SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            SaveFileDialog1.FileName = "label_" + textBox_templateName.Text;
+            SaveFileDialog1.ShowDialog();
+        }
+
+        private void SaveFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            StringBuilder output = new StringBuilder();
+            char div = Properties.Settings.Default.CSVdelimiter;
+            if (SaveFileDialog1.Title == "Save template as .CSV...")
+            {
+                if (!saveTemplateToCSV(SaveFileDialog1.FileName, Label, Properties.Settings.Default.CodePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+            }
+            else if (SaveFileDialog1.Title == "Save label data as .CSV...")
+            {
+                if (!saveTableToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Properties.Settings.Default.CodePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+            }
+        }
+
         private void CheckBox_toFile_CheckedChanged(object sender, EventArgs e)
         {
             textBox_saveFileName.Enabled = checkBox_toFile.Checked;
@@ -2731,7 +2709,11 @@ namespace LabelPrint
 
         private void DataGridView_labels_SelectionChanged(object sender, EventArgs e)
         {
-            if (!cmdLinePrint) GenerateLabel(dataGridView_labels.CurrentCell.RowIndex);
+            if (!cmdLinePrint)
+            {
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
+            }
         }
 
         private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -2785,15 +2767,15 @@ namespace LabelPrint
                     button_printAll.Enabled = true;
                     button_printRange.Enabled = true;
                     textBox_rangeFrom.Text = "0";
-                    textBox_rangeTo.Text = (LabelsDatabase.Rows.Count - 1).ToString();
+                    textBox_rangeTo.Text = LabelsDatabase.Rows.Count.ToString();
                     SetRowNumber(dataGridView_labels);
                     dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                     dataGridView_labels.Rows[0].Selected = true;
-                    GenerateLabel(-1);
+                    //GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                    //pictureBox_label.Image = LabelBmp;
                     dataGridView_labels.SelectionChanged += new EventHandler(DataGridView_labels_SelectionChanged);
                     _templateChanged = false;
                 }
-                GenerateLabel(-1);
             }
             else if (tabControl1.SelectedIndex == 1)
             {
@@ -2808,33 +2790,39 @@ namespace LabelPrint
                 listBox_objectsMulti.Items.AddRange(GetObjectsList());
                 listBox_objectsMulti.SelectedIndex = 0;
             }
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
         }
 
         private void ListBox_objects_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ShowObjectInUI(listBox_objects.SelectedIndex);
+            ShowObjectInGUI(listBox_objects.SelectedIndex);
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
         }
 
         private void Button_apply_Click(object sender, EventArgs e)
         {
+            if (listBox_objects.SelectedIndex < 0) return;
             listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             int n = listBox_objects.SelectedIndex;
-            if (listBox_objects.SelectedIndex == listBox_objects.Items.Count - 1)
+            Template templ = CollectObjectFromGUI(n);
+
+            if (n >= Label.Count)
             {
-                Template templ = CollectObjectFromUI();
-                Label.Add(templ);
+                if (comboBox_object.SelectedIndex > 0) Label.Add(templ);
             }
             else
             {
-                Template templ = CollectObjectFromUI();
                 Label[n] = templ;
-                GenerateLabel(-1);
             }
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
             listBox_objects.Items.Clear();
             listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = n;
             _templateChanged = true;
-            ShowObjectInUI(listBox_objects.SelectedIndex);
+            ShowObjectInGUI(listBox_objects.SelectedIndex);
             listBox_objects.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
@@ -2848,8 +2836,9 @@ namespace LabelPrint
                 listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n;
                 _templateChanged = true;
-                ShowObjectInUI(listBox_objects.SelectedIndex);
-                GenerateLabel(-1);
+                ShowObjectInGUI(listBox_objects.SelectedIndex);
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
             }
         }
 
@@ -2865,8 +2854,9 @@ namespace LabelPrint
                 listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n - 1;
                 _templateChanged = true;
-                ShowObjectInUI(listBox_objects.SelectedIndex);
-                GenerateLabel(-1);
+                ShowObjectInGUI(listBox_objects.SelectedIndex);
+                GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
             }
         }
 
@@ -2882,8 +2872,9 @@ namespace LabelPrint
                 listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n + 1;
                 _templateChanged = true;
-                ShowObjectInUI(listBox_objects.SelectedIndex);
-                GenerateLabel(-1);
+                ShowObjectInGUI(listBox_objects.SelectedIndex);
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
             }
         }
 
@@ -2934,7 +2925,7 @@ namespace LabelPrint
             mult = units[comboBox_units.SelectedIndex];
             if (comboBox_units.SelectedIndex == 0) textBox_dpi.Enabled = false;
             else textBox_dpi.Enabled = true;
-            ShowObjectInUI(listBox_objects.SelectedIndex);
+            ShowObjectInGUI(listBox_objects.SelectedIndex);
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
@@ -2953,7 +2944,11 @@ namespace LabelPrint
                     if (Label[n].name == _objectNames[lineObject])
                         DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, 0, 1);
                     else
-                        DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, Label[n].rotate, 1);
+                        try
+                        {
+                            DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, Label[n].rotate, 1);
+                        }
+                        catch { }
                 }
             }
             pictureBox_label.Image = LabelBmp;
@@ -2995,8 +2990,9 @@ namespace LabelPrint
                 listBox_objects.Items.AddRange(GetObjectsList());
                 listBox_objects.SelectedIndex = n;
                 _templateChanged = true;
-                ShowObjectInUI(listBox_objects.SelectedIndex);
-                GenerateLabel(-1);
+                ShowObjectInGUI(listBox_objects.SelectedIndex);
+                LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                pictureBox_label.Image = LabelBmp;
             }
         }
 
@@ -3021,7 +3017,7 @@ namespace LabelPrint
             listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
@@ -3046,7 +3042,7 @@ namespace LabelPrint
             listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
@@ -3071,7 +3067,7 @@ namespace LabelPrint
             listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
@@ -3096,7 +3092,7 @@ namespace LabelPrint
             listBox_objectsMulti.Items.AddRange(GetObjectsList());
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
-            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
 
@@ -3114,8 +3110,9 @@ namespace LabelPrint
             listBox_objectsMulti.Items.Clear();
             listBox_objectsMulti.Items.AddRange(GetObjectsList());
             listBox_objectsMulti.SelectedIndex = 0;
-            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
-            GenerateLabel(-1);
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
         }
 
         private void TextBox_move_Leave(object sender, EventArgs e)
@@ -3125,15 +3122,84 @@ namespace LabelPrint
             textBox_move.Text = n.ToString();
         }
 
+        private void textBox_rangeFrom_Leave(object sender, EventArgs e)
+        {
+            int n = 1;
+            int.TryParse(textBox_rangeFrom.Text, out n);
+            if (n >= 1) textBox_rangeFrom.Text = n.ToString();
+        }
+
+        private void textBox_rangeTo_Leave(object sender, EventArgs e)
+        {
+            int n = dataGridView_labels.Rows.Count;
+            int.TryParse(textBox_rangeTo.Text, out n);
+            if (n <= dataGridView_labels.Rows.Count) textBox_rangeTo.Text = n.ToString();
+        }
+
         private void ListBox_objectsMulti_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ShowObjectInUI(listBox_objectsMulti.SelectedIndex);
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
         }
+
+        private void Button_printCurrent_Click(object sender, EventArgs e)
+        {
+            int _pagesFrom = dataGridView_labels.CurrentRow.Index;
+            int _pagesTo = _pagesFrom;
+
+            if (!checkBox_toFile.Checked)
+            {
+                PrintLabels(_pagesFrom, _pagesTo);
+            }
+            else
+            {
+                SaveLabels(_pagesFrom, _pagesTo, textBox_saveFileName.Text);
+            }
+        }
+
+        private void Button_printAll_Click(object sender, EventArgs e)
+        {
+            int _pagesFrom = 0;
+            int _pagesTo = dataGridView_labels.Rows.Count - 1;
+
+            if (!checkBox_toFile.Checked)
+            {
+                PrintLabels(_pagesFrom, _pagesTo);
+            }
+            else
+            {
+                SaveLabels(_pagesFrom, _pagesTo, textBox_saveFileName.Text);
+            }
+        }
+
+        private void Button_printRange_Click(object sender, EventArgs e)
+        {
+            int _pagesFrom = 0;
+            int _pagesTo = dataGridView_labels.Rows.Count;
+
+            int.TryParse(textBox_rangeFrom.Text, out _pagesFrom);
+            int.TryParse(textBox_rangeTo.Text, out _pagesTo);
+            if (_pagesFrom < 1) _pagesFrom = 1;
+            if (_pagesTo > dataGridView_labels.Rows.Count) _pagesTo = dataGridView_labels.Rows.Count;
+
+            if (!checkBox_toFile.Checked)
+            {
+                PrintLabels(_pagesFrom - 1, _pagesTo - 1);
+            }
+            else
+            {
+                SaveLabels(_pagesFrom - 1, _pagesTo - 1, textBox_saveFileName.Text);
+            }
+        }
+
         #endregion
 
         #region Drag'n'Drop
+
         private void PictureBox_label_MouseMove(object sender, MouseEventArgs e)
         {
+            if (pictureBox_label.Image == null) return;
             if (checkBox_scale.Checked)
             {
 
@@ -3159,68 +3225,151 @@ namespace LabelPrint
             }
         }
 
-        /*private int xPosOrig, yPosOrig;
-        private int xPosCurrent, yPosCurrent;
-        private void pictureBox_label_MouseDown(object sender, MouseEventArgs e)
+        /*int xPosOrig, yPosOrig;
+        int xPosCurrent, yPosCurrent;
+        private void pictureBox_ball_MouseDown(object sender, MouseEventArgs e)
         {
-            if (!checkBox_scale.Checked) return;
             if (e.Button == MouseButtons.Left)
             {
-                objectBmp = new Bitmap(currentObject.Width, currentObject.Height, PixelFormat.Format32bppPArgb);
-                Graphics g = Graphics.FromImage(objectBmp);
-                Rectangle rect = new Rectangle(0, 0, currentObject.Width, currentObject.Height);
-                SolidBrush b = new SolidBrush(Color.Transparent);
-                g.FillRectangle(b, rect);
-                pictureBox_label.Image = objectBmp;
-
-                drawEllipse(objectBmp, Color.Black, 0, 0, currentObject.Width, currentObject.Height, Label[listBox_objects.SelectedIndex].rotate, 10, false);
-                pictureBox_object.Top = currentObject.Y;
-                pictureBox_object.Left = currentObject.X;
-
-                pictureBox_object.Width = currentObject.Width;
-                pictureBox_object.Height = currentObject.Height;
-                pictureBox_object.Image = objectBmp;
-                pictureBox_object.Visible = true;
-
                 xPosOrig = e.X;
                 yPosOrig = e.Y;
             }
-        }
+        }*/
 
-        private void pictureBox_object_MouseMove(object sender, MouseEventArgs e)
+        /*private void pictureBox_ball_MouseUp(object sender, MouseEventArgs e)
         {
-            if (!checkBox_scale.Checked) return;
+            if (e.Button == MouseButtons.Left)
+            {
+                PictureBox p = sender as PictureBox;
+                if (p != null)
+                {
+                    xPosCurrent = pictureBox_field.Left + pictureBox_field.Width / 2 - p.Width / 2;
+                    yPosCurrent = pictureBox_field.Top + pictureBox_field.Height / 2 - p.Height / 2;
+                    p.Left = xPosCurrent;
+                    p.Top = yPosCurrent;
+                }
+                //send stop signal to cart
+                if (serialPort1.IsOpen)
+                {
+                    try
+                    {
+                        serialPort1.Write("keep 0 0\r\n");
+                        serialPort1.Write("s\r\n");
+                    }
+                    catch { }
+                }
+                textBox_jX.Text = "0";
+                textBox_jY.Text = "0";
+                L_sent = 0;
+                R_sent = 0;
+            }
+        }*/
+
+        /*private void pictureBox_ball_MouseMove(object sender, MouseEventArgs e)
+        {
             if (e.Button == MouseButtons.Left)
             {
                 PictureBox p = sender as PictureBox;
                 if (p != null)
                 {
                     xPosCurrent += e.X - xPosOrig;
-                    if (xPosCurrent < pictureBox_label.Left) xPosCurrent = pictureBox_label.Left;
-                    if (xPosCurrent > pictureBox_label.Left + pictureBox_label.Width - p.Width) xPosCurrent = pictureBox_label.Left + pictureBox_label.Width - p.Width;
+                    if (xPosCurrent < pictureBox_field.Left) xPosCurrent = pictureBox_field.Left;
+                    if (xPosCurrent > pictureBox_field.Left + pictureBox_field.Width - p.Width) xPosCurrent = pictureBox_field.Left + pictureBox_field.Width - p.Width;
                     p.Left = xPosCurrent;
 
                     yPosCurrent += e.Y - yPosOrig;
-                    if (yPosCurrent < pictureBox_label.Top) yPosCurrent = pictureBox_label.Top;
-                    if (yPosCurrent > pictureBox_label.Top + pictureBox_label.Height - p.Height) yPosCurrent = pictureBox_label.Top + pictureBox_label.Height - p.Height;
+                    if (yPosCurrent < pictureBox_field.Top) yPosCurrent = pictureBox_field.Top;
+                    if (yPosCurrent > pictureBox_field.Top + pictureBox_field.Height - p.Height) yPosCurrent = pictureBox_field.Top + pictureBox_field.Height - p.Height;
                     p.Top = yPosCurrent;
 
-                    textBox_posX.Text = xPosCurrent.ToString();
-                    textBox_posY.Text = yPosCurrent.ToString();
+                    float jX = (xPosCurrent - xPosOrig - (pictureBox_field.Left + (float)pictureBox_field.Width / 2 - (float)pictureBox_ball.Width / 2) + (float)pictureBox_ball.Width / 2) / ((float)pictureBox_field.Width / 2);
+                    float jY = -((yPosCurrent - yPosOrig - (pictureBox_field.Top + (float)pictureBox_field.Height / 2 - (float)pictureBox_ball.Height / 2) + (float)pictureBox_ball.Height / 2) / ((float)pictureBox_field.Height / 2));
+
+                    //calc speed
+                    float l = 0;
+                    float r = 0;
+                    float spd = jY * max_speed * 10;
+
+                    if (jX > 0)
+                    {
+                        l = (int)(spd);
+                        r = (int)(spd * (1 - jX));
+                    }
+                    else
+                    {
+                        r = (int)spd;
+                        l = (int)(spd * (1 + jX));
+                    }
+                    l = l / 10;
+                    r = r / 10;
+                    //if difference >0.1 send speed to cart
+                    if (serialPort1.IsOpen)
+                    {
+                        if (Math.Abs(L_sent - l) >= 0.1 || Math.Abs(R_sent - r) >= 0.1)
+                        {
+                            try
+                            {
+                                serialPort1.Write("keep " + l.ToString("F2") + " " + r.ToString("F2") + "\r\n");
+                            }
+                            catch { }
+                        }
+                    }
+                    //redraw L/R speed indicator on the picture
+                    textBox_jX.Text = L_sent.ToString("F2");
+                    textBox_jY.Text = R_sent.ToString("F2");
+                    L_sent = l;
+                    R_sent = r;
                 }
             }
-        }
-
-        private void pictureBox_object_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (!checkBox_scale.Checked) return;
-            if (e.Button == MouseButtons.Left)
-            {
-                pictureBox_object.Visible = false;
-                Bitmap objectBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
-                button_apply_Click(this, EventArgs.Empty);
-            }
         }*/
+
         #endregion
     }
 }
+
+/*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
+{
+    if (variables != null)
+    {
+        if (variables.Length != values.Length) return 0;
+        for (int i = 0; i < variables.Length; i++) expression = expression.Replace(variables[i], values[i]);
+    }
+    var loDataTable = new DataTable();
+    var loDataColumn = new DataColumn("Eval", typeof(long), expression);
+    loDataTable.Columns.Add(loDataColumn);
+    loDataTable.Rows.Add(0);
+    return (long)(loDataTable.Rows[0]["Eval"]);
+}*/
+
+/*private bool IsInPolygon(Point[] poly, Point pnt)
+{
+    int i, j;
+    int nvert = poly.Length;
+    bool c = false;
+    for (i = 0, j = nvert - 1; i < nvert; j = i++)
+    {
+        if (((poly[i].Y > pnt.Y) != (poly[j].Y > pnt.Y)) &&
+         (pnt.X < (poly[j].X - poly[i].X) * (pnt.Y - poly[i].Y) / (poly[j].Y - poly[i].Y) + poly[i].X))
+            c = !c;
+    }
+    return c;
+}*/
+
+/*private PointF[] rotatePolygon(PointF zeroPoint, PointF[] poly, float angle)
+{
+    PointF[] p = new PointF[poly.Length];
+    for (int i = 0; i < poly.Length; i++)
+    {
+        double xn = 0, yn = 0;
+        rotateLine(zeroPoint.X, zeroPoint.Y, poly[i].X, poly[i].Y, angle, out xn, out yn);
+        p[i].X = (float)xn;
+        p[i].X = (float)yn;
+    }
+    return p;
+}*/
+
+/*private void rotateLine(double xc, double yc, double x, double y, double a, out double xn, out double yn)
+{
+    xn = (x - xc) * Math.Cos(a) - (y - yc) * Math.Sin(a) + xc;
+    yn = (x - xc) * Math.Sin(a) + (y - yc) * Math.Cos(a) + yc;
+}*/

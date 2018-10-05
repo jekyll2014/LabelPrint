@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -316,7 +316,8 @@
             this.textBox_rangeFrom.Name = "textBox_rangeFrom";
             this.textBox_rangeFrom.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeFrom.TabIndex = 1;
-            this.textBox_rangeFrom.Text = "00000";
+            this.textBox_rangeFrom.Text = "1";
+            this.textBox_rangeFrom.Leave += new System.EventHandler(this.textBox_rangeFrom_Leave);
             // 
             // checkBox_toFile
             // 
@@ -344,7 +345,8 @@
             this.textBox_rangeTo.Name = "textBox_rangeTo";
             this.textBox_rangeTo.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeTo.TabIndex = 1;
-            this.textBox_rangeTo.Text = "00000";
+            this.textBox_rangeTo.Text = "1";
+            this.textBox_rangeTo.Leave += new System.EventHandler(this.textBox_rangeTo_Leave);
             // 
             // tabPage_edit
             // 
@@ -600,6 +602,7 @@
             // comboBox_object
             // 
             this.comboBox_object.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_object.Enabled = false;
             this.comboBox_object.FormattingEnabled = true;
             this.comboBox_object.Location = new System.Drawing.Point(108, 36);
             this.comboBox_object.MinimumSize = new System.Drawing.Size(60, 0);
@@ -920,16 +923,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.Format = "N0";
-            dataGridViewCellStyle1.NullValue = null;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.Format = "N0";
+            dataGridViewCellStyle3.NullValue = null;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(954, 158);
             this.dataGridView_labels.TabIndex = 0;
