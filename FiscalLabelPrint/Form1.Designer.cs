@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -84,8 +84,6 @@
             this.button_apply = new System.Windows.Forms.Button();
             this.tabPage_group = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.button4 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -115,6 +113,8 @@
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.panel_picture = new System.Windows.Forms.Panel();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -151,7 +151,7 @@
             // 
             this.splitContainer_horizontal.Panel2.Controls.Add(this.dataGridView_labels);
             this.splitContainer_horizontal.Panel2MinSize = 100;
-            this.splitContainer_horizontal.Size = new System.Drawing.Size(958, 654);
+            this.splitContainer_horizontal.Size = new System.Drawing.Size(614, 654);
             this.splitContainer_horizontal.SplitterDistance = 488;
             this.splitContainer_horizontal.TabIndex = 0;
             // 
@@ -169,7 +169,7 @@
             this.splitContainer_vertical.Panel1.Controls.Add(this.textBox_mX);
             this.splitContainer_vertical.Panel1.Controls.Add(this.textBox_mY);
             this.splitContainer_vertical.Panel1.Controls.Add(this.checkBox_scale);
-            this.splitContainer_vertical.Panel1MinSize = 110;
+            this.splitContainer_vertical.Panel1MinSize = 265;
             // 
             // splitContainer_vertical.Panel2
             // 
@@ -186,9 +186,9 @@
             this.splitContainer_vertical.Panel2.Controls.Add(this.button_importLabels);
             this.splitContainer_vertical.Panel2.Controls.Add(this.comboBox_encoding);
             this.splitContainer_vertical.Panel2.Controls.Add(this.label2);
-            this.splitContainer_vertical.Panel2MinSize = 350;
-            this.splitContainer_vertical.Size = new System.Drawing.Size(958, 488);
-            this.splitContainer_vertical.SplitterDistance = 296;
+            this.splitContainer_vertical.Panel2MinSize = 340;
+            this.splitContainer_vertical.Size = new System.Drawing.Size(614, 488);
+            this.splitContainer_vertical.SplitterDistance = 265;
             this.splitContainer_vertical.TabIndex = 0;
             // 
             // pictureBox_label
@@ -196,7 +196,7 @@
             this.pictureBox_label.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pictureBox_label.Location = new System.Drawing.Point(3, 3);
             this.pictureBox_label.Name = "pictureBox_label";
-            this.pictureBox_label.Size = new System.Drawing.Size(273, 439);
+            this.pictureBox_label.Size = new System.Drawing.Size(200, 200);
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
@@ -254,7 +254,7 @@
             this.tabControl1.Location = new System.Drawing.Point(3, 121);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(641, 360);
+            this.tabControl1.Size = new System.Drawing.Size(328, 360);
             this.tabControl1.TabIndex = 4;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.TabControl1_SelectedIndexChanged);
             // 
@@ -271,7 +271,7 @@
             this.tabPage_print.Location = new System.Drawing.Point(4, 22);
             this.tabPage_print.Name = "tabPage_print";
             this.tabPage_print.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_print.Size = new System.Drawing.Size(633, 334);
+            this.tabPage_print.Size = new System.Drawing.Size(320, 334);
             this.tabPage_print.TabIndex = 0;
             this.tabPage_print.Text = "Print labels";
             this.tabPage_print.UseVisualStyleBackColor = true;
@@ -394,7 +394,7 @@
             this.tabPage_edit.Location = new System.Drawing.Point(4, 22);
             this.tabPage_edit.Name = "tabPage_edit";
             this.tabPage_edit.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_edit.Size = new System.Drawing.Size(633, 334);
+            this.tabPage_edit.Size = new System.Drawing.Size(320, 334);
             this.tabPage_edit.TabIndex = 1;
             this.tabPage_edit.Text = "Edit template";
             this.tabPage_edit.UseVisualStyleBackColor = true;
@@ -569,7 +569,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_content.Location = new System.Drawing.Point(108, 273);
             this.textBox_content.Name = "textBox_content";
-            this.textBox_content.Size = new System.Drawing.Size(516, 20);
+            this.textBox_content.Size = new System.Drawing.Size(203, 20);
             this.textBox_content.TabIndex = 3;
             // 
             // textBox_posX
@@ -721,15 +721,15 @@
             this.tabPage_group.Location = new System.Drawing.Point(4, 22);
             this.tabPage_group.Name = "tabPage_group";
             this.tabPage_group.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_group.Size = new System.Drawing.Size(633, 334);
+            this.tabPage_group.Size = new System.Drawing.Size(320, 334);
             this.tabPage_group.TabIndex = 2;
             this.tabPage_group.Text = "Group operation";
             this.tabPage_group.UseVisualStyleBackColor = true;
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.button4);
             this.groupBox2.Controls.Add(this.button1);
+            this.groupBox2.Controls.Add(this.button4);
             this.groupBox2.Controls.Add(this.button3);
             this.groupBox2.Controls.Add(this.button2);
             this.groupBox2.Controls.Add(this.textBox1);
@@ -740,34 +740,14 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Scale";
             // 
-            // button4
-            // 
-            this.button4.Enabled = false;
-            this.button4.Location = new System.Drawing.Point(52, 19);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(50, 23);
-            this.button4.TabIndex = 0;
-            this.button4.Text = "Up";
-            this.button4.UseVisualStyleBackColor = true;
-            // 
-            // button1
-            // 
-            this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(52, 74);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(50, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Down";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
             // button3
             // 
             this.button3.Enabled = false;
-            this.button3.Location = new System.Drawing.Point(108, 48);
+            this.button3.Location = new System.Drawing.Point(99, 48);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(41, 23);
             this.button3.TabIndex = 0;
-            this.button3.Text = "Right";
+            this.button3.Text = "→";
             this.button3.UseVisualStyleBackColor = true;
             // 
             // button2
@@ -777,7 +757,7 @@
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(41, 23);
             this.button2.TabIndex = 0;
-            this.button2.Text = "Left";
+            this.button2.Text = "←";
             this.button2.UseVisualStyleBackColor = true;
             // 
             // textBox1
@@ -786,7 +766,7 @@
             this.textBox1.Location = new System.Drawing.Point(52, 48);
             this.textBox1.MinimumSize = new System.Drawing.Size(4, 4);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(50, 20);
+            this.textBox1.Size = new System.Drawing.Size(41, 20);
             this.textBox1.TabIndex = 3;
             this.textBox1.Text = "1";
             this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
@@ -810,19 +790,19 @@
             // 
             this.button_moveUp.Location = new System.Drawing.Point(53, 19);
             this.button_moveUp.Name = "button_moveUp";
-            this.button_moveUp.Size = new System.Drawing.Size(50, 23);
+            this.button_moveUp.Size = new System.Drawing.Size(41, 23);
             this.button_moveUp.TabIndex = 0;
-            this.button_moveUp.Text = "Up";
+            this.button_moveUp.Text = "↑";
             this.button_moveUp.UseVisualStyleBackColor = true;
             this.button_moveUp.Click += new System.EventHandler(this.Button_moveUp_Click);
             // 
             // button_moveRight
             // 
-            this.button_moveRight.Location = new System.Drawing.Point(109, 48);
+            this.button_moveRight.Location = new System.Drawing.Point(100, 46);
             this.button_moveRight.Name = "button_moveRight";
             this.button_moveRight.Size = new System.Drawing.Size(41, 23);
             this.button_moveRight.TabIndex = 0;
-            this.button_moveRight.Text = "Right";
+            this.button_moveRight.Text = "→";
             this.button_moveRight.UseVisualStyleBackColor = true;
             this.button_moveRight.Click += new System.EventHandler(this.Button_moveRight_Click);
             // 
@@ -831,7 +811,7 @@
             this.textBox_move.Location = new System.Drawing.Point(53, 48);
             this.textBox_move.MinimumSize = new System.Drawing.Size(4, 4);
             this.textBox_move.Name = "textBox_move";
-            this.textBox_move.Size = new System.Drawing.Size(50, 20);
+            this.textBox_move.Size = new System.Drawing.Size(41, 20);
             this.textBox_move.TabIndex = 3;
             this.textBox_move.Text = "1";
             this.textBox_move.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
@@ -843,7 +823,7 @@
             this.button_moveLeft.Name = "button_moveLeft";
             this.button_moveLeft.Size = new System.Drawing.Size(41, 23);
             this.button_moveLeft.TabIndex = 0;
-            this.button_moveLeft.Text = "Left";
+            this.button_moveLeft.Text = "←";
             this.button_moveLeft.UseVisualStyleBackColor = true;
             this.button_moveLeft.Click += new System.EventHandler(this.Button_moveLeft_Click);
             // 
@@ -851,9 +831,9 @@
             // 
             this.button_moveDown.Location = new System.Drawing.Point(53, 74);
             this.button_moveDown.Name = "button_moveDown";
-            this.button_moveDown.Size = new System.Drawing.Size(50, 23);
+            this.button_moveDown.Size = new System.Drawing.Size(41, 23);
             this.button_moveDown.TabIndex = 0;
-            this.button_moveDown.Text = "Down";
+            this.button_moveDown.Text = "↓";
             this.button_moveDown.UseVisualStyleBackColor = true;
             this.button_moveDown.Click += new System.EventHandler(this.Button_moveDown_Click);
             // 
@@ -905,7 +885,7 @@
             this.checkBox_columnNames.AutoSize = true;
             this.checkBox_columnNames.Checked = true;
             this.checkBox_columnNames.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_columnNames.Location = new System.Drawing.Point(486, 43);
+            this.checkBox_columnNames.Location = new System.Drawing.Point(173, 43);
             this.checkBox_columnNames.Name = "checkBox_columnNames";
             this.checkBox_columnNames.Size = new System.Drawing.Size(158, 17);
             this.checkBox_columnNames.TabIndex = 2;
@@ -928,7 +908,7 @@
             this.textBox_labelsName.Enabled = false;
             this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
             this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(381, 20);
+            this.textBox_labelsName.Size = new System.Drawing.Size(68, 20);
             this.textBox_labelsName.TabIndex = 1;
             // 
             // comboBox_units
@@ -954,7 +934,7 @@
             this.textBox_templateName.Enabled = false;
             this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
             this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(545, 20);
+            this.textBox_templateName.Size = new System.Drawing.Size(232, 20);
             this.textBox_templateName.TabIndex = 1;
             // 
             // button_importTemplate
@@ -1008,18 +988,18 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.Format = "N0";
-            dataGridViewCellStyle1.NullValue = null;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.Format = "N0";
+            dataGridViewCellStyle3.NullValue = null;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView_labels.Size = new System.Drawing.Size(954, 158);
+            this.dataGridView_labels.Size = new System.Drawing.Size(610, 158);
             this.dataGridView_labels.TabIndex = 0;
             this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.DataGridView_labels_SelectionChanged);
             // 
@@ -1050,16 +1030,36 @@
             this.panel_picture.Controls.Add(this.pictureBox_label);
             this.panel_picture.Location = new System.Drawing.Point(10, 10);
             this.panel_picture.Name = "panel_picture";
-            this.panel_picture.Size = new System.Drawing.Size(279, 445);
+            this.panel_picture.Size = new System.Drawing.Size(248, 445);
             this.panel_picture.TabIndex = 4;
+            // 
+            // button1
+            // 
+            this.button1.Enabled = false;
+            this.button1.Location = new System.Drawing.Point(52, 19);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(41, 23);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "↑";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // button4
+            // 
+            this.button4.Enabled = false;
+            this.button4.Location = new System.Drawing.Point(52, 74);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(41, 23);
+            this.button4.TabIndex = 0;
+            this.button4.Text = "↓";
+            this.button4.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(958, 654);
+            this.ClientSize = new System.Drawing.Size(614, 654);
             this.Controls.Add(this.splitContainer_horizontal);
-            this.MinimumSize = new System.Drawing.Size(620, 600);
+            this.MinimumSize = new System.Drawing.Size(630, 630);
             this.Name = "Form1";
             this.Text = "LabelPrint";
             this.splitContainer_horizontal.Panel1.ResumeLayout(false);
@@ -1167,13 +1167,13 @@
         private System.Windows.Forms.Button button_deleteGroup;
         private System.Windows.Forms.ListBox listBox_objectsMulti;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Panel panel_picture;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button4;
     }
 }
 
