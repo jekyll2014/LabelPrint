@@ -2758,47 +2758,54 @@ namespace LabelPrint
                     textBox_labelsName.Clear();
                     LabelsDatabase.Clear();
                     LabelsDatabase.Rows.Clear();
-                    List<string> inputStr = new List<string>();
-                    char div = Properties.Settings.Default.CSVdelimiter;
+                    //List<string> inputStr = new List<string>();
+                    //char div = Properties.Settings.Default.CSVdelimiter;
                     //create column headers
                     LabelsDatabase.Columns.Clear();
-                    //create and count columns and read headers
-                    for (int i = 1; i < Label.Count; i++)
-                    {
-                        LabelsDatabase.Columns.Add(i.ToString() + " " + Label[i].name);
-                    }
 
-                    //create 1st row and count columns
-                    DataRow r = LabelsDatabase.NewRow();
-                    for (int i = 1; i < Label.Count; i++)
+                    if (Label.Count>1)
                     {
-                        r[i - 1] = Label[i].content;
-                    }
-                    LabelsDatabase.Rows.Add(r);
-
-                    dataGridView_labels.DataSource = LabelsDatabase;
-                    foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                    //check for picture file existence
-                    foreach (DataGridViewRow row in dataGridView_labels.Rows)
-                    {
-                        for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
+                        //create and count columns and read headers
+                        for (int i = 1; i < Label.Count; i++)
                         {
-                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                            LabelsDatabase.Columns.Add(i.ToString() + " " + Label[i].name);
+                        }
+
+                        //create 1st row and count columns
+                        DataRow r = LabelsDatabase.NewRow();
+                        for (int i = 1; i < Label.Count; i++)
+                        {
+                            r[i - 1] = Label[i].content;
+                        }
+                        LabelsDatabase.Rows.Add(r);
+
+                        dataGridView_labels.DataSource = LabelsDatabase;
+                        foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                        //check for picture file existence
+                        foreach (DataGridViewRow row in dataGridView_labels.Rows)
+                        {
+                            for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                             {
-                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                                if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                                {
+                                    MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                                }
                             }
                         }
+                        button_printCurrent.Enabled = true;
+                        button_printAll.Enabled = true;
+                        button_printRange.Enabled = true;
+                        textBox_rangeFrom.Text = "0";
+                        textBox_rangeTo.Text = LabelsDatabase.Rows.Count.ToString();
+                        SetRowNumber(dataGridView_labels);
+                        dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
+                        dataGridView_labels.Rows[0].Selected = true;
                     }
-                    button_printCurrent.Enabled = true;
-                    button_printAll.Enabled = true;
-                    button_printRange.Enabled = true;
-                    textBox_rangeFrom.Text = "0";
-                    textBox_rangeTo.Text = LabelsDatabase.Rows.Count.ToString();
-                    SetRowNumber(dataGridView_labels);
-                    dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
-                    dataGridView_labels.Rows[0].Selected = true;
-                    //GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
-                    //pictureBox_label.Image = LabelBmp;
+                    else
+                    {
+                        GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+                        pictureBox_label.Image = LabelBmp;
+                    }
                     dataGridView_labels.SelectionChanged += new EventHandler(DataGridView_labels_SelectionChanged);
                     _templateChanged = false;
                 }
