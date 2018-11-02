@@ -2723,13 +2723,15 @@ namespace LabelPrint
             {
                 //pictureBox_label.Dock = DockStyle.None;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Normal;
-                //pictureBox_label.Width = (int)Label[0].width;
-                //pictureBox_label.Height = (int)Label[0].height;
+                pictureBox_label.Width = (int)Label[0].width;
+                pictureBox_label.Height = (int)Label[0].height;
             }
             else
             {
                 //pictureBox_label.Dock = DockStyle.Fill;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
+                pictureBox_label.Width = panel_picture.Width - panel_picture.Margin.Horizontal;
+                pictureBox_label.Height = panel_picture.Height - panel_picture.Margin.Vertical;
             }
         }
 
@@ -2763,7 +2765,7 @@ namespace LabelPrint
                     //create column headers
                     LabelsDatabase.Columns.Clear();
 
-                    if (Label.Count>1)
+                    if (Label.Count > 1)
                     {
                         //create and count columns and read headers
                         for (int i = 1; i < Label.Count; i++)
