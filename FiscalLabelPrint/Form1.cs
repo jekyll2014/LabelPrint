@@ -133,6 +133,7 @@ namespace LabelPrint
             TextBox_dpi_Leave(this, EventArgs.Empty);
         }
 
+        //command line example: LabelPrint.exe /t=template.csv /l=labels.csv /c /prn="CUSTOM VKP80 II" /p=3
         private void CmdLineOperation(string[] cmdLine)
         {
             tabControl1.SelectedIndexChanged -= new EventHandler(TabControl1_SelectedIndexChanged);
@@ -143,7 +144,7 @@ namespace LabelPrint
                     "/t=file.csv - load template data from file\r\n" +
                     "/l=file.csv - load label data from file\r\n" +
                     "/c - 1st string of label file is column names (default = no)\r\n" +
-                    "/prn=SystemPrinterName - output to printer (replace spaces with \'_\')\r\n" +
+                    "/prn=SystemPrinterName - output to printer (bound with \"_\" if there are spaces)\r\n" +
                     "/pic=pictureName - output to pictures\r\n" +
                     "/p=A - print all labels\r\n" +
                     "/p=xxx - print label #xxx (starts from 1)\r\n" +
@@ -186,8 +187,23 @@ namespace LabelPrint
                     }
                     else if (cmdLine[i].ToLower().StartsWith("/prn="))
                     {
-                        printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1).Replace("_", " ");
+                        printerName = cmdLine[i].Substring(cmdLine[i].IndexOf('=') + 1);
                         //check if printer exists
+                        string[] tmp = GetPrinterList();
+                        bool e = false;
+                        foreach (string s in tmp)
+                        {
+                            if (s == printerName)
+                            {
+                                e = true;
+                                break;
+                            }
+                        }
+                        if (!e)
+                        {
+                            Console.WriteLine("label file \"" + labelFile + "\" doesn't exist.");
+                            printerName = null;
+                        }
                     }
                     else if (cmdLine[i].ToLower().StartsWith("/pic="))
                     {
@@ -2525,6 +2541,16 @@ namespace LabelPrint
             return encodeList.ToArray();
         }
 
+        private string[] GetPrinterList()
+        {
+            List<string> printerList = new List<string>();
+            foreach (string printer in PrinterSettings.InstalledPrinters)
+            {
+                printerList.Add(printer);
+            }
+            return printerList.ToArray();
+        }
+
         private void SetRowNumber(DataGridView dgv)
         {
             foreach (DataGridViewRow row in dgv.Rows)
@@ -3131,9 +3157,9 @@ namespace LabelPrint
 
         private void textBox_rangeTo_Leave(object sender, EventArgs e)
         {
-            int n = dataGridView_labels.Rows.Count;
+            int n = LabelsDatabase.Rows.Count;
             int.TryParse(textBox_rangeTo.Text, out n);
-            if (n <= dataGridView_labels.Rows.Count) textBox_rangeTo.Text = n.ToString();
+            if (n <= LabelsDatabase.Rows.Count) textBox_rangeTo.Text = n.ToString();
         }
 
         private void ListBox_objectsMulti_SelectedIndexChanged(object sender, EventArgs e)
@@ -3161,7 +3187,7 @@ namespace LabelPrint
         private void Button_printAll_Click(object sender, EventArgs e)
         {
             int _pagesFrom = 0;
-            int _pagesTo = dataGridView_labels.Rows.Count - 1;
+            int _pagesTo = LabelsDatabase.Rows.Count - 1;
 
             if (!checkBox_toFile.Checked)
             {
@@ -3176,12 +3202,12 @@ namespace LabelPrint
         private void Button_printRange_Click(object sender, EventArgs e)
         {
             int _pagesFrom = 0;
-            int _pagesTo = dataGridView_labels.Rows.Count;
+            int _pagesTo = LabelsDatabase.Rows.Count;
 
             int.TryParse(textBox_rangeFrom.Text, out _pagesFrom);
             int.TryParse(textBox_rangeTo.Text, out _pagesTo);
             if (_pagesFrom < 1) _pagesFrom = 1;
-            if (_pagesTo > dataGridView_labels.Rows.Count) _pagesTo = dataGridView_labels.Rows.Count;
+            if (_pagesTo > LabelsDatabase.Rows.Count) _pagesTo = LabelsDatabase.Rows.Count;
 
             if (!checkBox_toFile.Checked)
             {

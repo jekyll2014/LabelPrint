@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
@@ -107,6 +107,13 @@
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -121,6 +128,8 @@
             this.tabPage_edit.SuspendLayout();
             this.tabPage_group.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer_horizontal
@@ -706,13 +715,10 @@
             // 
             // tabPage_group
             // 
+            this.tabPage_group.Controls.Add(this.groupBox2);
+            this.tabPage_group.Controls.Add(this.groupBox1);
             this.tabPage_group.Controls.Add(this.listBox_objectsMulti);
             this.tabPage_group.Controls.Add(this.button_deleteGroup);
-            this.tabPage_group.Controls.Add(this.button_moveLeft);
-            this.tabPage_group.Controls.Add(this.button_moveDown);
-            this.tabPage_group.Controls.Add(this.button_moveUp);
-            this.tabPage_group.Controls.Add(this.textBox_move);
-            this.tabPage_group.Controls.Add(this.button_moveRight);
             this.tabPage_group.Location = new System.Drawing.Point(4, 22);
             this.tabPage_group.Name = "tabPage_group";
             this.tabPage_group.Padding = new System.Windows.Forms.Padding(3);
@@ -745,7 +751,7 @@
             // 
             // button_moveLeft
             // 
-            this.button_moveLeft.Location = new System.Drawing.Point(107, 66);
+            this.button_moveLeft.Location = new System.Drawing.Point(6, 48);
             this.button_moveLeft.Name = "button_moveLeft";
             this.button_moveLeft.Size = new System.Drawing.Size(41, 23);
             this.button_moveLeft.TabIndex = 0;
@@ -755,7 +761,7 @@
             // 
             // button_moveDown
             // 
-            this.button_moveDown.Location = new System.Drawing.Point(154, 90);
+            this.button_moveDown.Location = new System.Drawing.Point(53, 74);
             this.button_moveDown.Name = "button_moveDown";
             this.button_moveDown.Size = new System.Drawing.Size(50, 23);
             this.button_moveDown.TabIndex = 0;
@@ -765,7 +771,7 @@
             // 
             // button_moveUp
             // 
-            this.button_moveUp.Location = new System.Drawing.Point(154, 35);
+            this.button_moveUp.Location = new System.Drawing.Point(53, 19);
             this.button_moveUp.Name = "button_moveUp";
             this.button_moveUp.Size = new System.Drawing.Size(50, 23);
             this.button_moveUp.TabIndex = 0;
@@ -775,7 +781,7 @@
             // 
             // textBox_move
             // 
-            this.textBox_move.Location = new System.Drawing.Point(154, 64);
+            this.textBox_move.Location = new System.Drawing.Point(53, 48);
             this.textBox_move.MinimumSize = new System.Drawing.Size(4, 4);
             this.textBox_move.Name = "textBox_move";
             this.textBox_move.Size = new System.Drawing.Size(50, 20);
@@ -786,7 +792,7 @@
             // 
             // button_moveRight
             // 
-            this.button_moveRight.Location = new System.Drawing.Point(210, 64);
+            this.button_moveRight.Location = new System.Drawing.Point(109, 48);
             this.button_moveRight.Name = "button_moveRight";
             this.button_moveRight.Size = new System.Drawing.Size(41, 23);
             this.button_moveRight.TabIndex = 0;
@@ -923,16 +929,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.Format = "N0";
-            dataGridViewCellStyle3.NullValue = null;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(954, 158);
             this.dataGridView_labels.TabIndex = 0;
@@ -955,6 +961,85 @@
             // 
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.button_moveUp);
+            this.groupBox1.Controls.Add(this.button_moveRight);
+            this.groupBox1.Controls.Add(this.textBox_move);
+            this.groupBox1.Controls.Add(this.button_moveLeft);
+            this.groupBox1.Controls.Add(this.button_moveDown);
+            this.groupBox1.Location = new System.Drawing.Point(107, 35);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(158, 108);
+            this.groupBox1.TabIndex = 8;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Move";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.button4);
+            this.groupBox2.Controls.Add(this.button1);
+            this.groupBox2.Controls.Add(this.button3);
+            this.groupBox2.Controls.Add(this.button2);
+            this.groupBox2.Controls.Add(this.textBox1);
+            this.groupBox2.Location = new System.Drawing.Point(108, 150);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(157, 172);
+            this.groupBox2.TabIndex = 9;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "groupBox2";
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(52, 74);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(50, 23);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "Down";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.Button_moveDown_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(5, 48);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(41, 23);
+            this.button2.TabIndex = 0;
+            this.button2.Text = "Left";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.Button_moveLeft_Click);
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(52, 48);
+            this.textBox1.MinimumSize = new System.Drawing.Size(4, 4);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(50, 20);
+            this.textBox1.TabIndex = 3;
+            this.textBox1.Text = "1";
+            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.textBox1.Leave += new System.EventHandler(this.TextBox_move_Leave);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(108, 48);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(41, 23);
+            this.button3.TabIndex = 0;
+            this.button3.Text = "Right";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.Button_moveRight_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(52, 19);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(50, 23);
+            this.button4.TabIndex = 0;
+            this.button4.Text = "Up";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.Button_moveUp_Click);
             // 
             // Form1
             // 
@@ -982,8 +1067,11 @@
             this.tabPage_edit.ResumeLayout(false);
             this.tabPage_edit.PerformLayout();
             this.tabPage_group.ResumeLayout(false);
-            this.tabPage_group.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1065,6 +1153,13 @@
         private System.Windows.Forms.Button button_moveRight;
         private System.Windows.Forms.Button button_deleteGroup;
         private System.Windows.Forms.ListBox listBox_objectsMulti;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.GroupBox groupBox1;
     }
 }
 
