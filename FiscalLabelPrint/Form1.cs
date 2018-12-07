@@ -105,10 +105,10 @@ namespace LabelPrint
                 name = _objectNames[labelObject],
                 bgColor = Color.White,
                 fgColor = Color.Black,
-                width = 1,
-                height = 1,
-                dpi = 200,
-                codePage = 65001
+                width = 100,
+                height = 100,
+                dpi = 300,
+                codePage = Properties.Settings.Default.CodePage
             };
             Label.Add(init_label);
 
@@ -123,7 +123,7 @@ namespace LabelPrint
             //select codepage set in the template file
             for (int i = 0; i < comboBox_encoding.Items.Count; i++)
             {
-                if (comboBox_encoding.Items[i].ToString().StartsWith(Properties.Settings.Default.CodePage.ToString()))
+                if (comboBox_encoding.Items[i].ToString().StartsWith(Label[0].codePage.ToString()))
                 {
                     comboBox_encoding.SelectedIndex = i;
                     break;
@@ -251,10 +251,12 @@ namespace LabelPrint
                 {
                     cmdLinePrint = true;
                     //import template
-                    Label = LoadCsvTemplate(templateFile, Properties.Settings.Default.CodePage);
+                    path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
+                    Label = LoadCsvTemplate(templateFile, Label[0].codePage);
 
                     //import labels
-                    LabelsDatabase = LoadCsvLabel(labelFile, columnNames);
+                    path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
+                    LabelsDatabase = LoadCsvLabel(labelFile, Label[0].codePage);
 
                     if (printAll)
                     {
@@ -736,7 +738,7 @@ namespace LabelPrint
 
         #region file management
 
-        private DataTable LoadCsvLabel(string fileName, bool createColumnsNames = false)
+        private DataTable LoadCsvLabel(string fileName, int codePage, bool createColumnsNames = false)
         {
             DataTable table = new DataTable();
             //table.Clear();
@@ -744,7 +746,7 @@ namespace LabelPrint
             List<string> inputStr = new List<string>();
             try
             {
-                inputStr.AddRange(File.ReadAllLines(fileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage)));
+                inputStr.AddRange(File.ReadAllLines(fileName, Encoding.GetEncoding(codePage)));
             }
             catch (Exception ex)
             {
@@ -806,7 +808,7 @@ namespace LabelPrint
         private List<Template> LoadCsvTemplate(string fileName, int codePage)
         {
             List<Template> tmpLabel = new List<Template>();
-            string[] inputStr = File.ReadAllLines(fileName, Encoding.GetEncoding(Properties.Settings.Default.CodePage));
+            string[] inputStr = File.ReadAllLines(fileName, Encoding.GetEncoding(codePage));
             for (int i = 0; i < inputStr.Length; i++)
             {
                 if (inputStr[i].Trim() != "")
@@ -877,7 +879,7 @@ namespace LabelPrint
                             textBox_dpi.Text = templ.dpi.ToString("F4");
 
                             int.TryParse(cells[6], out templ.codePage);
-                            if (templ.codePage == 0) templ.codePage = Properties.Settings.Default.CodePage;
+                            if (templ.codePage == 0) templ.codePage = codePage;
                             else if (templ.codePage < 0)
                             {
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect codepage: " + templ.codePage.ToString());
@@ -1017,6 +1019,7 @@ namespace LabelPrint
 
                                 templ.content = cells[5];
                                 if (!File.Exists(path + templ.content))
+                                //if (!File.Exists(@templ.content))
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + path + templ.content);
                                 }
@@ -1343,7 +1346,7 @@ namespace LabelPrint
                                 MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
                             }
                         }
-                        // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
+                        // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
                         else if (templ.name == _objectNames[ellipseObject])
                         {
                             if (cells.Count >= 9)
@@ -1641,7 +1644,7 @@ namespace LabelPrint
                     string content = path + _label[i].content;
                     if (lineNumber > -1)
                         if (dataTable.Rows[lineNumber].ItemArray[i - 1].ToString() != "")
-                            content = dataTable.Rows[lineNumber].ItemArray[i - 1].ToString();
+                            content = path + dataTable.Rows[lineNumber].ItemArray[i - 1].ToString();
 
                     float rotate = _label[i].rotate;
                     float width = _label[i].width;
@@ -1860,8 +1863,12 @@ namespace LabelPrint
                 }
                 templ.posX = 0;
                 templ.posY = 0;
-                templ.dpi = 1;
-                templ.dpi = Properties.Settings.Default.CodePage;
+                templ.dpi = 300;
+
+                int cp = Properties.Settings.Default.CodePage;
+                if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out cp)) Properties.Settings.Default.CodePage = cp;
+                templ.codePage = cp;
+
                 templ.rotate = 0;
                 templ.content = "";
                 templ.width = 1;
@@ -1916,7 +1923,8 @@ namespace LabelPrint
                     float b = 0;
                     textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
                     float.TryParse(textBox_fontSize.Text, out b);
-                    templ.fontSize = b * mult;
+                    //templ.fontSize = b * mult;
+                    templ.fontSize = b;
 
                     byte s = 0;
                     byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
@@ -2209,7 +2217,8 @@ namespace LabelPrint
 
                     textBox_fontSize.Enabled = true;
                     label_fontSize.Text = "Font size";
-                    textBox_fontSize.Text = (Label[n].fontSize / mult).ToString("F4");
+                    //textBox_fontSize.Text = (Label[n].fontSize / mult).ToString("F4");
+                    textBox_fontSize.Text = (Label[n].fontSize).ToString("F4");
                 }
 
                 // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
@@ -2603,9 +2612,9 @@ namespace LabelPrint
                 LabelsDatabase.Columns.Clear();
                 LabelsDatabase.Rows.Clear();
                 textBox_labelsName.Clear();
-                Label.Clear();
-
-                Label = LoadCsvTemplate(openFileDialog1.FileName, Properties.Settings.Default.CodePage);
+                //Label.Clear();
+                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                Label = LoadCsvTemplate(openFileDialog1.FileName, Label[0].codePage);
 
                 TextBox_dpi_Leave(this, EventArgs.Empty);
                 button_importLabels.Enabled = true;
@@ -2614,7 +2623,6 @@ namespace LabelPrint
 
                 textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 //save path to template
-                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 //create colums and fill 1 row with default values
                 for (int i = 1; i < objectsNum; i++)
                 {
@@ -2640,7 +2648,8 @@ namespace LabelPrint
             {
                 dataGridView_labels.DataSource = null;
 
-                LabelsDatabase = LoadCsvLabel(openFileDialog1.FileName, checkBox_columnNames.Checked);
+                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                LabelsDatabase = LoadCsvLabel(openFileDialog1.FileName, Label[0].codePage, checkBox_columnNames.Checked);
 
                 if (LabelsDatabase.Rows.Count > 0)
                 {
@@ -2676,6 +2685,7 @@ namespace LabelPrint
                 LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
                 pictureBox_label.Image = LabelBmp;
                 textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                //save path to template
             }
         }
 
@@ -2704,11 +2714,11 @@ namespace LabelPrint
             char div = Properties.Settings.Default.CSVdelimiter;
             if (SaveFileDialog1.Title == "Save template as .CSV...")
             {
-                if (!saveTemplateToCSV(SaveFileDialog1.FileName, Label, Properties.Settings.Default.CodePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                if (!saveTemplateToCSV(SaveFileDialog1.FileName, Label, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
             }
             else if (SaveFileDialog1.Title == "Save label data as .CSV...")
             {
-                if (!saveTableToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Properties.Settings.Default.CodePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                if (!saveTableToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
             }
         }
 
@@ -2823,7 +2833,9 @@ namespace LabelPrint
             {
                 listBox_objectsMulti.Items.Clear();
                 listBox_objectsMulti.Items.AddRange(GetObjectsList());
-                listBox_objectsMulti.SelectedIndex = 0;
+
+                listBox_objectsMulti.SelectedIndex = listBox_objects.SelectedIndex;
+
             }
             LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
             pictureBox_label.Image = LabelBmp;
@@ -2915,44 +2927,25 @@ namespace LabelPrint
 
         private void ComboBox_encoding_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Template templ = new Template
-            {
-                name = _objectNames[labelObject],
-                bgColor = Label[0].bgColor,
-                fgColor = Label[0].fgColor,
-                width = Label[0].width,
-                height = Label[0].height,
-                dpi = 1
-            };
-            float.TryParse(textBox_dpi.Text, out templ.dpi);
+            Template templ = Label[0];
             int cp = Properties.Settings.Default.CodePage;
             if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out cp)) Properties.Settings.Default.CodePage = cp;
             templ.codePage = cp;
-            Label.RemoveAt(0);
-            Label.Insert(0, templ);
+            Label[0] = templ;
         }
 
         private void TextBox_dpi_Leave(object sender, EventArgs e)
         {
-            Template templ = new Template
-            {
-                name = _objectNames[labelObject],
-                bgColor = Label[0].bgColor,
-                fgColor = Label[0].fgColor,
-                width = Label[0].width,
-                height = Label[0].height,
-                dpi = 1
-            };
+            Template templ = Label[0];
+
             float.TryParse(textBox_dpi.Text, out templ.dpi);
-            templ.codePage = Properties.Settings.Default.CodePage;
-            if (int.TryParse(comboBox_encoding.SelectedItem.ToString().Substring(0, comboBox_encoding.SelectedItem.ToString().IndexOf('=')), out templ.codePage)) Properties.Settings.Default.CodePage = templ.codePage;
-            Label.RemoveAt(0);
-            Label.Insert(0, templ);
+            Label[0] = templ;
             textBox_dpi.Text = Label[0].dpi.ToString();
             units[1] = (float)(Label[0].dpi / 25.4);
             units[2] = (float)(Label[0].dpi / 2.54);
             units[3] = Label[0].dpi;
             mult = units[comboBox_units.SelectedIndex];
+            //recalculate all objects
         }
 
         private void ComboBox_units_SelectedIndexChanged(object sender, EventArgs e)
@@ -3034,6 +3027,7 @@ namespace LabelPrint
         private void Button_moveUp_Click(object sender, EventArgs e)
         {
             List<int> k = new List<int>();
+            var saveSelections = listBox_objectsMulti.SelectedIndices;
             foreach (int n in listBox_objectsMulti.SelectedIndices)
             {
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
@@ -3042,8 +3036,7 @@ namespace LabelPrint
                     float y = 0;
                     float.TryParse(textBox_move.Text, out y);
                     templ.posY -= y;
-                    Label.RemoveAt(n);
-                    Label.Insert(n, templ);
+                    Label[n] = templ;
                     k.Add(n);
                 }
             }
@@ -3067,8 +3060,7 @@ namespace LabelPrint
                     float x = 0;
                     float.TryParse(textBox_move.Text, out x);
                     templ.posX -= x;
-                    Label.RemoveAt(n);
-                    Label.Insert(n, templ);
+                    Label[n] = templ;
                     k.Add(n);
                 }
             }
@@ -3092,8 +3084,7 @@ namespace LabelPrint
                     float y = 0;
                     float.TryParse(textBox_move.Text, out y);
                     templ.posY += y;
-                    Label.RemoveAt(n);
-                    Label.Insert(n, templ);
+                    Label[n] = templ;
                     k.Add(n);
                 }
             }
@@ -3117,8 +3108,7 @@ namespace LabelPrint
                     float x = 0;
                     float.TryParse(textBox_move.Text, out x);
                     templ.posX += x;
-                    Label.RemoveAt(n);
-                    Label.Insert(n, templ);
+                    Label[n] = templ;
                     k.Add(n);
                 }
             }
