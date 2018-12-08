@@ -1615,7 +1615,7 @@ namespace LabelPrint
 
                     img = new Bitmap((int)width, (int)height, PixelFormat.Format32bppPArgb);
                     FillBackground(img, bColor, width, height);
-                    pictureBox_label.Image = img;
+                    //pictureBox_label.Image = img;
                 }
                 else if (_label[i].name == _objectNames[textObject])
                 {
@@ -2731,17 +2731,17 @@ namespace LabelPrint
         {
             if (checkBox_scale.Checked)
             {
-                //pictureBox_label.Dock = DockStyle.None;
+                pictureBox_label.Dock = DockStyle.None;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Normal;
                 pictureBox_label.Width = (int)Label[0].width;
                 pictureBox_label.Height = (int)Label[0].height;
             }
             else
             {
-                //pictureBox_label.Dock = DockStyle.Fill;
+                pictureBox_label.Dock = DockStyle.Fill;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
-                pictureBox_label.Width = panel_picture.Width - panel_picture.Margin.Horizontal;
-                pictureBox_label.Height = panel_picture.Height - panel_picture.Margin.Vertical;
+                //pictureBox_label.Width = panel_picture.Width - panel_picture.Margin.Horizontal;
+                //pictureBox_label.Height = panel_picture.Height - panel_picture.Margin.Vertical;
             }
         }
 
@@ -2865,6 +2865,8 @@ namespace LabelPrint
             }
             LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
             pictureBox_label.Image = LabelBmp;
+            pictureBox_label.Width = LabelBmp.Width;
+            pictureBox_label.Height = LabelBmp.Height;
             listBox_objects.Items.Clear();
             listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = n;
@@ -3349,6 +3351,11 @@ namespace LabelPrint
         }*/
 
         #endregion
+
+        private void panel_picture_SizeChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }
 
