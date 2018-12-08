@@ -31,9 +31,10 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
+            this.panel_picture = new System.Windows.Forms.Panel();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
             this.textBox_mX = new System.Windows.Forms.TextBox();
             this.textBox_mY = new System.Windows.Forms.TextBox();
@@ -84,6 +85,8 @@
             this.button_apply = new System.Windows.Forms.Button();
             this.tabPage_group = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -112,9 +115,6 @@
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.panel_picture = new System.Windows.Forms.Panel();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -123,6 +123,7 @@
             this.splitContainer_vertical.Panel1.SuspendLayout();
             this.splitContainer_vertical.Panel2.SuspendLayout();
             this.splitContainer_vertical.SuspendLayout();
+            this.panel_picture.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_label)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage_print.SuspendLayout();
@@ -131,7 +132,6 @@
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).BeginInit();
-            this.panel_picture.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer_horizontal
@@ -190,6 +190,18 @@
             this.splitContainer_vertical.Size = new System.Drawing.Size(614, 488);
             this.splitContainer_vertical.SplitterDistance = 265;
             this.splitContainer_vertical.TabIndex = 0;
+            // 
+            // panel_picture
+            // 
+            this.panel_picture.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_picture.AutoScroll = true;
+            this.panel_picture.Controls.Add(this.pictureBox_label);
+            this.panel_picture.Location = new System.Drawing.Point(10, 10);
+            this.panel_picture.Name = "panel_picture";
+            this.panel_picture.Size = new System.Drawing.Size(248, 445);
+            this.panel_picture.TabIndex = 4;
             // 
             // pictureBox_label
             // 
@@ -739,6 +751,27 @@
             this.groupBox2.TabIndex = 9;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Scale";
+            this.groupBox2.Visible = false;
+            // 
+            // button1
+            // 
+            this.button1.Enabled = false;
+            this.button1.Location = new System.Drawing.Point(52, 19);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(41, 23);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "↑";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // button4
+            // 
+            this.button4.Enabled = false;
+            this.button4.Location = new System.Drawing.Point(52, 74);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(41, 23);
+            this.button4.TabIndex = 0;
+            this.button4.Text = "↓";
+            this.button4.UseVisualStyleBackColor = true;
             // 
             // button3
             // 
@@ -988,16 +1021,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.Format = "N0";
-            dataGridViewCellStyle3.NullValue = null;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(610, 158);
             this.dataGridView_labels.TabIndex = 0;
@@ -1021,38 +1054,6 @@
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
             // 
-            // panel_picture
-            // 
-            this.panel_picture.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel_picture.AutoScroll = true;
-            this.panel_picture.Controls.Add(this.pictureBox_label);
-            this.panel_picture.Location = new System.Drawing.Point(10, 10);
-            this.panel_picture.Name = "panel_picture";
-            this.panel_picture.Size = new System.Drawing.Size(248, 445);
-            this.panel_picture.TabIndex = 4;
-            // 
-            // button1
-            // 
-            this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(52, 19);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(41, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "↑";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
-            // button4
-            // 
-            this.button4.Enabled = false;
-            this.button4.Location = new System.Drawing.Point(52, 74);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(41, 23);
-            this.button4.TabIndex = 0;
-            this.button4.Text = "↓";
-            this.button4.UseVisualStyleBackColor = true;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1072,6 +1073,7 @@
             this.splitContainer_vertical.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_vertical)).EndInit();
             this.splitContainer_vertical.ResumeLayout(false);
+            this.panel_picture.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_label)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPage_print.ResumeLayout(false);
@@ -1084,7 +1086,6 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_labels)).EndInit();
-            this.panel_picture.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
