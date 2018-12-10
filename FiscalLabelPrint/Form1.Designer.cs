@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.panel_picture = new System.Windows.Forms.Panel();
@@ -85,11 +85,11 @@
             this.button_apply = new System.Windows.Forms.Button();
             this.tabPage_group = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
+            this.button_scaleUp = new System.Windows.Forms.Button();
+            this.button_scaleDown = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.button_scaleLeft = new System.Windows.Forms.Button();
+            this.textBox_scale = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.button_moveUp = new System.Windows.Forms.Button();
             this.button_moveRight = new System.Windows.Forms.Button();
@@ -202,7 +202,6 @@
             this.panel_picture.Name = "panel_picture";
             this.panel_picture.Size = new System.Drawing.Size(248, 445);
             this.panel_picture.TabIndex = 4;
-            this.panel_picture.SizeChanged += new System.EventHandler(this.panel_picture_SizeChanged);
             // 
             // pictureBox_label
             // 
@@ -214,6 +213,7 @@
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
+            this.pictureBox_label.Click += new System.EventHandler(this.pictureBox_label_Click);
             this.pictureBox_label.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_label_MouseMove);
             // 
             // textBox_mX
@@ -742,11 +742,11 @@
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.button1);
-            this.groupBox2.Controls.Add(this.button4);
+            this.groupBox2.Controls.Add(this.button_scaleUp);
+            this.groupBox2.Controls.Add(this.button_scaleDown);
             this.groupBox2.Controls.Add(this.button3);
-            this.groupBox2.Controls.Add(this.button2);
-            this.groupBox2.Controls.Add(this.textBox1);
+            this.groupBox2.Controls.Add(this.button_scaleLeft);
+            this.groupBox2.Controls.Add(this.textBox_scale);
             this.groupBox2.Location = new System.Drawing.Point(108, 150);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(157, 172);
@@ -755,25 +755,25 @@
             this.groupBox2.Text = "Scale";
             this.groupBox2.Visible = false;
             // 
-            // button1
+            // button_scaleUp
             // 
-            this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(52, 19);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(41, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "↑";
-            this.button1.UseVisualStyleBackColor = true;
+            this.button_scaleUp.Enabled = false;
+            this.button_scaleUp.Location = new System.Drawing.Point(52, 19);
+            this.button_scaleUp.Name = "button_scaleUp";
+            this.button_scaleUp.Size = new System.Drawing.Size(41, 23);
+            this.button_scaleUp.TabIndex = 0;
+            this.button_scaleUp.Text = "↑";
+            this.button_scaleUp.UseVisualStyleBackColor = true;
             // 
-            // button4
+            // button_scaleDown
             // 
-            this.button4.Enabled = false;
-            this.button4.Location = new System.Drawing.Point(52, 74);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(41, 23);
-            this.button4.TabIndex = 0;
-            this.button4.Text = "↓";
-            this.button4.UseVisualStyleBackColor = true;
+            this.button_scaleDown.Enabled = false;
+            this.button_scaleDown.Location = new System.Drawing.Point(52, 74);
+            this.button_scaleDown.Name = "button_scaleDown";
+            this.button_scaleDown.Size = new System.Drawing.Size(41, 23);
+            this.button_scaleDown.TabIndex = 0;
+            this.button_scaleDown.Text = "↓";
+            this.button_scaleDown.UseVisualStyleBackColor = true;
             // 
             // button3
             // 
@@ -785,27 +785,27 @@
             this.button3.Text = "→";
             this.button3.UseVisualStyleBackColor = true;
             // 
-            // button2
+            // button_scaleLeft
             // 
-            this.button2.Enabled = false;
-            this.button2.Location = new System.Drawing.Point(5, 48);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(41, 23);
-            this.button2.TabIndex = 0;
-            this.button2.Text = "←";
-            this.button2.UseVisualStyleBackColor = true;
+            this.button_scaleLeft.Enabled = false;
+            this.button_scaleLeft.Location = new System.Drawing.Point(5, 48);
+            this.button_scaleLeft.Name = "button_scaleLeft";
+            this.button_scaleLeft.Size = new System.Drawing.Size(41, 23);
+            this.button_scaleLeft.TabIndex = 0;
+            this.button_scaleLeft.Text = "←";
+            this.button_scaleLeft.UseVisualStyleBackColor = true;
             // 
-            // textBox1
+            // textBox_scale
             // 
-            this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(52, 48);
-            this.textBox1.MinimumSize = new System.Drawing.Size(4, 4);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(41, 20);
-            this.textBox1.TabIndex = 3;
-            this.textBox1.Text = "1";
-            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.textBox1.Leave += new System.EventHandler(this.TextBox_move_Leave);
+            this.textBox_scale.Enabled = false;
+            this.textBox_scale.Location = new System.Drawing.Point(52, 48);
+            this.textBox_scale.MinimumSize = new System.Drawing.Size(4, 4);
+            this.textBox_scale.Name = "textBox_scale";
+            this.textBox_scale.Size = new System.Drawing.Size(41, 20);
+            this.textBox_scale.TabIndex = 3;
+            this.textBox_scale.Text = "1";
+            this.textBox_scale.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.textBox_scale.Leave += new System.EventHandler(this.textBox_scale_Leave);
             // 
             // groupBox1
             // 
@@ -1023,16 +1023,16 @@
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
             this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle4.Format = "N0";
-            dataGridViewCellStyle4.NullValue = null;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle2.Format = "N0";
+            dataGridViewCellStyle2.NullValue = null;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(610, 158);
             this.dataGridView_labels.TabIndex = 0;
@@ -1171,12 +1171,12 @@
         private System.Windows.Forms.ListBox listBox_objectsMulti;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button button_scaleLeft;
+        private System.Windows.Forms.TextBox textBox_scale;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Panel panel_picture;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button_scaleUp;
+        private System.Windows.Forms.Button button_scaleDown;
     }
 }
 
