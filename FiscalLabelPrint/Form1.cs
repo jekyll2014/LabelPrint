@@ -90,6 +90,7 @@ namespace LabelPrint
         private Color _borderColor = Color.Black;
         private string path = "";
         private Bitmap objectBmp = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
+        private float mouseX = 0, mouseY = 0;
 
         public Form1(string[] cmdLine)
         {
@@ -253,10 +254,19 @@ namespace LabelPrint
                     //import template
                     path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
                     Label = LoadCsvTemplate(templateFile, Label[0].codePage);
-
+                    if (Label.Count <= 1)
+                    {
+                        Console.WriteLine("Incorrect template file.\r\n");
+                        Exit();
+                    }
                     //import labels
                     path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
-                    LabelsDatabase = LoadCsvLabel(labelFile, Label[0].codePage);
+                    LabelsDatabase = LoadCsvLabel(labelFile, Label[0].codePage, columnNames);
+                    if (LabelsDatabase.Rows.Count < 1)
+                    {
+                        Console.WriteLine("Incorrect label file.\r\n");
+                        Exit();
+                    }
 
                     if (printAll)
                     {
@@ -286,6 +296,11 @@ namespace LabelPrint
                 }
                 else Console.WriteLine("Not enough parameters.\r\n");
             }
+            Exit();
+        }
+
+        private void Exit()
+        {
             if (Application.MessageLoop)
             {
                 // WinForms app
@@ -296,6 +311,7 @@ namespace LabelPrint
                 // Console app
                 Environment.Exit(1);
             }
+
         }
 
         #region Drawing
@@ -754,13 +770,14 @@ namespace LabelPrint
                 return table;
             }
 
+            if (inputStr.Count <= 0) return null;
             //read headers
             int n = 0;
             if (createColumnsNames == true)
             {
                 table.Columns.Clear();
                 //create and count columns and read headers
-                if (inputStr[n].Length != 0)
+                if (inputStr[0].Length != 0)
                 {
                     string[] cells = inputStr[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
                     for (int i = 0; i < cells.Length - 1; i++)
@@ -779,19 +796,21 @@ namespace LabelPrint
                     DataRow row = table.NewRow();
                     for (int i = 0; i < cells.Length - 1; i++)
                     {
+                        table.Columns.Add(i.ToString());
                         string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
                         if (tmp1 != "") row[i] = tmp1;
                     }
                     table.Rows.Add(row);
+                    n++;
                 }
             }
 
             //read CSV content string by string
-            for (int i1 = 1; i1 < inputStr.Count; i1++)
+            for (; n < inputStr.Count; n++)
             {
-                if (inputStr[i1].ToString().Replace(Properties.Settings.Default.CSVdelimiter, ' ').Trim().TrimStart('\r').TrimStart('\n').TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').TrimEnd('\r').TrimEnd('\n') != "")
+                if (inputStr[n].ToString().Replace(Properties.Settings.Default.CSVdelimiter, ' ').Trim().TrimStart('\r').TrimStart('\n').TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').TrimEnd('\r').TrimEnd('\n') != "")
                 {
-                    string[] cells = inputStr[i1].ToString().Split(Properties.Settings.Default.CSVdelimiter);
+                    string[] cells = inputStr[n].ToString().Split(Properties.Settings.Default.CSVdelimiter);
                     DataRow row = table.NewRow();
                     for (int i = 0; i < cells.Length - 1; i++)
                     {
@@ -825,7 +844,7 @@ namespace LabelPrint
                         if (i == 0 && cells[0] != _objectNames[labelObject])
                         {
                             MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
-                            return tmpLabel;
+                            return Label;
                         }
                         templ.name = cells[0];
                         objectsNum++;
@@ -1434,7 +1453,8 @@ namespace LabelPrint
                     }
                 }
             }
-            return tmpLabel;
+            if (tmpLabel != null) return tmpLabel;
+            else return Label;
         }
 
         private bool saveTemplateToCSV(string fileName, List<Template> _label, int codePage)
@@ -2770,8 +2790,6 @@ namespace LabelPrint
                     textBox_labelsName.Clear();
                     LabelsDatabase.Clear();
                     LabelsDatabase.Rows.Clear();
-                    //List<string> inputStr = new List<string>();
-                    //char div = Properties.Settings.Default.CSVdelimiter;
                     //create column headers
                     LabelsDatabase.Columns.Clear();
 
@@ -2798,9 +2816,9 @@ namespace LabelPrint
                         {
                             for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                             {
-                                if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(row.Cells[i].Value.ToString()))
+                                if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(path + row.Cells[i].Value.ToString()))
                                 {
-                                    MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + row.Cells[i].Value.ToString());
+                                    MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
                                 }
                             }
                         }
@@ -2939,8 +2957,10 @@ namespace LabelPrint
         private void TextBox_dpi_Leave(object sender, EventArgs e)
         {
             Template templ = Label[0];
+            float diff = 0;
 
             float.TryParse(textBox_dpi.Text, out templ.dpi);
+            diff = templ.dpi / Label[0].dpi;
             Label[0] = templ;
             textBox_dpi.Text = Label[0].dpi.ToString();
             units[1] = (float)(Label[0].dpi / 25.4);
@@ -2948,13 +2968,29 @@ namespace LabelPrint
             units[3] = Label[0].dpi;
             mult = units[comboBox_units.SelectedIndex];
             //recalculate all objects
+            for (int i = 0; i < Label.Count; i++)
+            {
+                Template tmp = Label[i];
+                tmp.width *= diff;
+                tmp.height *= diff;
+                tmp.fontSize *= diff;
+                tmp.lineLength *= diff;
+                tmp.lineWidth *= diff;
+                tmp.posX *= diff;
+                tmp.posY *= diff;
+                Label[i] = tmp;
+            }
+            LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
+            pictureBox_label.Image = LabelBmp;
+            pictureBox_label.Width = LabelBmp.Width;
+            pictureBox_label.Height = LabelBmp.Height;
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objects.SelectedIndex);
         }
 
         private void ComboBox_units_SelectedIndexChanged(object sender, EventArgs e)
         {
             mult = units[comboBox_units.SelectedIndex];
-            if (comboBox_units.SelectedIndex == 0) textBox_dpi.Enabled = false;
-            else textBox_dpi.Enabled = true;
             ShowObjectInGUI(listBox_objects.SelectedIndex);
         }
 
@@ -2974,11 +3010,7 @@ namespace LabelPrint
                     if (Label[n].name == _objectNames[lineObject])
                         DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, 0, 1);
                     else
-                        try
-                        {
-                            DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, Label[n].rotate, 1);
-                        }
-                        catch { }
+                        DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, Label[n].rotate, 1);
                 }
             }
             pictureBox_label.Image = LabelBmp;
@@ -3146,6 +3178,7 @@ namespace LabelPrint
         {
             float n = 0;
             float.TryParse(textBox_move.Text, out n);
+            if (n <= 0) n = 1;
             textBox_move.Text = n.ToString();
         }
 
@@ -3168,6 +3201,43 @@ namespace LabelPrint
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
             pictureBox_label.Image = LabelBmp;
+            if (listBox_objectsMulti.SelectedIndices.Count <= 0 || listBox_objectsMulti.SelectedIndices.Contains(0))
+            {
+                button_moveUp.Enabled = false;
+                button_moveDown.Enabled = false;
+                button_moveLeft.Enabled = false;
+                button_moveRight.Enabled = false;
+            }
+            else
+            {
+                button_moveUp.Enabled = true;
+                button_moveDown.Enabled = true;
+                button_moveLeft.Enabled = true;
+                button_moveRight.Enabled = true;
+            }
+
+            if (listBox_objectsMulti.SelectedIndices.Count <= 0)
+            {
+                button_moveUp.Enabled = false;
+                button_moveDown.Enabled = false;
+                button_moveLeft.Enabled = false;
+                button_moveRight.Enabled = false;
+            }
+            else
+            {
+                button_moveUp.Enabled = true;
+                button_moveDown.Enabled = true;
+                button_moveLeft.Enabled = true;
+                button_moveRight.Enabled = true;
+            }
+        }
+
+        private void textBox_scale_Leave(object sender, EventArgs e)
+        {
+            float n = 0;
+            float.TryParse(textBox_scale.Text, out n);
+            if (n <= 0) n = 1;
+            textBox_scale.Text = n.ToString();
         }
 
         private void Button_printCurrent_Click(object sender, EventArgs e)
@@ -3229,9 +3299,8 @@ namespace LabelPrint
             if (pictureBox_label.Image == null) return;
             if (checkBox_scale.Checked)
             {
-
-                textBox_mX.Text = e.X.ToString();
-                textBox_mY.Text = e.Y.ToString();
+                mouseX = e.X;
+                mouseY = e.Y;
             }
             else
             {
@@ -3239,17 +3308,19 @@ namespace LabelPrint
                 float scaleH = (float)pictureBox_label.Height / LabelBmp.Height;
                 if (scaleW > scaleH)
                 {
-                    textBox_mY.Text = (e.Y / scaleH).ToString();
+                    mouseY = e.Y / scaleH;
                     float corr = (pictureBox_label.Width - (LabelBmp.Width * scaleH)) / 2;
-                    textBox_mX.Text = ((e.X - corr) / scaleH).ToString();
+                    mouseX = (e.X - corr) / scaleH;
                 }
                 else
                 {
-                    textBox_mX.Text = (e.X / scaleW).ToString();
+                    mouseX = e.X / scaleW;
                     float corr = (pictureBox_label.Height - LabelBmp.Height * scaleW) / 2;
-                    textBox_mY.Text = ((e.Y - corr) / scaleW).ToString();
+                    mouseY = (e.Y - corr) / scaleW;
                 }
             }
+            textBox_mX.Text = (mouseX / mult).ToString("F4");
+            textBox_mY.Text = (mouseY / mult).ToString("F4");
         }
 
         /*int xPosOrig, yPosOrig;
@@ -3350,12 +3421,78 @@ namespace LabelPrint
             }
         }*/
 
+        //select object with click
+        private bool IsInPolygon(PointF[] poly, PointF pnt)
+        {
+            int i, j;
+            int nvert = poly.Length;
+            bool c = false;
+            for (i = 0, j = nvert - 1; i < nvert; j = i++)
+            {
+                if (((poly[i].Y > pnt.Y) != (poly[j].Y > pnt.Y)) &&
+                 (pnt.X < (poly[j].X - poly[i].X) * (pnt.Y - poly[i].Y) / (poly[j].Y - poly[i].Y) + poly[i].X))
+                    c = !c;
+            }
+            return c;
+        }
+
+        private PointF[] rotatePolygon(PointF zeroPoint, PointF[] poly, float angleDegree)
+        {
+            PointF[] p = new PointF[poly.Length];
+            for (int i = 0; i < poly.Length; i++)
+            {
+                p[i] = rotateLine(zeroPoint, poly[i], angleDegree);
+            }
+            return p;
+        }
+
+        private PointF rotateLine(PointF center, PointF end, double angleDeg)
+        {
+            PointF result = new PointF();
+            if (angleDeg % 360 == 0) return end;
+            double angleRad = (angleDeg * Math.PI) / 180;
+            result.X = (float)((end.X - center.X) * Math.Cos(angleRad) - (end.Y - center.Y) * Math.Sin(angleRad) + center.X);
+            result.Y = (float)((end.X - center.X) * Math.Sin(angleRad) + (end.Y - center.Y) * Math.Cos(angleRad) + center.Y);
+            return result;
+        }
+
+        private void pictureBox_label_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex != 1 && tabControl1.SelectedIndex != 2) return;
+            for (int i = 0; i < Label.Count; i++)
+            {
+                PointF[] rect = new PointF[4];
+                rect[0].X = currentObjectsPositions[i].X;
+                rect[0].Y = currentObjectsPositions[i].Y;
+
+                rect[1].X = currentObjectsPositions[i].X + currentObjectsPositions[i].Width;
+                rect[1].Y = currentObjectsPositions[i].Y;
+
+                rect[2].X = currentObjectsPositions[i].X + currentObjectsPositions[i].Width;
+                rect[2].Y = currentObjectsPositions[i].Y + currentObjectsPositions[i].Height;
+
+                rect[3].X = currentObjectsPositions[i].X;
+                rect[3].Y = currentObjectsPositions[i].Y + currentObjectsPositions[i].Height;
+
+                if (Label[i].name != _objectNames[lineObject])
+                {
+                    rect = rotatePolygon(rect[0], rect, Label[i].rotate);
+                }
+
+                if (IsInPolygon(rect, new Point((int)mouseX, (int)mouseY)))
+                {
+                    if (tabControl1.SelectedIndex == 1) listBox_objects.SelectedIndex = i;
+                    else if (tabControl1.SelectedIndex == 2)
+                    {
+                        listBox_objectsMulti.SetSelected(i, !listBox_objectsMulti.GetSelected(i));
+                    }
+                    break;
+                }
+            }
+        }
+
         #endregion
 
-        private void panel_picture_SizeChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }
 
@@ -3373,35 +3510,3 @@ namespace LabelPrint
     return (long)(loDataTable.Rows[0]["Eval"]);
 }*/
 
-/*private bool IsInPolygon(Point[] poly, Point pnt)
-{
-    int i, j;
-    int nvert = poly.Length;
-    bool c = false;
-    for (i = 0, j = nvert - 1; i < nvert; j = i++)
-    {
-        if (((poly[i].Y > pnt.Y) != (poly[j].Y > pnt.Y)) &&
-         (pnt.X < (poly[j].X - poly[i].X) * (pnt.Y - poly[i].Y) / (poly[j].Y - poly[i].Y) + poly[i].X))
-            c = !c;
-    }
-    return c;
-}*/
-
-/*private PointF[] rotatePolygon(PointF zeroPoint, PointF[] poly, float angle)
-{
-    PointF[] p = new PointF[poly.Length];
-    for (int i = 0; i < poly.Length; i++)
-    {
-        double xn = 0, yn = 0;
-        rotateLine(zeroPoint.X, zeroPoint.Y, poly[i].X, poly[i].Y, angle, out xn, out yn);
-        p[i].X = (float)xn;
-        p[i].X = (float)yn;
-    }
-    return p;
-}*/
-
-/*private void rotateLine(double xc, double yc, double x, double y, double a, out double xn, out double yn)
-{
-    xn = (x - xc) * Math.Cos(a) - (y - yc) * Math.Sin(a) + xc;
-    yn = (x - xc) * Math.Sin(a) + (y - yc) * Math.Cos(a) + yc;
-}*/
