@@ -31,13 +31,12 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.panel_picture = new System.Windows.Forms.Panel();
             this.pictureBox_label = new System.Windows.Forms.PictureBox();
             this.textBox_mX = new System.Windows.Forms.TextBox();
-            this.textBox_mY = new System.Windows.Forms.TextBox();
             this.checkBox_scale = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
@@ -77,8 +76,6 @@
             this.comboBox_fontName = new System.Windows.Forms.ComboBox();
             this.comboBox_backgroundColor = new System.Windows.Forms.ComboBox();
             this.button_clone = new System.Windows.Forms.Button();
-            this.button_saveLabel = new System.Windows.Forms.Button();
-            this.button_saveTemplate = new System.Windows.Forms.Button();
             this.button_delete = new System.Windows.Forms.Button();
             this.button_down = new System.Windows.Forms.Button();
             this.button_up = new System.Windows.Forms.Button();
@@ -87,6 +84,8 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button_scaleUp = new System.Windows.Forms.Button();
             this.button_scaleDown = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button_scaleLeft = new System.Windows.Forms.Button();
             this.textBox_scale = new System.Windows.Forms.TextBox();
@@ -108,7 +107,8 @@
             this.button_importTemplate = new System.Windows.Forms.Button();
             this.button_importLabels = new System.Windows.Forms.Button();
             this.comboBox_encoding = new System.Windows.Forms.ComboBox();
-            this.label2 = new System.Windows.Forms.Label();
+            this.button_saveTemplate = new System.Windows.Forms.Button();
+            this.button_saveLabel = new System.Windows.Forms.Button();
             this.dataGridView_labels = new System.Windows.Forms.DataGridView();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.printDialog1 = new System.Windows.Forms.PrintDialog();
@@ -152,7 +152,7 @@
             this.splitContainer_horizontal.Panel2.Controls.Add(this.dataGridView_labels);
             this.splitContainer_horizontal.Panel2MinSize = 100;
             this.splitContainer_horizontal.Size = new System.Drawing.Size(614, 654);
-            this.splitContainer_horizontal.SplitterDistance = 488;
+            this.splitContainer_horizontal.SplitterDistance = 460;
             this.splitContainer_horizontal.TabIndex = 0;
             // 
             // splitContainer_vertical
@@ -167,7 +167,6 @@
             this.splitContainer_vertical.Panel1.AutoScroll = true;
             this.splitContainer_vertical.Panel1.Controls.Add(this.panel_picture);
             this.splitContainer_vertical.Panel1.Controls.Add(this.textBox_mX);
-            this.splitContainer_vertical.Panel1.Controls.Add(this.textBox_mY);
             this.splitContainer_vertical.Panel1.Controls.Add(this.checkBox_scale);
             this.splitContainer_vertical.Panel1MinSize = 265;
             // 
@@ -185,9 +184,10 @@
             this.splitContainer_vertical.Panel2.Controls.Add(this.button_importTemplate);
             this.splitContainer_vertical.Panel2.Controls.Add(this.button_importLabels);
             this.splitContainer_vertical.Panel2.Controls.Add(this.comboBox_encoding);
-            this.splitContainer_vertical.Panel2.Controls.Add(this.label2);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_saveTemplate);
+            this.splitContainer_vertical.Panel2.Controls.Add(this.button_saveLabel);
             this.splitContainer_vertical.Panel2MinSize = 340;
-            this.splitContainer_vertical.Size = new System.Drawing.Size(614, 488);
+            this.splitContainer_vertical.Size = new System.Drawing.Size(614, 460);
             this.splitContainer_vertical.SplitterDistance = 265;
             this.splitContainer_vertical.TabIndex = 0;
             // 
@@ -200,7 +200,7 @@
             this.panel_picture.Controls.Add(this.pictureBox_label);
             this.panel_picture.Location = new System.Drawing.Point(10, 10);
             this.panel_picture.Name = "panel_picture";
-            this.panel_picture.Size = new System.Drawing.Size(248, 445);
+            this.panel_picture.Size = new System.Drawing.Size(248, 417);
             this.panel_picture.TabIndex = 4;
             // 
             // pictureBox_label
@@ -209,7 +209,7 @@
             this.pictureBox_label.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox_label.Location = new System.Drawing.Point(0, 0);
             this.pictureBox_label.Name = "pictureBox_label";
-            this.pictureBox_label.Size = new System.Drawing.Size(248, 445);
+            this.pictureBox_label.Size = new System.Drawing.Size(248, 417);
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
@@ -218,29 +218,20 @@
             // 
             // textBox_mX
             // 
-            this.textBox_mX.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.textBox_mX.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_mX.Enabled = false;
-            this.textBox_mX.Location = new System.Drawing.Point(3, 461);
+            this.textBox_mX.Location = new System.Drawing.Point(10, 433);
             this.textBox_mX.MinimumSize = new System.Drawing.Size(60, 4);
             this.textBox_mX.Name = "textBox_mX";
-            this.textBox_mX.Size = new System.Drawing.Size(67, 20);
+            this.textBox_mX.Size = new System.Drawing.Size(136, 20);
             this.textBox_mX.TabIndex = 3;
-            // 
-            // textBox_mY
-            // 
-            this.textBox_mY.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox_mY.Enabled = false;
-            this.textBox_mY.Location = new System.Drawing.Point(79, 461);
-            this.textBox_mY.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_mY.Name = "textBox_mY";
-            this.textBox_mY.Size = new System.Drawing.Size(67, 20);
-            this.textBox_mY.TabIndex = 3;
             // 
             // checkBox_scale
             // 
-            this.checkBox_scale.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.checkBox_scale.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBox_scale.AutoSize = true;
-            this.checkBox_scale.Location = new System.Drawing.Point(152, 463);
+            this.checkBox_scale.Location = new System.Drawing.Point(152, 435);
             this.checkBox_scale.Name = "checkBox_scale";
             this.checkBox_scale.Size = new System.Drawing.Size(106, 17);
             this.checkBox_scale.TabIndex = 2;
@@ -251,7 +242,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(116, 98);
+            this.label5.Location = new System.Drawing.Point(215, 94);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(21, 13);
             this.label5.TabIndex = 9;
@@ -259,16 +250,13 @@
             // 
             // tabControl1
             // 
-            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage_print);
             this.tabControl1.Controls.Add(this.tabPage_edit);
             this.tabControl1.Controls.Add(this.tabPage_group);
-            this.tabControl1.Location = new System.Drawing.Point(3, 121);
+            this.tabControl1.Location = new System.Drawing.Point(3, 117);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(328, 360);
+            this.tabControl1.Size = new System.Drawing.Size(335, 336);
             this.tabControl1.TabIndex = 4;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.TabControl1_SelectedIndexChanged);
             // 
@@ -285,7 +273,7 @@
             this.tabPage_print.Location = new System.Drawing.Point(4, 22);
             this.tabPage_print.Name = "tabPage_print";
             this.tabPage_print.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_print.Size = new System.Drawing.Size(320, 334);
+            this.tabPage_print.Size = new System.Drawing.Size(327, 310);
             this.tabPage_print.TabIndex = 0;
             this.tabPage_print.Text = "Print labels";
             this.tabPage_print.UseVisualStyleBackColor = true;
@@ -354,10 +342,12 @@
             // 
             // textBox_saveFileName
             // 
+            this.textBox_saveFileName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_saveFileName.Enabled = false;
             this.textBox_saveFileName.Location = new System.Drawing.Point(116, 3);
             this.textBox_saveFileName.Name = "textBox_saveFileName";
-            this.textBox_saveFileName.Size = new System.Drawing.Size(79, 20);
+            this.textBox_saveFileName.Size = new System.Drawing.Size(205, 20);
             this.textBox_saveFileName.TabIndex = 1;
             this.textBox_saveFileName.Text = "name";
             // 
@@ -399,8 +389,6 @@
             this.tabPage_edit.Controls.Add(this.comboBox_fontName);
             this.tabPage_edit.Controls.Add(this.comboBox_backgroundColor);
             this.tabPage_edit.Controls.Add(this.button_clone);
-            this.tabPage_edit.Controls.Add(this.button_saveLabel);
-            this.tabPage_edit.Controls.Add(this.button_saveTemplate);
             this.tabPage_edit.Controls.Add(this.button_delete);
             this.tabPage_edit.Controls.Add(this.button_down);
             this.tabPage_edit.Controls.Add(this.button_up);
@@ -408,7 +396,7 @@
             this.tabPage_edit.Location = new System.Drawing.Point(4, 22);
             this.tabPage_edit.Name = "tabPage_edit";
             this.tabPage_edit.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_edit.Size = new System.Drawing.Size(320, 334);
+            this.tabPage_edit.Size = new System.Drawing.Size(327, 310);
             this.tabPage_edit.TabIndex = 1;
             this.tabPage_edit.Text = "Edit template";
             this.tabPage_edit.UseVisualStyleBackColor = true;
@@ -420,7 +408,7 @@
             this.listBox_objects.FormattingEnabled = true;
             this.listBox_objects.Location = new System.Drawing.Point(7, 36);
             this.listBox_objects.Name = "listBox_objects";
-            this.listBox_objects.Size = new System.Drawing.Size(95, 199);
+            this.listBox_objects.Size = new System.Drawing.Size(95, 225);
             this.listBox_objects.TabIndex = 6;
             this.listBox_objects.SelectedIndexChanged += new System.EventHandler(this.ListBox_objects_SelectedIndexChanged);
             // 
@@ -526,7 +514,8 @@
             // checkBox_fill
             // 
             this.checkBox_fill.AutoSize = true;
-            this.checkBox_fill.Location = new System.Drawing.Point(190, 37);
+            this.checkBox_fill.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBox_fill.Location = new System.Drawing.Point(181, 38);
             this.checkBox_fill.Name = "checkBox_fill";
             this.checkBox_fill.Size = new System.Drawing.Size(83, 17);
             this.checkBox_fill.TabIndex = 4;
@@ -547,7 +536,7 @@
             this.textBox_fontSize.Location = new System.Drawing.Point(181, 233);
             this.textBox_fontSize.MinimumSize = new System.Drawing.Size(135, 4);
             this.textBox_fontSize.Name = "textBox_fontSize";
-            this.textBox_fontSize.Size = new System.Drawing.Size(135, 20);
+            this.textBox_fontSize.Size = new System.Drawing.Size(140, 20);
             this.textBox_fontSize.TabIndex = 3;
             // 
             // textBox_rotate
@@ -583,7 +572,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_content.Location = new System.Drawing.Point(108, 273);
             this.textBox_content.Name = "textBox_content";
-            this.textBox_content.Size = new System.Drawing.Size(203, 20);
+            this.textBox_content.Size = new System.Drawing.Size(213, 20);
             this.textBox_content.TabIndex = 3;
             // 
             // textBox_posX
@@ -602,7 +591,7 @@
             this.comboBox_objectColor.Location = new System.Drawing.Point(181, 115);
             this.comboBox_objectColor.MinimumSize = new System.Drawing.Size(135, 0);
             this.comboBox_objectColor.Name = "comboBox_objectColor";
-            this.comboBox_objectColor.Size = new System.Drawing.Size(135, 21);
+            this.comboBox_objectColor.Size = new System.Drawing.Size(140, 21);
             this.comboBox_objectColor.TabIndex = 2;
             // 
             // comboBox_fontStyle
@@ -618,7 +607,7 @@
             this.comboBox_fontStyle.Location = new System.Drawing.Point(181, 193);
             this.comboBox_fontStyle.MinimumSize = new System.Drawing.Size(135, 0);
             this.comboBox_fontStyle.Name = "comboBox_fontStyle";
-            this.comboBox_fontStyle.Size = new System.Drawing.Size(135, 21);
+            this.comboBox_fontStyle.Size = new System.Drawing.Size(140, 21);
             this.comboBox_fontStyle.TabIndex = 2;
             // 
             // comboBox_object
@@ -639,7 +628,7 @@
             this.comboBox_fontName.Location = new System.Drawing.Point(181, 154);
             this.comboBox_fontName.MinimumSize = new System.Drawing.Size(135, 0);
             this.comboBox_fontName.Name = "comboBox_fontName";
-            this.comboBox_fontName.Size = new System.Drawing.Size(135, 21);
+            this.comboBox_fontName.Size = new System.Drawing.Size(140, 21);
             this.comboBox_fontName.TabIndex = 2;
             // 
             // comboBox_backgroundColor
@@ -649,44 +638,23 @@
             this.comboBox_backgroundColor.Location = new System.Drawing.Point(181, 77);
             this.comboBox_backgroundColor.MinimumSize = new System.Drawing.Size(135, 0);
             this.comboBox_backgroundColor.Name = "comboBox_backgroundColor";
-            this.comboBox_backgroundColor.Size = new System.Drawing.Size(135, 21);
+            this.comboBox_backgroundColor.Size = new System.Drawing.Size(140, 21);
             this.comboBox_backgroundColor.TabIndex = 2;
             // 
             // button_clone
             // 
             this.button_clone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_clone.Location = new System.Drawing.Point(3, 240);
+            this.button_clone.Location = new System.Drawing.Point(102, 6);
             this.button_clone.Name = "button_clone";
-            this.button_clone.Size = new System.Drawing.Size(99, 23);
+            this.button_clone.Size = new System.Drawing.Size(96, 23);
             this.button_clone.TabIndex = 0;
             this.button_clone.Text = "Clone object";
             this.button_clone.UseVisualStyleBackColor = true;
             this.button_clone.Click += new System.EventHandler(this.Button_clone_Click);
             // 
-            // button_saveLabel
-            // 
-            this.button_saveLabel.Location = new System.Drawing.Point(198, 6);
-            this.button_saveLabel.Name = "button_saveLabel";
-            this.button_saveLabel.Size = new System.Drawing.Size(90, 23);
-            this.button_saveLabel.TabIndex = 0;
-            this.button_saveLabel.Text = "Save label data";
-            this.button_saveLabel.UseVisualStyleBackColor = true;
-            this.button_saveLabel.Click += new System.EventHandler(this.Button_saveLabel_Click);
-            // 
-            // button_saveTemplate
-            // 
-            this.button_saveTemplate.Location = new System.Drawing.Point(102, 6);
-            this.button_saveTemplate.Name = "button_saveTemplate";
-            this.button_saveTemplate.Size = new System.Drawing.Size(90, 23);
-            this.button_saveTemplate.TabIndex = 0;
-            this.button_saveTemplate.Text = "Save template";
-            this.button_saveTemplate.UseVisualStyleBackColor = true;
-            this.button_saveTemplate.Click += new System.EventHandler(this.Button_saveTemplate_Click);
-            // 
             // button_delete
             // 
-            this.button_delete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_delete.Location = new System.Drawing.Point(6, 298);
+            this.button_delete.Location = new System.Drawing.Point(204, 6);
             this.button_delete.Name = "button_delete";
             this.button_delete.Size = new System.Drawing.Size(96, 23);
             this.button_delete.TabIndex = 0;
@@ -697,9 +665,9 @@
             // button_down
             // 
             this.button_down.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_down.Location = new System.Drawing.Point(54, 269);
+            this.button_down.Location = new System.Drawing.Point(58, 270);
             this.button_down.Name = "button_down";
-            this.button_down.Size = new System.Drawing.Size(48, 23);
+            this.button_down.Size = new System.Drawing.Size(45, 23);
             this.button_down.TabIndex = 0;
             this.button_down.Text = "Down";
             this.button_down.UseVisualStyleBackColor = true;
@@ -708,9 +676,9 @@
             // button_up
             // 
             this.button_up.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_up.Location = new System.Drawing.Point(6, 269);
+            this.button_up.Location = new System.Drawing.Point(7, 270);
             this.button_up.Name = "button_up";
-            this.button_up.Size = new System.Drawing.Size(42, 23);
+            this.button_up.Size = new System.Drawing.Size(45, 23);
             this.button_up.TabIndex = 0;
             this.button_up.Text = "Up";
             this.button_up.UseVisualStyleBackColor = true;
@@ -735,7 +703,7 @@
             this.tabPage_group.Location = new System.Drawing.Point(4, 22);
             this.tabPage_group.Name = "tabPage_group";
             this.tabPage_group.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_group.Size = new System.Drawing.Size(320, 334);
+            this.tabPage_group.Size = new System.Drawing.Size(327, 310);
             this.tabPage_group.TabIndex = 2;
             this.tabPage_group.Text = "Group operation";
             this.tabPage_group.UseVisualStyleBackColor = true;
@@ -744,12 +712,14 @@
             // 
             this.groupBox2.Controls.Add(this.button_scaleUp);
             this.groupBox2.Controls.Add(this.button_scaleDown);
+            this.groupBox2.Controls.Add(this.button2);
+            this.groupBox2.Controls.Add(this.button1);
             this.groupBox2.Controls.Add(this.button3);
             this.groupBox2.Controls.Add(this.button_scaleLeft);
             this.groupBox2.Controls.Add(this.textBox_scale);
             this.groupBox2.Location = new System.Drawing.Point(108, 150);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(157, 172);
+            this.groupBox2.Size = new System.Drawing.Size(157, 107);
             this.groupBox2.TabIndex = 9;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Scale";
@@ -774,6 +744,26 @@
             this.button_scaleDown.TabIndex = 0;
             this.button_scaleDown.Text = "↓";
             this.button_scaleDown.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Enabled = false;
+            this.button2.Location = new System.Drawing.Point(5, 19);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(41, 23);
+            this.button2.TabIndex = 0;
+            this.button2.Text = "-";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
+            // button1
+            // 
+            this.button1.Enabled = false;
+            this.button1.Location = new System.Drawing.Point(99, 19);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(41, 23);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "+";
+            this.button1.UseVisualStyleBackColor = true;
             // 
             // button3
             // 
@@ -880,7 +870,7 @@
             this.listBox_objectsMulti.Location = new System.Drawing.Point(6, 6);
             this.listBox_objectsMulti.Name = "listBox_objectsMulti";
             this.listBox_objectsMulti.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.listBox_objectsMulti.Size = new System.Drawing.Size(95, 316);
+            this.listBox_objectsMulti.Size = new System.Drawing.Size(95, 290);
             this.listBox_objectsMulti.TabIndex = 7;
             this.listBox_objectsMulti.SelectedIndexChanged += new System.EventHandler(this.ListBox_objectsMulti_SelectedIndexChanged);
             // 
@@ -897,7 +887,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(3, 98);
+            this.label4.Location = new System.Drawing.Point(96, 94);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(57, 13);
             this.label4.TabIndex = 9;
@@ -905,7 +895,7 @@
             // 
             // textBox_dpi
             // 
-            this.textBox_dpi.Location = new System.Drawing.Point(60, 96);
+            this.textBox_dpi.Location = new System.Drawing.Point(159, 91);
             this.textBox_dpi.MinimumSize = new System.Drawing.Size(50, 4);
             this.textBox_dpi.Name = "textBox_dpi";
             this.textBox_dpi.Size = new System.Drawing.Size(50, 20);
@@ -916,11 +906,10 @@
             // 
             // checkBox_columnNames
             // 
-            this.checkBox_columnNames.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBox_columnNames.AutoSize = true;
             this.checkBox_columnNames.Checked = true;
             this.checkBox_columnNames.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_columnNames.Location = new System.Drawing.Point(173, 43);
+            this.checkBox_columnNames.Location = new System.Drawing.Point(3, 68);
             this.checkBox_columnNames.Name = "checkBox_columnNames";
             this.checkBox_columnNames.Size = new System.Drawing.Size(158, 17);
             this.checkBox_columnNames.TabIndex = 2;
@@ -930,7 +919,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(160, 98);
+            this.label3.Location = new System.Drawing.Point(3, 94);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(31, 13);
             this.label3.TabIndex = 7;
@@ -943,7 +932,7 @@
             this.textBox_labelsName.Enabled = false;
             this.textBox_labelsName.Location = new System.Drawing.Point(99, 41);
             this.textBox_labelsName.Name = "textBox_labelsName";
-            this.textBox_labelsName.Size = new System.Drawing.Size(68, 20);
+            this.textBox_labelsName.Size = new System.Drawing.Size(143, 20);
             this.textBox_labelsName.TabIndex = 1;
             // 
             // comboBox_units
@@ -955,7 +944,7 @@
             "mm",
             "cm",
             "in."});
-            this.comboBox_units.Location = new System.Drawing.Point(195, 95);
+            this.comboBox_units.Location = new System.Drawing.Point(40, 91);
             this.comboBox_units.MinimumSize = new System.Drawing.Size(50, 0);
             this.comboBox_units.Name = "comboBox_units";
             this.comboBox_units.Size = new System.Drawing.Size(50, 21);
@@ -969,7 +958,7 @@
             this.textBox_templateName.Enabled = false;
             this.textBox_templateName.Location = new System.Drawing.Point(99, 12);
             this.textBox_templateName.Name = "textBox_templateName";
-            this.textBox_templateName.Size = new System.Drawing.Size(232, 20);
+            this.textBox_templateName.Size = new System.Drawing.Size(143, 20);
             this.textBox_templateName.TabIndex = 1;
             // 
             // button_importTemplate
@@ -978,7 +967,7 @@
             this.button_importTemplate.Name = "button_importTemplate";
             this.button_importTemplate.Size = new System.Drawing.Size(90, 23);
             this.button_importTemplate.TabIndex = 0;
-            this.button_importTemplate.Text = "Import template";
+            this.button_importTemplate.Text = "Load template";
             this.button_importTemplate.UseVisualStyleBackColor = true;
             this.button_importTemplate.Click += new System.EventHandler(this.Button_importTemplate_Click);
             // 
@@ -989,29 +978,44 @@
             this.button_importLabels.Name = "button_importLabels";
             this.button_importLabels.Size = new System.Drawing.Size(90, 23);
             this.button_importLabels.TabIndex = 0;
-            this.button_importLabels.Text = "Import labels";
+            this.button_importLabels.Text = "Load labels";
             this.button_importLabels.UseVisualStyleBackColor = true;
             this.button_importLabels.Click += new System.EventHandler(this.Button_importLabels_Click);
             // 
             // comboBox_encoding
             // 
+            this.comboBox_encoding.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.comboBox_encoding.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox_encoding.FormattingEnabled = true;
-            this.comboBox_encoding.Location = new System.Drawing.Point(60, 68);
-            this.comboBox_encoding.MinimumSize = new System.Drawing.Size(135, 0);
+            this.comboBox_encoding.Location = new System.Drawing.Point(242, 91);
+            this.comboBox_encoding.MinimumSize = new System.Drawing.Size(90, 0);
             this.comboBox_encoding.Name = "comboBox_encoding";
-            this.comboBox_encoding.Size = new System.Drawing.Size(185, 21);
+            this.comboBox_encoding.Size = new System.Drawing.Size(96, 21);
             this.comboBox_encoding.TabIndex = 2;
             this.comboBox_encoding.SelectedIndexChanged += new System.EventHandler(this.ComboBox_encoding_SelectedIndexChanged);
             // 
-            // label2
+            // button_saveTemplate
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(2, 71);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(52, 13);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Encoding";
+            this.button_saveTemplate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button_saveTemplate.Location = new System.Drawing.Point(248, 10);
+            this.button_saveTemplate.Name = "button_saveTemplate";
+            this.button_saveTemplate.Size = new System.Drawing.Size(90, 23);
+            this.button_saveTemplate.TabIndex = 0;
+            this.button_saveTemplate.Text = "Save template";
+            this.button_saveTemplate.UseVisualStyleBackColor = true;
+            this.button_saveTemplate.Click += new System.EventHandler(this.Button_saveTemplate_Click);
+            // 
+            // button_saveLabel
+            // 
+            this.button_saveLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button_saveLabel.Location = new System.Drawing.Point(248, 39);
+            this.button_saveLabel.Name = "button_saveLabel";
+            this.button_saveLabel.Size = new System.Drawing.Size(90, 23);
+            this.button_saveLabel.TabIndex = 0;
+            this.button_saveLabel.Text = "Save label data";
+            this.button_saveLabel.UseVisualStyleBackColor = true;
+            this.button_saveLabel.Click += new System.EventHandler(this.Button_saveLabel_Click);
             // 
             // dataGridView_labels
             // 
@@ -1022,19 +1026,18 @@
             this.dataGridView_labels.Location = new System.Drawing.Point(0, 0);
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
-            this.dataGridView_labels.ReadOnly = true;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.Format = "N0";
-            dataGridViewCellStyle2.NullValue = null;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView_labels.Size = new System.Drawing.Size(610, 158);
+            this.dataGridView_labels.Size = new System.Drawing.Size(610, 186);
             this.dataGridView_labels.TabIndex = 0;
             this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.DataGridView_labels_SelectionChanged);
             // 
@@ -1151,7 +1154,6 @@
         private System.Windows.Forms.TextBox textBox_fontSize;
         private System.Windows.Forms.Button button_saveLabel;
         private System.Windows.Forms.ComboBox comboBox_encoding;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox textBox_dpi;
         private System.Windows.Forms.Label label3;
@@ -1160,7 +1162,6 @@
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Button button_clone;
         private System.Windows.Forms.TextBox textBox_mX;
-        private System.Windows.Forms.TextBox textBox_mY;
         private System.Windows.Forms.TabPage tabPage_group;
         private System.Windows.Forms.Button button_moveLeft;
         private System.Windows.Forms.Button button_moveDown;
@@ -1177,6 +1178,8 @@
         private System.Windows.Forms.Panel panel_picture;
         private System.Windows.Forms.Button button_scaleUp;
         private System.Windows.Forms.Button button_scaleDown;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button1;
     }
 }
 

@@ -1,11 +1,9 @@
 ﻿label;Beige;Black;400;400;300;65001;
-text;Green;10;10;0;string1;Arial;10;0;
+text;Green;10;10;0;string1;Arial;10;Regular;
 picture;White;10;100;0;logo.png;0;0;1;
-barcode;Yellow;Blue;10;160;0;123456789;200;40;16;0;;
+barcode;Yellow;Blue;10;160;0;123456789;200;40;CODE_128;0;;
 picture;Black;390;10;90;logo.png;0;0;0;
-barcode;Blue;Yellow;340;190;90;987654321;200;200;2048;0;MARGIN=0;
-text;Cyan;20;390;-45;string2;Courier New;20;4;
-line;Red;10;10;;1;389;389;
-line;Purple;389;10;135;5;400;
-rectangle;Lime;20;20;0;3;359;359;1;
+barcode;Blue;Yellow;340;190;90;987654321;200;200;QR_CODE;0;MARGIN=0;
+text;Cyan;20;390;-45;string2;Courier New;20;Underline;
+line_coord;Red;10;10;1;389;389;line_length;Purple;389;10;135;5;400;rectangle;Lime;20;20;0;3;359;359;1;
 ellipse;Magenta;20;20;0;10;359;359;1;

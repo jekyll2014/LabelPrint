@@ -20,15 +20,27 @@ namespace LabelPrint
         private const int textObject = 1;
         private const int pictureObject = 2;
         private const int barcodeObject = 3;
-        private const int lineObject = 4;
-        private const int rectangleObject = 5;
-        private const int ellipseObject = 6;
-        private string[] _objectNames = { "label", "text", "picture", "barcode", "line", "rectangle", "ellipse", };
-        private string[] _textStyleNames = { "0=regular", "1=bold", "2=italic", "4=underline", "8=strikeout" };
+        private const int line_coord_Object = 4;
+        private const int line_length_Object = 5;
+        private const int rectangleObject = 6;
+        private const int ellipseObject = 7;
+
+        private enum LabelObject
+        {
+            label,
+            text,
+            picture,
+            barcode,
+            line_coord,
+            line_length,
+            rectangle,
+            ellipse,
+        }
+        private string[] _objectNames = { "label", "text", "picture", "barcode", "line_coord", "line_length", "rectangle", "ellipse", };
 
         private struct Template
         {
-            public string name;
+            public LabelObject objectType;
             public Color bgColor;
             public Color fgColor;
             public float dpi;
@@ -40,40 +52,18 @@ namespace LabelPrint
             public float width;
             public float height;
             public bool transparent;
-            public int BCformat;
+            public BarcodeFormat barCodeFormat;
             public float fontSize;
-            public byte fontStyle;
+            public FontStyle fontStyle;
             public string fontName;
-            public string feature;
+            public string addFeature;
             public float lineLength;
             public float lineWidth;
         }
 
         private List<Template> Label = new List<Template>();
         private DataTable LabelsDatabase = new DataTable();
-        private int objectsNum = 0;
         private List<string> bcFeatures = new List<string> { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
-        private List<int> BarCodeTypes = new List<int> {
-        (int)BarcodeFormat.AZTEC,
-        (int)BarcodeFormat.CODABAR,
-        (int)BarcodeFormat.CODE_128,
-        (int)BarcodeFormat.CODE_39,
-        (int)BarcodeFormat.CODE_93,
-        (int)BarcodeFormat.DATA_MATRIX,
-        (int)BarcodeFormat.EAN_13,
-        (int)BarcodeFormat.EAN_8,
-        (int)BarcodeFormat.IMB,
-        (int)BarcodeFormat.ITF,
-        (int)BarcodeFormat.MAXICODE,
-        (int)BarcodeFormat.MSI,
-        (int)BarcodeFormat.PDF_417,
-        (int)BarcodeFormat.PLESSEY,
-        (int)BarcodeFormat.QR_CODE,
-        (int)BarcodeFormat.RSS_14,
-        (int)BarcodeFormat.RSS_EXPANDED,
-        (int)BarcodeFormat.UPC_A,
-        (int)BarcodeFormat.UPC_E,
-        (int)BarcodeFormat.UPC_EAN_EXTENSION };
 
         private float mult = 1;
 
@@ -103,7 +93,7 @@ namespace LabelPrint
 
             Template init_label = new Template
             {
-                name = _objectNames[labelObject],
+                objectType = LabelObject.label,
                 bgColor = Color.White,
                 fgColor = Color.Black,
                 width = 100,
@@ -139,7 +129,7 @@ namespace LabelPrint
         {
             tabControl1.SelectedIndexChanged -= new EventHandler(TabControl1_SelectedIndexChanged);
             listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
-            if (cmdLine[0].StartsWith("/?") || cmdLine[0].StartsWith("/h") || cmdLine[0].StartsWith("/help"))
+            if (cmdLine[0].StartsWith("/?") || cmdLine[0].StartsWith("/help"))
             {
                 Console.WriteLine("/?, /h, /help - print help\r\n" +
                     "/t=file.csv - load template data from file\r\n" +
@@ -841,15 +831,17 @@ namespace LabelPrint
                     if (cells.Count >= 7)
                     {
                         Template templ = new Template();
-                        if (i == 0 && cells[0] != _objectNames[labelObject])
+                        for (int n = 0; n < _objectNames.Length; n++)
                         {
-                            MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                            if (_objectNames[n] == cells[0]) templ.objectType = (LabelObject)n;
+                        }
+                        if (i == 0 && templ.objectType != LabelObject.label)
+                        {
+                            MessageBox.Show("[Line " + i.ToString() + "] Label object must be defined first");
                             return Label;
                         }
-                        templ.name = cells[0];
-                        objectsNum++;
                         // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
-                        if (templ.name == _objectNames[labelObject])
+                        if (templ.objectType == LabelObject.label)
                         {
                             if (cells[1] != "")
                             {
@@ -914,7 +906,7 @@ namespace LabelPrint
                             }
                         }
                         // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
-                        else if (templ.name == _objectNames[textObject])
+                        else if (templ.objectType == LabelObject.text)
                         {
                             if (cells.Count >= 9)
                             {
@@ -937,10 +929,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                     templ.posX = 0;
                                 }
-                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                else if (templ.posX >= tmpLabel[0].width)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                    templ.posX = tmpLabel[0].width - 1;
                                 }
 
                                 float.TryParse(cells[3], out templ.posY);
@@ -949,10 +941,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                     templ.posY = 0;
                                 }
-                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                else if (templ.posY >= tmpLabel[0].height)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                    templ.posY = tmpLabel[0].height - 1;
                                 }
 
                                 float.TryParse(cells[4], out templ.rotate);
@@ -980,8 +972,9 @@ namespace LabelPrint
 
                                 float.TryParse(cells[7], out templ.fontSize);
 
-                                byte.TryParse(cells[8], out templ.fontStyle);
-                                if (templ.fontStyle != 0 && templ.fontStyle != 1 && templ.fontStyle != 2 && templ.fontStyle != 4 && templ.fontStyle != 8)
+                                FontStyle.TryParse(cells[8], out templ.fontStyle);
+                                //if (templ.fontStyle) templ.fontStyle != 0 && templ.fontStyle != 1 && templ.fontStyle != 2 && templ.fontStyle != 4 && templ.fontStyle != 8)
+                                if (!Enum.IsDefined(typeof(FontStyle), templ.fontStyle))
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Incorrect font style: " + templ.fontStyle);
                                     templ.fontStyle = 0;
@@ -993,7 +986,7 @@ namespace LabelPrint
                             }
                         }
                         // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
-                        else if (templ.name == _objectNames[pictureObject])
+                        else if (templ.objectType == LabelObject.picture)
                         {
                             if (cells.Count >= 9)
                             {
@@ -1016,10 +1009,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                     templ.posX = 0;
                                 }
-                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                else if (templ.posX >= tmpLabel[0].width)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                    templ.posX = tmpLabel[0].width - 1;
                                 }
 
                                 float.TryParse(cells[3], out templ.posY);
@@ -1028,10 +1021,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                     templ.posY = 0;
                                 }
-                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                else if (templ.posY >= tmpLabel[0].height)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                    templ.posY = tmpLabel[0].height - 1;
                                 }
 
                                 float.TryParse(cells[4], out templ.rotate);
@@ -1077,7 +1070,7 @@ namespace LabelPrint
                             }
                         }
                         // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
-                        else if (templ.name == _objectNames[barcodeObject])
+                        else if (templ.objectType == LabelObject.barcode)
                         {
                             if (cells.Count >= 11)
                             {
@@ -1109,10 +1102,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                     templ.posX = 0;
                                 }
-                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                else if (templ.posX >= tmpLabel[0].width)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                    templ.posX = tmpLabel[0].width - 1;
                                 }
 
                                 float.TryParse(cells[4], out templ.posY);
@@ -1121,10 +1114,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                     templ.posY = 0;
                                 }
-                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                else if (templ.posY >= tmpLabel[0].height)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                    templ.posY = tmpLabel[0].height - 1;
                                 }
 
                                 float.TryParse(cells[5], out templ.rotate);
@@ -1155,11 +1148,11 @@ namespace LabelPrint
                                     templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
                                 }*/
 
-                                int.TryParse(cells[9], out templ.BCformat);
-                                if (!BarCodeTypes.Contains(templ.BCformat))
+                                BarcodeFormat.TryParse(cells[9], out templ.barCodeFormat);
+                                if (!Enum.IsDefined(typeof(BarcodeFormat), templ.barCodeFormat))
                                 {
-                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + templ.BCformat.ToString());
-                                    templ.BCformat = (int)BarcodeFormat.QR_CODE;
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect barcode type: " + templ.barCodeFormat.ToString());
+                                    templ.barCodeFormat = BarcodeFormat.QR_CODE;
                                 }
 
                                 byte t = 0;
@@ -1170,20 +1163,19 @@ namespace LabelPrint
                                 {
                                     if (bcFeatures.Contains(cells[11].Substring(0, cells[11].IndexOf('=')).Trim()))
                                     {
-                                        templ.feature = cells[11];
+                                        templ.addFeature = cells[11];
                                     }
-                                    else if (templ.feature == "0") templ.feature = "";
+                                    else if (templ.addFeature == "0") templ.addFeature = "";
                                 }
-                                else templ.feature = "";
+                                else templ.addFeature = "";
                             }
                             else
                             {
                                 MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
                             }
                         }
-                        // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY;
-                        // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
-                        else if (templ.name == _objectNames[lineObject])
+                        // line_coord; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY;
+                        else if (templ.objectType == LabelObject.line_coord)
                         {
                             if (cells.Count >= 7) //-V3022
                             {
@@ -1206,10 +1198,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                     templ.posX = 0;
                                 }
-                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                else if (templ.posX >= tmpLabel[0].width)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                    templ.posX = tmpLabel[0].width - 1;
                                 }
 
                                 float.TryParse(cells[3], out templ.posY);
@@ -1218,10 +1210,78 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                     templ.posY = 0;
                                 }
-                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                else if (templ.posY >= tmpLabel[0].height)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                    templ.posY = tmpLabel[0].height - 1;
+                                }
+
+                                float.TryParse(cells[4], out templ.lineWidth);
+                                if (templ.lineWidth < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect line width: " + templ.lineWidth.ToString());
+                                    templ.lineWidth = 0;
+                                }
+
+                                float.TryParse(cells[5], out templ.width);
+                                if (templ.width < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
+                                    templ.width = 0;
+                                }
+
+                                float.TryParse(cells[6], out templ.height);
+                                if (templ.height < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
+                                    templ.height = 0;
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("[Line " + i.ToString() + "] Incomplete parameters:\r\n" + inputStr[i]);
+                            }
+                        }
+                        // line_length; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
+                        else if (templ.objectType == LabelObject.line_length)
+                        {
+                            if (cells.Count >= 7) //-V3022
+                            {
+                                if (cells[1] != "")
+                                {
+                                    templ.fgColor = Color.FromName(cells[1]);
+                                }
+                                else
+                                {
+                                    templ.fgColor = tmpLabel[0].fgColor;
+                                }
+                                if (templ.bgColor == templ.fgColor)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect or same back/foreground colors:\r\n" + inputStr[i]);
+                                }
+
+                                float.TryParse(cells[2], out templ.posX);
+                                if (templ.posX < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = 0;
+                                }
+                                else if (templ.posX >= tmpLabel[0].width)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
+                                    templ.posX = tmpLabel[0].width - 1;
+                                }
+
+                                float.TryParse(cells[3], out templ.posY);
+                                if (templ.posY < 0)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = 0;
+                                }
+                                else if (templ.posY >= tmpLabel[0].height)
+                                {
+                                    MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
+                                    templ.posY = tmpLabel[0].height - 1;
                                 }
 
                                 float.TryParse(cells[5], out templ.lineWidth);
@@ -1231,50 +1291,19 @@ namespace LabelPrint
                                     templ.lineWidth = 0;
                                 }
 
-                                if (cells[4] != "")
+                                float.TryParse(cells[4], out templ.rotate);
+
+                                float.TryParse(cells[6], out templ.lineLength);
+                                if (templ.lineLength < 0)
                                 {
-                                    float.TryParse(cells[4], out templ.rotate);
-
-                                    float.TryParse(cells[6], out templ.lineLength);
-                                    if (templ.lineLength < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
-                                        templ.lineLength = 0;
-                                    }
-                                    /*else if (templ.lineLength >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
-                                        templ.lineLength = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
-                                    }*/
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
+                                    templ.lineLength = 0;
                                 }
-                                else
+                                /*else if (templ.lineLength >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
                                 {
-                                    float.TryParse(cells[6], out templ.width);
-                                    if (templ.width < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = 0;
-                                    }
-                                    /*else if (templ.width >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.width.ToString());
-                                        templ.width = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
-                                    }*/
-
-                                    float.TryParse(cells[7], out templ.height);
-                                    if (templ.height < 0)
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = 0;
-                                    }
-                                    /*else if (templ.height >= Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height))
-                                    {
-                                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect width: " + templ.height.ToString());
-                                        templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
-                                    }*/
-
-                                    templ.lineLength = -1;
-                                }
+                                    MessageBox.Show("[Line " + i.ToString() + "] Incorrect line length: " + templ.lineLength.ToString());
+                                    templ.lineLength = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
+                                }*/
                             }
                             else
                             {
@@ -1282,7 +1311,7 @@ namespace LabelPrint
                             }
                         }
                         // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
-                        else if (templ.name == _objectNames[rectangleObject])
+                        else if (templ.objectType == LabelObject.rectangle)
                         {
                             if (cells.Count >= 9)
                             {
@@ -1305,10 +1334,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                     templ.posX = 0;
                                 }
-                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                else if (templ.posX >= tmpLabel[0].width)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                    templ.posX = tmpLabel[0].width - 1;
                                 }
 
                                 float.TryParse(cells[3], out templ.posY);
@@ -1317,10 +1346,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                     templ.posY = 0;
                                 }
-                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                else if (templ.posY >= tmpLabel[0].height)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                    templ.posY = tmpLabel[0].height - 1;
                                 }
 
                                 float.TryParse(cells[4], out templ.rotate);
@@ -1366,7 +1395,7 @@ namespace LabelPrint
                             }
                         }
                         // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [fill];
-                        else if (templ.name == _objectNames[ellipseObject])
+                        else if (templ.objectType == LabelObject.ellipse)
                         {
                             if (cells.Count >= 9)
                             {
@@ -1389,10 +1418,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
                                     templ.posX = 0;
                                 }
-                                else if (templ.posX >= (int)tmpLabel[0].width)
+                                else if (templ.posX >= tmpLabel[0].width)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] X position out of label bounds: " + templ.posX.ToString());
-                                    templ.posX = (int)tmpLabel[0].width - 1;
+                                    templ.posX = tmpLabel[0].width - 1;
                                 }
 
                                 float.TryParse(cells[3], out templ.posY);
@@ -1401,10 +1430,10 @@ namespace LabelPrint
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
                                     templ.posY = 0;
                                 }
-                                else if (templ.posY >= (int)tmpLabel[0].height)
+                                else if (templ.posY >= tmpLabel[0].height)
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] Y position out of label bounds: " + templ.posY.ToString());
-                                    templ.posY = (int)tmpLabel[0].height - 1;
+                                    templ.posY = tmpLabel[0].height - 1;
                                 }
 
                                 float.TryParse(cells[4], out templ.rotate);
@@ -1451,9 +1480,10 @@ namespace LabelPrint
                         }
                         tmpLabel.Add(templ);
                     }
+                    else MessageBox.Show("[Line " + i.ToString() + "] Incorrect object definition");
                 }
             }
-            if (tmpLabel != null) return tmpLabel;
+            if (tmpLabel.Count > 0) return tmpLabel;
             else return Label;
         }
 
@@ -1464,9 +1494,9 @@ namespace LabelPrint
             for (int i = 0; i < _label.Count; i++)
             {
                 // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
-                if (_label[i].name == _objectNames[labelObject])
+                if (_label[i].objectType == LabelObject.label)
                 {
-                    output.AppendLine(_label[i].name.ToString() + div +
+                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].bgColor.Name.ToString() + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].width.ToString() + div +
@@ -1475,9 +1505,9 @@ namespace LabelPrint
                         _label[i].codePage.ToString() + div);
                 }
                 // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
-                else if (_label[i].name == _objectNames[textObject])
+                else if (_label[i].objectType == LabelObject.text)
                 {
-                    output.AppendLine(_label[i].name.ToString() + div +
+                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1488,9 +1518,9 @@ namespace LabelPrint
                         _label[i].fontStyle.ToString() + div);
                 }
                 // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
-                else if (_label[i].name == _objectNames[pictureObject])
+                else if (_label[i].objectType == LabelObject.picture)
                 {
-                    output.AppendLine(_label[i].name.ToString() + div +
+                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1501,9 +1531,9 @@ namespace LabelPrint
                         Convert.ToInt32(_label[i].transparent).ToString() + div);
                 }
                 // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
-                else if (_label[i].name == _objectNames[barcodeObject])
+                else if (_label[i].objectType == LabelObject.barcode)
                 {
-                    output.AppendLine(_label[i].name.ToString() + div +
+                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].bgColor.Name.ToString() + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
@@ -1512,36 +1542,36 @@ namespace LabelPrint
                         _label[i].content.ToString() + div +
                         _label[i].width.ToString() + div +
                         _label[i].height.ToString() + div +
-                        _label[i].BCformat.ToString() + div +
+                        _label[i].barCodeFormat.ToString() + div +
                         Convert.ToInt32(_label[i].transparent).ToString() + div +
-                        _label[i].feature.ToString() + div);
+                        _label[i].addFeature.ToString() + div);
                 }
-                // line; 1 [objectColor]; 2 posX; 3 posY; 4 ------- ; 5 [lineWidth]; 6 endX; 7 endY; (lineLength = -1)
-                // line; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
-                else if (_label[i].name == _objectNames[lineObject])
+                // line_coord; 1 [objectColor]; 2 posX; 3 posY; 4 [lineWidth]; 5 endX; 6 endY;
+                else if (_label[i].objectType == LabelObject.line_coord)
                 {
-                    output.Append(_label[i].name.ToString() + div +
+                    output.Append(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
-                        _label[i].posY.ToString() + div);
-                    if (_label[i].lineLength == -1) //-V3024
-                    {
-                        output.AppendLine("" + div +
-                            _label[i].lineWidth.ToString() + div +
-                            _label[i].width.ToString() + div +
-                            _label[i].height.ToString() + div);
-                    }
-                    else
-                    {
-                        output.AppendLine(_label[i].rotate.ToString() + div +
-                            _label[i].lineWidth.ToString() + div +
-                            _label[i].lineLength.ToString() + div);
-                    }
+                        _label[i].posY.ToString() + div +
+                        _label[i].lineWidth.ToString() + div +
+                        _label[i].width.ToString() + div +
+                        _label[i].height.ToString() + div);
+                }
+                // line_length; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
+                else if (_label[i].objectType == LabelObject.line_length)
+                {
+                    output.Append(_objectNames[(int)_label[i].objectType] + div +
+                        _label[i].fgColor.Name.ToString() + div +
+                        _label[i].posX.ToString() + div +
+                        _label[i].posY.ToString() + div +
+                        _label[i].rotate.ToString() + div +
+                        _label[i].lineWidth.ToString() + div +
+                        _label[i].lineLength.ToString() + div);
                 }
                 // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
-                else if (_label[i].name == _objectNames[rectangleObject])
+                else if (_label[i].objectType == LabelObject.rectangle)
                 {
-                    output.AppendLine(_label[i].name.ToString() + div +
+                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1552,9 +1582,9 @@ namespace LabelPrint
                         Convert.ToInt32(_label[i].transparent).ToString() + div);
                 }
                 // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
-                else if (_label[i].name == _objectNames[ellipseObject])
+                else if (_label[i].objectType == LabelObject.ellipse)
                 {
-                    output.AppendLine(_label[i].name.ToString() + div +
+                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1617,8 +1647,8 @@ namespace LabelPrint
 
         private Bitmap GenerateLabel(List<Template> _label, DataTable dataTable, int lineNumber, Bitmap img)
         {
-            if (lineNumber >= dataTable.Rows.Count) return null;
-            if (_label[0].name != _objectNames[labelObject])
+            if (lineNumber >= dataTable.Rows.Count || _label.Count <= 0) return null;
+            if (_label[0].objectType != LabelObject.label)
             {
                 MessageBox.Show("1st object must be \"label\"");
                 return null;
@@ -1627,7 +1657,7 @@ namespace LabelPrint
             for (int i = 0; i < _label.Count; i++)
             {
                 currentObjectsPositions.Add(new Rectangle());
-                if (_label[i].name == _objectNames[labelObject])
+                if (_label[i].objectType == LabelObject.label)
                 {
                     Color bColor = _label[i].bgColor;
                     float width = _label[i].width;
@@ -1637,7 +1667,7 @@ namespace LabelPrint
                     FillBackground(img, bColor, width, height);
                     //pictureBox_label.Image = img;
                 }
-                else if (_label[i].name == _objectNames[textObject])
+                else if (_label[i].objectType == LabelObject.text)
                 {
                     Color fColor = _label[i].fgColor;
                     float posX = _label[i].posX;
@@ -1651,11 +1681,11 @@ namespace LabelPrint
                     string fontname = _label[i].fontName;
                     float fontSize = _label[i].fontSize;
                     float rotate = _label[i].rotate;
-                    FontStyle fontStyle = (FontStyle)_label[i].fontStyle;
+                    FontStyle fontStyle = _label[i].fontStyle;
 
                     currentObjectsPositions[i] = DrawText(img, fColor, posX, posY, content, fontname, fontSize, rotate, fontStyle);
                 }
-                else if (_label[i].name == _objectNames[pictureObject])
+                else if (_label[i].objectType == LabelObject.picture)
                 {
                     Color fColor = _label[i].fgColor;
                     float posX = _label[i].posX;
@@ -1673,7 +1703,7 @@ namespace LabelPrint
 
                     currentObjectsPositions[i] = DrawPicture(img, fColor, posX, posY, content, rotate, width, height, transparent);
                 }
-                else if (_label[i].name == _objectNames[barcodeObject])
+                else if (_label[i].objectType == LabelObject.barcode)
                 {
                     Color bColor = _label[i].bgColor;
                     Color fColor = _label[i].fgColor;
@@ -1687,14 +1717,25 @@ namespace LabelPrint
                         if (dataTable.Rows[lineNumber].ItemArray[i - 1].ToString() != "")
                             content = dataTable.Rows[lineNumber].ItemArray[i - 1].ToString();
 
-                    BarcodeFormat BCformat = (BarcodeFormat)_label[i].BCformat;
+                    BarcodeFormat BCformat = _label[i].barCodeFormat;
                     float rotate = _label[i].rotate;
-                    string feature = _label[i].feature;
+                    string feature = _label[i].addFeature;
                     bool transparent = _label[i].transparent;
 
                     currentObjectsPositions[i] = DrawBarcode(img, bColor, fColor, posX, posY, width, height, content, BCformat, rotate, feature, transparent);
                 }
-                else if (_label[i].name == _objectNames[lineObject])
+                else if (_label[i].objectType == LabelObject.line_coord)
+                {
+                    Color fColor = _label[i].fgColor;
+                    float posX = _label[i].posX;
+                    float posY = _label[i].posY;
+                    float rotate = _label[i].rotate;
+                    float lineWidth = _label[i].lineWidth;
+                    float endX = _label[i].width;
+                    float endY = _label[i].height;
+                    currentObjectsPositions[i] = DrawLineCoord(img, fColor, posX, posY, endX, endY, lineWidth);
+                }
+                else if (_label[i].objectType == LabelObject.line_length)
                 {
                     Color fColor = _label[i].fgColor;
                     float posX = _label[i].posX;
@@ -1702,19 +1743,9 @@ namespace LabelPrint
                     float rotate = _label[i].rotate;
                     float lineWidth = _label[i].lineWidth;
                     float length = _label[i].lineLength;
-
-                    if (length == -1) //line on start/end coordinates
-                    {
-                        float endX = _label[i].width;
-                        float endY = _label[i].height;
-                        currentObjectsPositions[i] = DrawLineCoord(img, fColor, posX, posY, endX, endY, lineWidth);
-                    }
-                    else //line on start coordinates and length+rotate angle
-                    {
-                        currentObjectsPositions[i] = DrawLineLength(img, fColor, posX, posY, length, rotate, lineWidth);
-                    }
+                    currentObjectsPositions[i] = DrawLineLength(img, fColor, posX, posY, length, rotate, lineWidth);
                 }
-                else if (_label[i].name == _objectNames[rectangleObject])
+                else if (_label[i].objectType == LabelObject.rectangle)
                 {
                     Color fColor = _label[i].fgColor;
                     float posX = _label[i].posX;
@@ -1727,7 +1758,7 @@ namespace LabelPrint
 
                     currentObjectsPositions[i] = DrawRectangle(img, fColor, posX, posY, width, height, rotate, lineWidth, fill);
                 }
-                else if (_label[i].name == _objectNames[ellipseObject])
+                else if (_label[i].objectType == LabelObject.ellipse)
                 {
                     Color fColor = _label[i].fgColor;
                     float posX = _label[i].posX;
@@ -1742,7 +1773,7 @@ namespace LabelPrint
                 }
                 else
                 {
-                    MessageBox.Show("Incorrect object: " + _label[i].name);
+                    MessageBox.Show("Incorrect object: " + _label[i].objectType);
                     return null;
                 }
             }
@@ -1870,8 +1901,8 @@ namespace LabelPrint
 
             if (n == listBox_objects.Items.Count - 1)
             {
-                templ.name = comboBox_object.SelectedItem.ToString();
-                if (Label[0].name == _objectNames[labelObject])
+                templ.objectType = (LabelObject)comboBox_object.SelectedIndex;
+                if (Label[0].objectType == LabelObject.label)
                 {
                     templ.bgColor = Label[0].bgColor;
                     templ.fgColor = Label[0].fgColor;
@@ -1894,11 +1925,11 @@ namespace LabelPrint
                 templ.width = 1;
                 templ.height = 1;
                 templ.transparent = true;
-                templ.BCformat = 1;
+                templ.barCodeFormat = BarcodeFormat.AZTEC;
                 templ.fontSize = 10;
-                templ.fontStyle = 0;
+                templ.fontStyle = FontStyle.Regular;
                 templ.fontName = "Arial";
-                templ.feature = "";
+                templ.addFeature = "";
                 templ.lineLength = 1;
                 templ.lineWidth = 1;
             }
@@ -1906,7 +1937,7 @@ namespace LabelPrint
             else
             {
                 templ = Label[n];
-                if (templ.name == _objectNames[labelObject])
+                if (templ.objectType == LabelObject.label)
                 {
                     if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
                     else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
@@ -1923,7 +1954,7 @@ namespace LabelPrint
                 }
 
                 // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
-                else if (templ.name == _objectNames[textObject])
+                else if (templ.objectType == LabelObject.text)
                 {
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
@@ -1943,18 +1974,17 @@ namespace LabelPrint
                     float b = 0;
                     textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
                     float.TryParse(textBox_fontSize.Text, out b);
-                    //templ.fontSize = b * mult;
                     templ.fontSize = b;
 
-                    byte s = 0;
-                    byte.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
+                    FontStyle s = 0;
+                    FontStyle.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
                     templ.fontStyle = s;
 
                     templ.fontName = comboBox_fontName.SelectedItem.ToString();
                 }
 
                 // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
-                else if (templ.name == _objectNames[pictureObject])
+                else if (templ.objectType == LabelObject.picture)
                 {
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
@@ -1981,7 +2011,7 @@ namespace LabelPrint
                 }
 
                 // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
-                else if (templ.name == _objectNames[barcodeObject])
+                else if (templ.objectType == LabelObject.barcode)
                 {
                     if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
                     else templ.bgColor = Color.FromName(comboBox_backgroundColor.SelectedItem.ToString());
@@ -2009,17 +2039,16 @@ namespace LabelPrint
 
                     templ.transparent = checkBox_fill.Checked;
 
-                    int i = 0;
-                    int.TryParse(comboBox_fontName.SelectedItem.ToString().Substring(0, comboBox_fontName.SelectedItem.ToString().IndexOf('=')), out i);
-                    templ.BCformat = i;
+                    BarcodeFormat i = 0;
+                    BarcodeFormat.TryParse(comboBox_fontName.SelectedItem.ToString().Substring(0, comboBox_fontName.SelectedItem.ToString().IndexOf('=')), out i);
+                    templ.barCodeFormat = i;
 
-                    if (comboBox_fontStyle.SelectedItem.ToString() != "") templ.feature = comboBox_fontStyle.SelectedItem.ToString() + "=" + textBox_fontSize.Text;
-                    else templ.feature = "";
+                    if (comboBox_fontStyle.SelectedItem.ToString() != "") templ.addFeature = comboBox_fontStyle.SelectedItem.ToString() + "=" + textBox_fontSize.Text;
+                    else templ.addFeature = "";
                 }
 
-                // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
-                // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
-                else if (templ.name == _objectNames[lineObject])
+                // line_coord; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
+                else if (templ.objectType == LabelObject.line_coord)
                 {
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
@@ -2035,29 +2064,40 @@ namespace LabelPrint
                     float.TryParse(textBox_fontSize.Text, out f);
                     templ.lineWidth = f * mult;
 
-                    if ((textBox_rotate.Text == "" || textBox_content.Text == "" || templ.lineLength == -1) && textBox_width.Text != "" && textBox_height.Text != "") //-V3024
-                    {
-                        float.TryParse(textBox_width.Text, out f);
-                        templ.width = f * mult;
+                    float.TryParse(textBox_width.Text, out f);
+                    templ.width = f * mult;
 
-                        float.TryParse(textBox_height.Text, out f);
-                        templ.height = f * mult;
+                    float.TryParse(textBox_height.Text, out f);
+                    templ.height = f * mult;
+                }
 
-                        templ.lineLength = -1;
-                    }
-                    else if (textBox_rotate.Text != "" && textBox_content.Text != "")
-                    {
-                        float.TryParse(textBox_rotate.Text, out f);
-                        templ.rotate = f;
+                // line_length; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
+                else if (templ.objectType == LabelObject.line_length)
+                {
+                    if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
+                    else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                        textBox_content.Text = Evaluate(textBox_content.Text).ToString();
-                        float.TryParse(textBox_content.Text, out f);
-                        templ.lineLength = f * mult;
-                    }
+                    float f = 0;
+                    float.TryParse(textBox_posX.Text, out f);
+                    templ.posX = f * mult;
+
+                    float.TryParse(textBox_posY.Text, out f);
+                    templ.posY = f * mult;
+
+                    textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
+                    float.TryParse(textBox_fontSize.Text, out f);
+                    templ.lineWidth = f * mult;
+
+                    float.TryParse(textBox_rotate.Text, out f);
+                    templ.rotate = f;
+
+                    textBox_content.Text = Evaluate(textBox_content.Text).ToString();
+                    float.TryParse(textBox_content.Text, out f);
+                    templ.lineLength = f * mult;
                 }
 
                 // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                else if (templ.name == _objectNames[rectangleObject])
+                else if (templ.objectType == LabelObject.rectangle)
                 {
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
@@ -2086,7 +2126,7 @@ namespace LabelPrint
                 }
 
                 // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                else if (templ.name == _objectNames[ellipseObject])
+                else if (templ.objectType == LabelObject.ellipse)
                 {
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
@@ -2130,9 +2170,9 @@ namespace LabelPrint
             }
             else
             {
-                comboBox_object.SelectedItem = Label[n].name;
+                comboBox_object.SelectedItem = Label[n].objectType;
                 // label; [bgColor]; [objectColor]; width; height;
-                if (Label[n].name == _objectNames[labelObject])
+                if (Label[n].objectType == LabelObject.label)
                 {
                     label_backgroundColor.Text = "Background color";
                     comboBox_backgroundColor.Enabled = true;
@@ -2174,7 +2214,7 @@ namespace LabelPrint
                 }
 
                 // text; [objectColor]; posX; posY; [rotate]; [default_text]; fontName; fontSize; [fontStyle];
-                else if (Label[n].name == _objectNames[textObject])
+                else if (Label[n].objectType == LabelObject.text)
                 {
                     comboBox_objectColor.Enabled = true;
                     label_objectColor.Text = "Default object color";
@@ -2223,7 +2263,8 @@ namespace LabelPrint
                     comboBox_fontStyle.Enabled = true;
                     label_fontStyle.Text = "Text style";
                     comboBox_fontStyle.Items.Clear();
-                    comboBox_fontStyle.Items.AddRange(_textStyleNames);
+                    //comboBox_fontStyle.Items.AddRange(Enum.GetNames(typeof(FontStyle)));
+                    comboBox_fontStyle.Items.AddRange(GetFontStyleList());
                     comboBox_fontStyle.SelectedIndex = 0;
                     str = Label[n].fontStyle.ToString();
                     for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
@@ -2237,12 +2278,11 @@ namespace LabelPrint
 
                     textBox_fontSize.Enabled = true;
                     label_fontSize.Text = "Font size";
-                    //textBox_fontSize.Text = (Label[n].fontSize / mult).ToString("F4");
                     textBox_fontSize.Text = (Label[n].fontSize).ToString("F4");
                 }
 
                 // picture; [objectColor]; posX; posY; [rotate]; [default_file]; [width]; [height]; [transparent];
-                else if (Label[n].name == _objectNames[pictureObject])
+                else if (Label[n].objectType == LabelObject.picture)
                 {
                     comboBox_objectColor.Enabled = true;
                     label_objectColor.Text = "Transparent color";
@@ -2287,7 +2327,7 @@ namespace LabelPrint
                 }
 
                 // barcode; [bgColor]; [objectColor]; posX; posY; [rotate]; [default_data]; width; height; bcFormat; [transparent]; [additional_features]
-                else if (Label[n].name == _objectNames[barcodeObject])
+                else if (Label[n].objectType == LabelObject.barcode)
                 {
                     comboBox_backgroundColor.Enabled = true;
                     label_backgroundColor.Text = "Background color";
@@ -2344,7 +2384,7 @@ namespace LabelPrint
                     comboBox_fontName.Items.Clear();
                     comboBox_fontName.Items.AddRange(GetBarcodeList());
                     comboBox_fontName.SelectedIndex = 0;
-                    str = Label[n].BCformat.ToString() + "=" + ((BarcodeFormat)Label[n].BCformat).ToString();
+                    str = Label[n].barCodeFormat.ToString();
                     for (int i = 0; i < comboBox_fontName.Items.Count; i++)
                     {
                         if (comboBox_fontName.Items[i].ToString() == str)
@@ -2358,27 +2398,28 @@ namespace LabelPrint
                     label_fontStyle.Text = "Additional feature";
                     comboBox_fontStyle.Items.AddRange(bcFeatures.ToArray());
                     comboBox_fontStyle.SelectedIndex = 0;
-                    str = Label[n].feature;
+
+                    str = Label[n].addFeature;
                     for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
                     {
-                        if (str.StartsWith(comboBox_fontStyle.Items[i].ToString()))
+                        if (str == comboBox_fontStyle.Items[i].ToString())
                         {
                             comboBox_fontStyle.SelectedIndex = i;
+                            break;
                         }
                     }
 
                     textBox_fontSize.Enabled = true;
                     label_fontSize.Text = "Feature value";
-                    textBox_fontSize.Text = Label[n].feature.Substring(Label[n].feature.IndexOf('=') + 1);
+                    textBox_fontSize.Text = Label[n].addFeature.Substring(Label[n].addFeature.IndexOf('=') + 1);
 
                     checkBox_fill.Enabled = true;
                     checkBox_fill.Text = "Transparent";
                     checkBox_fill.Checked = Label[n].transparent;
                 }
 
-                // line; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
-                // line; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
-                else if (Label[n].name == _objectNames[lineObject])
+                // line_coord; [objectColor]; posX; posY; --- ; [lineWidth]; endX; endY; (lineLength = -1)
+                else if (Label[n].objectType == LabelObject.line_coord)
                 {
                     comboBox_objectColor.Enabled = true;
                     label_objectColor.Text = "Default object color";
@@ -2412,17 +2453,63 @@ namespace LabelPrint
                     textBox_height.Enabled = true;
                     label_height.Text = "endY";
                     textBox_height.Text = (Label[n].height / mult).ToString("F4");
+
+                    textBox_rotate.Enabled = false;
+                    label_rotate.Text = "Rotate";
+                    textBox_rotate.Text = "";
+
+                    textBox_content.Enabled = false;
+                    label_content.Text = "Line length (empty to use coordinates)";
+                    textBox_content.Text = ""; //-V3024
+                }
+
+                // line_length; [objectColor]; posX; posY; [rotate]; [lineWidth]; lineLength;
+                else if (Label[n].objectType == LabelObject.line_length)
+                {
+                    comboBox_objectColor.Enabled = true;
+                    label_objectColor.Text = "Default object color";
+                    comboBox_objectColor.Items.AddRange(GetColorList());
+                    str = Label[n].fgColor.Name.ToString();
+                    for (int i = 0; i < comboBox_objectColor.Items.Count; i++)
+                    {
+                        if (comboBox_objectColor.Items[i].ToString() == str)
+                        {
+                            comboBox_objectColor.SelectedIndex = i;
+                            i = comboBox_objectColor.Items.Count;
+                        }
+                    }
+
+                    textBox_posX.Enabled = true;
+                    label_posX.Text = "posX";
+                    textBox_posX.Text = (Label[n].posX / mult).ToString("F4");
+
+                    textBox_posY.Enabled = true;
+                    label_posY.Text = "posY";
+                    textBox_posY.Text = (Label[n].posY / mult).ToString("F4");
+
+                    textBox_fontSize.Enabled = true;
+                    label_fontSize.Text = "Line width";
+                    textBox_fontSize.Text = (Label[n].lineWidth / mult).ToString("F4");
+
+                    textBox_width.Enabled = false;
+                    label_width.Text = "endX";
+                    textBox_width.Text = (Label[n].width / mult).ToString("F4");
+
+                    textBox_height.Enabled = false;
+                    label_height.Text = "endY";
+                    textBox_height.Text = (Label[n].height / mult).ToString("F4");
+
                     textBox_rotate.Enabled = true;
                     label_rotate.Text = "Rotate";
                     textBox_rotate.Text = Label[n].rotate.ToString();
 
                     textBox_content.Enabled = true;
                     label_content.Text = "Line length (empty to use coordinates)";
-                    if (Label[n].lineLength != -1) textBox_content.Text = (Label[n].lineLength / mult).ToString("F4"); //-V3024
+                    textBox_content.Text = (Label[n].lineLength / mult).ToString("F4"); //-V3024
                 }
 
                 // rectangle; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                else if (Label[n].name == _objectNames[rectangleObject])
+                else if (Label[n].objectType == LabelObject.rectangle)
                 {
                     comboBox_objectColor.Enabled = true;
                     label_objectColor.Text = "Default object color";
@@ -2467,7 +2554,7 @@ namespace LabelPrint
                 }
 
                 // ellipse; [objectColor]; posX; posY; [rotate]; [lineWidth]; width; height; [fill];
-                else if (Label[n].name == _objectNames[ellipseObject])
+                else if (Label[n].objectType == LabelObject.ellipse)
                 {
                     label_objectColor.Text = "Default object color";
                     comboBox_objectColor.Enabled = true;
@@ -2519,7 +2606,7 @@ namespace LabelPrint
             int i = 0;
             foreach (Template t in Label)
             {
-                objectList.Add(i.ToString() + " " + t.name);
+                objectList.Add(i.ToString() + " " + t.objectType);
                 i++;
             }
             objectList.Add("");
@@ -2548,14 +2635,14 @@ namespace LabelPrint
             return fontList.ToArray();
         }
 
+        private string[] GetFontStyleList()
+        {
+            return Enum.GetNames(typeof(FontStyle));
+        }
+
         private string[] GetBarcodeList()
         {
-            List<string> barcodeList = new List<string>();
-            foreach (BarcodeFormat b in BarCodeTypes)
-            {
-                barcodeList.Add(((int)b).ToString() + "=" + b.ToString());
-            }
-            return barcodeList.ToArray();
+            return Enum.GetNames(typeof(BarcodeFormat));
         }
 
         private string[] GetEncodingList()
@@ -2626,7 +2713,6 @@ namespace LabelPrint
         {
             if (openFileDialog1.Title == "Open template .CSV file")
             {
-                objectsNum = 0;
                 dataGridView_labels.DataSource = null;
                 LabelsDatabase.Clear();
                 LabelsDatabase.Columns.Clear();
@@ -2644,12 +2730,12 @@ namespace LabelPrint
                 textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 //save path to template
                 //create colums and fill 1 row with default values
-                for (int i = 1; i < objectsNum; i++)
+                for (int i = 1; i < Label.Count; i++)
                 {
-                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].name);
+                    LabelsDatabase.Columns.Add((i).ToString() + " " + Label[i].objectType);
                 }
                 DataRow row = LabelsDatabase.NewRow();
-                for (int i = 1; i < objectsNum; i++)
+                for (int i = 1; i < Label.Count; i++)
                 {
                     row[i - 1] = Label[i].content;
                 }
@@ -2680,7 +2766,7 @@ namespace LabelPrint
                     {
                         for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                         {
-                            if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(path + row.Cells[i].Value.ToString()))
+                            if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.Cells[i].Value.ToString()))
                             {
                                 MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
                             }
@@ -2760,8 +2846,6 @@ namespace LabelPrint
             {
                 pictureBox_label.Dock = DockStyle.Fill;
                 pictureBox_label.SizeMode = PictureBoxSizeMode.Zoom;
-                //pictureBox_label.Width = panel_picture.Width - panel_picture.Margin.Horizontal;
-                //pictureBox_label.Height = panel_picture.Height - panel_picture.Margin.Vertical;
             }
         }
 
@@ -2798,7 +2882,7 @@ namespace LabelPrint
                         //create and count columns and read headers
                         for (int i = 1; i < Label.Count; i++)
                         {
-                            LabelsDatabase.Columns.Add(i.ToString() + " " + Label[i].name);
+                            LabelsDatabase.Columns.Add(i.ToString() + " " + Label[i].objectType);
                         }
 
                         //create 1st row and count columns
@@ -2816,7 +2900,7 @@ namespace LabelPrint
                         {
                             for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
                             {
-                                if (Label[i + 1].name == _objectNames[pictureObject] && !File.Exists(path + row.Cells[i].Value.ToString()))
+                                if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.Cells[i].Value.ToString()))
                                 {
                                     MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
                                 }
@@ -3007,7 +3091,7 @@ namespace LabelPrint
                 if (n > 0 && n < Label.Count)
                 {
 
-                    if (Label[n].name == _objectNames[lineObject])
+                    if (Label[n].objectType == LabelObject.line_coord || Label[n].objectType == LabelObject.line_length)
                         DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, 0, 1);
                     else
                         DrawSelection(LabelBmp, _borderColor, currentObjectsPositions[n].X, currentObjectsPositions[n].Y, currentObjectsPositions[n].Width, currentObjectsPositions[n].Height, Label[n].rotate, 1);
@@ -3294,6 +3378,7 @@ namespace LabelPrint
 
         #region Drag'n'Drop
 
+        //show current mouse cursor position on the picture
         private void PictureBox_label_MouseMove(object sender, MouseEventArgs e)
         {
             if (pictureBox_label.Image == null) return;
@@ -3319,109 +3404,12 @@ namespace LabelPrint
                     mouseY = (e.Y - corr) / scaleW;
                 }
             }
-            textBox_mX.Text = (mouseX / mult).ToString("F4");
-            textBox_mY.Text = (mouseY / mult).ToString("F4");
+            textBox_mX.Text = "X=" + (mouseX / mult).ToString("F4") + comboBox_units.SelectedItem.ToString();
+            textBox_mX.Text += "; Y=" + (mouseY / mult).ToString("F4") + comboBox_units.SelectedItem.ToString();
+            int n = LabelObjectPointed((int)mouseX, (int)mouseY);
+            if (n > 0) textBox_mX.Text += "; [" + n + "] " + Label[n].objectType;
         }
 
-        /*int xPosOrig, yPosOrig;
-        int xPosCurrent, yPosCurrent;
-        private void pictureBox_ball_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                xPosOrig = e.X;
-                yPosOrig = e.Y;
-            }
-        }*/
-
-        /*private void pictureBox_ball_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                PictureBox p = sender as PictureBox;
-                if (p != null)
-                {
-                    xPosCurrent = pictureBox_field.Left + pictureBox_field.Width / 2 - p.Width / 2;
-                    yPosCurrent = pictureBox_field.Top + pictureBox_field.Height / 2 - p.Height / 2;
-                    p.Left = xPosCurrent;
-                    p.Top = yPosCurrent;
-                }
-                //send stop signal to cart
-                if (serialPort1.IsOpen)
-                {
-                    try
-                    {
-                        serialPort1.Write("keep 0 0\r\n");
-                        serialPort1.Write("s\r\n");
-                    }
-                    catch { }
-                }
-                textBox_jX.Text = "0";
-                textBox_jY.Text = "0";
-                L_sent = 0;
-                R_sent = 0;
-            }
-        }*/
-
-        /*private void pictureBox_ball_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                PictureBox p = sender as PictureBox;
-                if (p != null)
-                {
-                    xPosCurrent += e.X - xPosOrig;
-                    if (xPosCurrent < pictureBox_field.Left) xPosCurrent = pictureBox_field.Left;
-                    if (xPosCurrent > pictureBox_field.Left + pictureBox_field.Width - p.Width) xPosCurrent = pictureBox_field.Left + pictureBox_field.Width - p.Width;
-                    p.Left = xPosCurrent;
-
-                    yPosCurrent += e.Y - yPosOrig;
-                    if (yPosCurrent < pictureBox_field.Top) yPosCurrent = pictureBox_field.Top;
-                    if (yPosCurrent > pictureBox_field.Top + pictureBox_field.Height - p.Height) yPosCurrent = pictureBox_field.Top + pictureBox_field.Height - p.Height;
-                    p.Top = yPosCurrent;
-
-                    float jX = (xPosCurrent - xPosOrig - (pictureBox_field.Left + (float)pictureBox_field.Width / 2 - (float)pictureBox_ball.Width / 2) + (float)pictureBox_ball.Width / 2) / ((float)pictureBox_field.Width / 2);
-                    float jY = -((yPosCurrent - yPosOrig - (pictureBox_field.Top + (float)pictureBox_field.Height / 2 - (float)pictureBox_ball.Height / 2) + (float)pictureBox_ball.Height / 2) / ((float)pictureBox_field.Height / 2));
-
-                    //calc speed
-                    float l = 0;
-                    float r = 0;
-                    float spd = jY * max_speed * 10;
-
-                    if (jX > 0)
-                    {
-                        l = (int)(spd);
-                        r = (int)(spd * (1 - jX));
-                    }
-                    else
-                    {
-                        r = (int)spd;
-                        l = (int)(spd * (1 + jX));
-                    }
-                    l = l / 10;
-                    r = r / 10;
-                    //if difference >0.1 send speed to cart
-                    if (serialPort1.IsOpen)
-                    {
-                        if (Math.Abs(L_sent - l) >= 0.1 || Math.Abs(R_sent - r) >= 0.1)
-                        {
-                            try
-                            {
-                                serialPort1.Write("keep " + l.ToString("F2") + " " + r.ToString("F2") + "\r\n");
-                            }
-                            catch { }
-                        }
-                    }
-                    //redraw L/R speed indicator on the picture
-                    textBox_jX.Text = L_sent.ToString("F2");
-                    textBox_jY.Text = R_sent.ToString("F2");
-                    L_sent = l;
-                    R_sent = r;
-                }
-            }
-        }*/
-
-        //select object with click
         private bool IsInPolygon(PointF[] poly, PointF pnt)
         {
             int i, j;
@@ -3456,9 +3444,24 @@ namespace LabelPrint
             return result;
         }
 
+        //select object with click
         private void pictureBox_label_Click(object sender, EventArgs e)
         {
             if (tabControl1.SelectedIndex != 1 && tabControl1.SelectedIndex != 2) return;
+
+            int n = LabelObjectPointed((int)mouseX, (int)mouseY);
+            if (n > 0)
+            {
+                if (tabControl1.SelectedIndex == 1) listBox_objects.SelectedIndex = n;
+                else if (tabControl1.SelectedIndex == 2)
+                {
+                    listBox_objectsMulti.SetSelected(n, !listBox_objectsMulti.GetSelected(n));
+                }
+            }
+        }
+
+        public int LabelObjectPointed(int posX, int posY)
+        {
             for (int i = 0; i < Label.Count; i++)
             {
                 PointF[] rect = new PointF[4];
@@ -3474,39 +3477,21 @@ namespace LabelPrint
                 rect[3].X = currentObjectsPositions[i].X;
                 rect[3].Y = currentObjectsPositions[i].Y + currentObjectsPositions[i].Height;
 
-                if (Label[i].name != _objectNames[lineObject])
+                if (Label[i].objectType != LabelObject.line_coord)
                 {
                     rect = rotatePolygon(rect[0], rect, Label[i].rotate);
                 }
 
-                if (IsInPolygon(rect, new Point((int)mouseX, (int)mouseY)))
+                if (IsInPolygon(rect, new PointF(posX, posY)))
                 {
-                    if (tabControl1.SelectedIndex == 1) listBox_objects.SelectedIndex = i;
-                    else if (tabControl1.SelectedIndex == 2)
-                    {
-                        listBox_objectsMulti.SetSelected(i, !listBox_objectsMulti.GetSelected(i));
-                    }
-                    break;
+                    return i;
                 }
             }
+            return -1;
         }
 
         #endregion
 
     }
 }
-
-/*public static long EvaluateVariables(string expression, string[] variables = null, string[] values = null)  //calculate string formula
-{
-    if (variables != null)
-    {
-        if (variables.Length != values.Length) return 0;
-        for (int i = 0; i < variables.Length; i++) expression = expression.Replace(variables[i], values[i]);
-    }
-    var loDataTable = new DataTable();
-    var loDataColumn = new DataColumn("Eval", typeof(long), expression);
-    loDataTable.Columns.Add(loDataColumn);
-    loDataTable.Rows.Add(0);
-    return (long)(loDataTable.Rows[0]["Eval"]);
-}*/
 
