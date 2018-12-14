@@ -213,7 +213,7 @@
             this.pictureBox_label.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox_label.TabIndex = 0;
             this.pictureBox_label.TabStop = false;
-            this.pictureBox_label.Click += new System.EventHandler(this.pictureBox_label_Click);
+            this.pictureBox_label.Click += new System.EventHandler(this.PictureBox_label_Click);
             this.pictureBox_label.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_label_MouseMove);
             // 
             // textBox_mX
@@ -327,7 +327,7 @@
             this.textBox_rangeFrom.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeFrom.TabIndex = 1;
             this.textBox_rangeFrom.Text = "1";
-            this.textBox_rangeFrom.Leave += new System.EventHandler(this.textBox_rangeFrom_Leave);
+            this.textBox_rangeFrom.Leave += new System.EventHandler(this.TextBox_rangeFrom_Leave);
             // 
             // checkBox_toFile
             // 
@@ -358,7 +358,7 @@
             this.textBox_rangeTo.Size = new System.Drawing.Size(44, 20);
             this.textBox_rangeTo.TabIndex = 1;
             this.textBox_rangeTo.Text = "1";
-            this.textBox_rangeTo.Leave += new System.EventHandler(this.textBox_rangeTo_Leave);
+            this.textBox_rangeTo.Leave += new System.EventHandler(this.TextBox_rangeTo_Leave);
             // 
             // tabPage_edit
             // 
@@ -795,7 +795,7 @@
             this.textBox_scale.TabIndex = 3;
             this.textBox_scale.Text = "1";
             this.textBox_scale.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.textBox_scale.Leave += new System.EventHandler(this.textBox_scale_Leave);
+            this.textBox_scale.Leave += new System.EventHandler(this.TextBox_scale_Leave);
             // 
             // groupBox1
             // 
@@ -1020,7 +1020,8 @@
             // dataGridView_labels
             // 
             this.dataGridView_labels.AllowUserToAddRows = false;
-            this.dataGridView_labels.AllowUserToDeleteRows = false;
+            this.dataGridView_labels.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
+            this.dataGridView_labels.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.DisplayedCells;
             this.dataGridView_labels.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView_labels.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView_labels.Location = new System.Drawing.Point(0, 0);

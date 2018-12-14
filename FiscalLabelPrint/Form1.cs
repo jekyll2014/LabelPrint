@@ -36,7 +36,6 @@ namespace LabelPrint
             rectangle,
             ellipse,
         }
-        private string[] _objectNames = { "label", "text", "picture", "barcode", "line_coord", "line_length", "rectangle", "ellipse", };
 
         private struct Template
         {
@@ -63,7 +62,7 @@ namespace LabelPrint
 
         private List<Template> Label = new List<Template>();
         private DataTable LabelsDatabase = new DataTable();
-        private List<string> bcFeatures = new List<string> { "AZTEC_LAYERS", "ERROR_CORRECTION", "MARGIN", "PDF417_ASPECT_RATIO", "QR_VERSION" };
+        private List<string> bcFeatures = new List<string>();
 
         private float mult = 1;
 
@@ -89,7 +88,7 @@ namespace LabelPrint
             {
                 CmdLineOperation(cmdLine);
             }
-            comboBox_object.Items.AddRange(_objectNames);
+            comboBox_object.Items.AddRange(Enum.GetNames(typeof(LabelObject)));
 
             Template init_label = new Template
             {
@@ -103,6 +102,7 @@ namespace LabelPrint
             };
             Label.Add(init_label);
 
+            bcFeatures.AddRange(Enum.GetNames(typeof(EncodeHintType)));
             listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = 0;
             comboBox_units.SelectedIndex = 0;
@@ -831,9 +831,9 @@ namespace LabelPrint
                     if (cells.Count >= 7)
                     {
                         Template templ = new Template();
-                        for (int n = 0; n < _objectNames.Length; n++)
+                        for (int n = 0; n < Enum.GetNames(typeof(LabelObject)).Length; n++)
                         {
-                            if (_objectNames[n] == cells[0]) templ.objectType = (LabelObject)n;
+                            if (Enum.GetName(typeof(LabelObject), n) == cells[0]) templ.objectType = (LabelObject)n;
                         }
                         if (i == 0 && templ.objectType != LabelObject.label)
                         {
@@ -1165,7 +1165,7 @@ namespace LabelPrint
                                     {
                                         templ.addFeature = cells[11];
                                     }
-                                    else if (templ.addFeature == "0") templ.addFeature = "";
+                                    else templ.addFeature = "";
                                 }
                                 else templ.addFeature = "";
                             }
@@ -1487,7 +1487,7 @@ namespace LabelPrint
             else return Label;
         }
 
-        private bool saveTemplateToCSV(string fileName, List<Template> _label, int codePage)
+        private bool SaveTemplateToCSV(string fileName, List<Template> _label, int codePage)
         {
             StringBuilder output = new StringBuilder();
             char div = Properties.Settings.Default.CSVdelimiter;
@@ -1496,7 +1496,7 @@ namespace LabelPrint
                 // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
                 if (_label[i].objectType == LabelObject.label)
                 {
-                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].bgColor.Name.ToString() + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].width.ToString() + div +
@@ -1507,7 +1507,7 @@ namespace LabelPrint
                 // text; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_text]; 6 fontName; 7 fontSize; 8 [fontStyle];
                 else if (_label[i].objectType == LabelObject.text)
                 {
-                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1520,7 +1520,7 @@ namespace LabelPrint
                 // picture; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [default_file]; 6 [width]; 7 [height]; 8 [transparent];
                 else if (_label[i].objectType == LabelObject.picture)
                 {
-                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1533,7 +1533,7 @@ namespace LabelPrint
                 // barcode; 1 [bgColor]; 2 [objectColor]; 3 posX; 4 posY; 5 [rotate]; 6 [default_data]; 7 width; 8 height; 9 bcFormat; 10 [transparent]; 11 [additional_features]
                 else if (_label[i].objectType == LabelObject.barcode)
                 {
-                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].bgColor.Name.ToString() + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
@@ -1549,7 +1549,7 @@ namespace LabelPrint
                 // line_coord; 1 [objectColor]; 2 posX; 3 posY; 4 [lineWidth]; 5 endX; 6 endY;
                 else if (_label[i].objectType == LabelObject.line_coord)
                 {
-                    output.Append(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1560,7 +1560,7 @@ namespace LabelPrint
                 // line_length; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 lineLength;
                 else if (_label[i].objectType == LabelObject.line_length)
                 {
-                    output.Append(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1571,7 +1571,7 @@ namespace LabelPrint
                 // rectangle; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
                 else if (_label[i].objectType == LabelObject.rectangle)
                 {
-                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1584,7 +1584,7 @@ namespace LabelPrint
                 // ellipse; 1 [objectColor]; 2 posX; 3 posY; 4 [rotate]; 5 [lineWidth]; 6 width; 7 height; 8 [transparent];
                 else if (_label[i].objectType == LabelObject.ellipse)
                 {
-                    output.AppendLine(_objectNames[(int)_label[i].objectType] + div +
+                    output.AppendLine(Enum.GetName(typeof(LabelObject), _label[i].objectType) + div +
                         _label[i].fgColor.Name.ToString() + div +
                         _label[i].posX.ToString() + div +
                         _label[i].posY.ToString() + div +
@@ -1609,7 +1609,8 @@ namespace LabelPrint
         }
 
         // *BUG - saves 3 additional byte in the beginning of a file
-        private bool saveTableToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
+        // doesn't save edited table
+        private bool SaveTableToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
         {
             if (codePage == -1) codePage = Encoding.UTF8.CodePage;
             StringBuilder output = new StringBuilder();
@@ -1933,10 +1934,10 @@ namespace LabelPrint
                 templ.lineLength = 1;
                 templ.lineWidth = 1;
             }
-            // label; [bgColor]; [objectColor]; width; height;
             else
             {
                 templ = Label[n];
+                // label; [bgColor]; [objectColor]; width; height;
                 if (templ.objectType == LabelObject.label)
                 {
                     if (comboBox_backgroundColor.SelectedItem.ToString() == "Background color") templ.bgColor = Label[0].bgColor;
@@ -2039,8 +2040,8 @@ namespace LabelPrint
 
                     templ.transparent = checkBox_fill.Checked;
 
-                    BarcodeFormat i = 0;
-                    BarcodeFormat.TryParse(comboBox_fontName.SelectedItem.ToString().Substring(0, comboBox_fontName.SelectedItem.ToString().IndexOf('=')), out i);
+                    BarcodeFormat i = BarcodeFormat.QR_CODE;
+                    BarcodeFormat.TryParse(comboBox_fontName.SelectedItem.ToString(), out i);
                     templ.barCodeFormat = i;
 
                     if (comboBox_fontStyle.SelectedItem.ToString() != "") templ.addFeature = comboBox_fontStyle.SelectedItem.ToString() + "=" + textBox_fontSize.Text;
@@ -2400,19 +2401,20 @@ namespace LabelPrint
                     comboBox_fontStyle.SelectedIndex = 0;
 
                     str = Label[n].addFeature;
-                    for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
+                    if (str.Contains("="))
                     {
-                        if (str == comboBox_fontStyle.Items[i].ToString())
+                        for (int i = 0; i < comboBox_fontStyle.Items.Count; i++)
                         {
-                            comboBox_fontStyle.SelectedIndex = i;
-                            break;
+                            if (str.Substring(0, str.IndexOf('=')) == comboBox_fontStyle.Items[i].ToString())
+                            {
+                                comboBox_fontStyle.SelectedIndex = i;
+                                break;
+                            }
                         }
+                        textBox_fontSize.Enabled = true;
+                        label_fontSize.Text = "Feature value";
+                        textBox_fontSize.Text = Label[n].addFeature.Substring(Label[n].addFeature.IndexOf('=') + 1);
                     }
-
-                    textBox_fontSize.Enabled = true;
-                    label_fontSize.Text = "Feature value";
-                    textBox_fontSize.Text = Label[n].addFeature.Substring(Label[n].addFeature.IndexOf('=') + 1);
-
                     checkBox_fill.Enabled = true;
                     checkBox_fill.Text = "Transparent";
                     checkBox_fill.Checked = Label[n].transparent;
@@ -2820,11 +2822,11 @@ namespace LabelPrint
             char div = Properties.Settings.Default.CSVdelimiter;
             if (SaveFileDialog1.Title == "Save template as .CSV...")
             {
-                if (!saveTemplateToCSV(SaveFileDialog1.FileName, Label, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                if (!SaveTemplateToCSV(SaveFileDialog1.FileName, Label, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
             }
             else if (SaveFileDialog1.Title == "Save label data as .CSV...")
             {
-                if (!saveTableToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                if (!SaveTableToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
             }
         }
 
@@ -2851,7 +2853,7 @@ namespace LabelPrint
 
         private void DataGridView_labels_SelectionChanged(object sender, EventArgs e)
         {
-            if (!cmdLinePrint)
+            if (!cmdLinePrint && dataGridView_labels.CurrentCell.RowIndex < LabelsDatabase.Rows.Count)
             {
                 LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
                 pictureBox_label.Image = LabelBmp;
@@ -2896,13 +2898,13 @@ namespace LabelPrint
                         dataGridView_labels.DataSource = LabelsDatabase;
                         foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
                         //check for picture file existence
-                        foreach (DataGridViewRow row in dataGridView_labels.Rows)
+                        foreach (DataRow row in LabelsDatabase.Rows)
                         {
-                            for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
+                            for (int i = 0; i < LabelsDatabase.Columns.Count; i++)
                             {
-                                if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.Cells[i].Value.ToString()))
+                                if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.ItemArray[i].ToString()))
                                 {
-                                    MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
+                                    MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
                                 }
                             }
                         }
@@ -3266,14 +3268,14 @@ namespace LabelPrint
             textBox_move.Text = n.ToString();
         }
 
-        private void textBox_rangeFrom_Leave(object sender, EventArgs e)
+        private void TextBox_rangeFrom_Leave(object sender, EventArgs e)
         {
             int n = 1;
             int.TryParse(textBox_rangeFrom.Text, out n);
             if (n >= 1) textBox_rangeFrom.Text = n.ToString();
         }
 
-        private void textBox_rangeTo_Leave(object sender, EventArgs e)
+        private void TextBox_rangeTo_Leave(object sender, EventArgs e)
         {
             int n = LabelsDatabase.Rows.Count;
             int.TryParse(textBox_rangeTo.Text, out n);
@@ -3316,7 +3318,7 @@ namespace LabelPrint
             }
         }
 
-        private void textBox_scale_Leave(object sender, EventArgs e)
+        private void TextBox_scale_Leave(object sender, EventArgs e)
         {
             float n = 0;
             float.TryParse(textBox_scale.Text, out n);
@@ -3326,6 +3328,7 @@ namespace LabelPrint
 
         private void Button_printCurrent_Click(object sender, EventArgs e)
         {
+            if (dataGridView_labels.CurrentRow.Index >= LabelsDatabase.Rows.Count) return;
             int _pagesFrom = dataGridView_labels.CurrentRow.Index;
             int _pagesTo = _pagesFrom;
 
@@ -3424,17 +3427,17 @@ namespace LabelPrint
             return c;
         }
 
-        private PointF[] rotatePolygon(PointF zeroPoint, PointF[] poly, float angleDegree)
+        private PointF[] RotatePolygon(PointF zeroPoint, PointF[] poly, float angleDegree)
         {
             PointF[] p = new PointF[poly.Length];
             for (int i = 0; i < poly.Length; i++)
             {
-                p[i] = rotateLine(zeroPoint, poly[i], angleDegree);
+                p[i] = RotateLine(zeroPoint, poly[i], angleDegree);
             }
             return p;
         }
 
-        private PointF rotateLine(PointF center, PointF end, double angleDeg)
+        private PointF RotateLine(PointF center, PointF end, double angleDeg)
         {
             PointF result = new PointF();
             if (angleDeg % 360 == 0) return end;
@@ -3445,7 +3448,7 @@ namespace LabelPrint
         }
 
         //select object with click
-        private void pictureBox_label_Click(object sender, EventArgs e)
+        private void PictureBox_label_Click(object sender, EventArgs e)
         {
             if (tabControl1.SelectedIndex != 1 && tabControl1.SelectedIndex != 2) return;
 
@@ -3479,7 +3482,7 @@ namespace LabelPrint
 
                 if (Label[i].objectType != LabelObject.line_coord)
                 {
-                    rect = rotatePolygon(rect[0], rect, Label[i].rotate);
+                    rect = RotatePolygon(rect[0], rect, Label[i].rotate);
                 }
 
                 if (IsInPolygon(rect, new PointF(posX, posY)))
