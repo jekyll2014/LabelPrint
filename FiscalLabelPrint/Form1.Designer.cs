@@ -84,9 +84,9 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button_scaleUp = new System.Windows.Forms.Button();
             this.button_scaleDown = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
+            this.button_reduce = new System.Windows.Forms.Button();
+            this.button_enlarge = new System.Windows.Forms.Button();
+            this.button_scaleRight = new System.Windows.Forms.Button();
             this.button_scaleLeft = new System.Windows.Forms.Button();
             this.textBox_scale = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -712,88 +712,86 @@
             // 
             this.groupBox2.Controls.Add(this.button_scaleUp);
             this.groupBox2.Controls.Add(this.button_scaleDown);
-            this.groupBox2.Controls.Add(this.button2);
-            this.groupBox2.Controls.Add(this.button1);
-            this.groupBox2.Controls.Add(this.button3);
+            this.groupBox2.Controls.Add(this.button_reduce);
+            this.groupBox2.Controls.Add(this.button_enlarge);
+            this.groupBox2.Controls.Add(this.button_scaleRight);
             this.groupBox2.Controls.Add(this.button_scaleLeft);
             this.groupBox2.Controls.Add(this.textBox_scale);
             this.groupBox2.Location = new System.Drawing.Point(108, 150);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(157, 107);
+            this.groupBox2.Size = new System.Drawing.Size(157, 111);
             this.groupBox2.TabIndex = 9;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Scale";
-            this.groupBox2.Visible = false;
             // 
             // button_scaleUp
             // 
-            this.button_scaleUp.Enabled = false;
             this.button_scaleUp.Location = new System.Drawing.Point(52, 19);
             this.button_scaleUp.Name = "button_scaleUp";
             this.button_scaleUp.Size = new System.Drawing.Size(41, 23);
             this.button_scaleUp.TabIndex = 0;
             this.button_scaleUp.Text = "↑";
             this.button_scaleUp.UseVisualStyleBackColor = true;
+            this.button_scaleUp.Click += new System.EventHandler(this.Button_scaleUp_Click);
             // 
             // button_scaleDown
             // 
-            this.button_scaleDown.Enabled = false;
-            this.button_scaleDown.Location = new System.Drawing.Point(52, 74);
+            this.button_scaleDown.Location = new System.Drawing.Point(52, 77);
             this.button_scaleDown.Name = "button_scaleDown";
             this.button_scaleDown.Size = new System.Drawing.Size(41, 23);
             this.button_scaleDown.TabIndex = 0;
             this.button_scaleDown.Text = "↓";
             this.button_scaleDown.UseVisualStyleBackColor = true;
+            this.button_scaleDown.Click += new System.EventHandler(this.Button_scaleDown_Click);
             // 
-            // button2
+            // button_reduce
             // 
-            this.button2.Enabled = false;
-            this.button2.Location = new System.Drawing.Point(5, 19);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(41, 23);
-            this.button2.TabIndex = 0;
-            this.button2.Text = "-";
-            this.button2.UseVisualStyleBackColor = true;
+            this.button_reduce.Location = new System.Drawing.Point(6, 19);
+            this.button_reduce.Name = "button_reduce";
+            this.button_reduce.Size = new System.Drawing.Size(41, 23);
+            this.button_reduce.TabIndex = 0;
+            this.button_reduce.Text = "-";
+            this.button_reduce.UseVisualStyleBackColor = true;
+            this.button_reduce.Click += new System.EventHandler(this.Button_reduce_Click);
             // 
-            // button1
+            // button_enlarge
             // 
-            this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(99, 19);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(41, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "+";
-            this.button1.UseVisualStyleBackColor = true;
+            this.button_enlarge.Location = new System.Drawing.Point(99, 77);
+            this.button_enlarge.Name = "button_enlarge";
+            this.button_enlarge.Size = new System.Drawing.Size(41, 23);
+            this.button_enlarge.TabIndex = 0;
+            this.button_enlarge.Text = "+";
+            this.button_enlarge.UseVisualStyleBackColor = true;
+            this.button_enlarge.Click += new System.EventHandler(this.Button_enlarge_Click);
             // 
-            // button3
+            // button_scaleRight
             // 
-            this.button3.Enabled = false;
-            this.button3.Location = new System.Drawing.Point(99, 48);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(41, 23);
-            this.button3.TabIndex = 0;
-            this.button3.Text = "→";
-            this.button3.UseVisualStyleBackColor = true;
+            this.button_scaleRight.Location = new System.Drawing.Point(99, 48);
+            this.button_scaleRight.Name = "button_scaleRight";
+            this.button_scaleRight.Size = new System.Drawing.Size(41, 23);
+            this.button_scaleRight.TabIndex = 0;
+            this.button_scaleRight.Text = "→";
+            this.button_scaleRight.UseVisualStyleBackColor = true;
+            this.button_scaleRight.Click += new System.EventHandler(this.Button_scaleRight_Click);
             // 
             // button_scaleLeft
             // 
-            this.button_scaleLeft.Enabled = false;
-            this.button_scaleLeft.Location = new System.Drawing.Point(5, 48);
+            this.button_scaleLeft.Location = new System.Drawing.Point(6, 48);
             this.button_scaleLeft.Name = "button_scaleLeft";
             this.button_scaleLeft.Size = new System.Drawing.Size(41, 23);
             this.button_scaleLeft.TabIndex = 0;
             this.button_scaleLeft.Text = "←";
             this.button_scaleLeft.UseVisualStyleBackColor = true;
+            this.button_scaleLeft.Click += new System.EventHandler(this.Button_scaleLeft_Click);
             // 
             // textBox_scale
             // 
-            this.textBox_scale.Enabled = false;
-            this.textBox_scale.Location = new System.Drawing.Point(52, 48);
+            this.textBox_scale.Location = new System.Drawing.Point(52, 50);
             this.textBox_scale.MinimumSize = new System.Drawing.Size(4, 4);
             this.textBox_scale.Name = "textBox_scale";
             this.textBox_scale.Size = new System.Drawing.Size(41, 20);
             this.textBox_scale.TabIndex = 3;
-            this.textBox_scale.Text = "1";
+            this.textBox_scale.Text = "1.0";
             this.textBox_scale.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.textBox_scale.Leave += new System.EventHandler(this.TextBox_scale_Leave);
             // 
@@ -838,7 +836,7 @@
             this.textBox_move.Name = "textBox_move";
             this.textBox_move.Size = new System.Drawing.Size(41, 20);
             this.textBox_move.TabIndex = 3;
-            this.textBox_move.Text = "1";
+            this.textBox_move.Text = "1.0";
             this.textBox_move.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.textBox_move.Leave += new System.EventHandler(this.TextBox_move_Leave);
             // 
@@ -1172,15 +1170,15 @@
         private System.Windows.Forms.Button button_deleteGroup;
         private System.Windows.Forms.ListBox listBox_objectsMulti;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button_scaleRight;
         private System.Windows.Forms.Button button_scaleLeft;
         private System.Windows.Forms.TextBox textBox_scale;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Panel panel_picture;
         private System.Windows.Forms.Button button_scaleUp;
         private System.Windows.Forms.Button button_scaleDown;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button_reduce;
+        private System.Windows.Forms.Button button_enlarge;
     }
 }
 

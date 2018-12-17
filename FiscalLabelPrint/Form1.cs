@@ -3161,8 +3161,7 @@ namespace LabelPrint
                 }
             }
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
-            listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(GetObjectsList());
+            listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
@@ -3185,8 +3184,7 @@ namespace LabelPrint
                 }
             }
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
-            listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(GetObjectsList());
+            listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
@@ -3209,8 +3207,7 @@ namespace LabelPrint
                 }
             }
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
-            listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(GetObjectsList());
+            listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
@@ -3233,8 +3230,161 @@ namespace LabelPrint
                 }
             }
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
-            listBox_objectsMulti.Items.Clear();
-            listBox_objectsMulti.Items.AddRange(GetObjectsList());
+            listBox_objectsMulti.SelectedIndex = -1;
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
+        }
+
+        private void Button_enlarge_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
+                {
+                    Template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_scale.Text, out x);
+                    if (templ.objectType == LabelObject.text)
+                    {
+                        templ.fontSize += x;
+                    }
+                    else
+                    {
+                        templ.width += x;
+                        templ.height += x;
+                    }
+                    Label[n] = templ;
+                    k.Add(n);
+                }
+            }
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndex = -1;
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
+        }
+
+        private void Button_reduce_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
+                {
+                    Template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_scale.Text, out x);
+                    if (templ.objectType == LabelObject.text)
+                    {
+                        templ.fontSize -= x;
+                    }
+                    else
+                    {
+                        templ.width -= x;
+                        templ.height -= x;
+                    }
+                    Label[n] = templ;
+                    k.Add(n);
+                }
+            }
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndex = -1;
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
+        }
+
+        private void Button_scaleRight_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
+                {
+                    Template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_scale.Text, out x);
+                    templ.width += x;
+                    Label[n] = templ;
+                    k.Add(n);
+                }
+            }
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndex = -1;
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
+        }
+
+        private void Button_scaleLeft_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
+                {
+                    Template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_scale.Text, out x);
+                    templ.width -= x;
+                    Label[n] = templ;
+                    k.Add(n);
+                }
+            }
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndex = -1;
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
+        }
+
+        private void Button_scaleDown_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
+                {
+                    Template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_scale.Text, out x);
+                    templ.height += x;
+                    Label[n] = templ;
+                    k.Add(n);
+                }
+            }
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndex = -1;
+            foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
+            _templateChanged = true;
+            ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
+            listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
+        }
+
+        private void Button_scaleUp_Click(object sender, EventArgs e)
+        {
+            List<int> k = new List<int>();
+            foreach (int n in listBox_objectsMulti.SelectedIndices)
+            {
+                if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
+                {
+                    Template templ = Label[n];
+                    float x = 0;
+                    float.TryParse(textBox_scale.Text, out x);
+                    templ.height -= x;
+                    Label[n] = templ;
+                    k.Add(n);
+                }
+            }
+            listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
+            listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
             _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
