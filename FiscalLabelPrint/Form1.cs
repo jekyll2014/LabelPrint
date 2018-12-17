@@ -747,8 +747,6 @@ namespace LabelPrint
         private DataTable LoadCsvLabel(string fileName, int codePage, bool createColumnsNames = false)
         {
             DataTable table = new DataTable();
-            //table.Clear();
-            //table.Rows.Clear();
             List<string> inputStr = new List<string>();
             try
             {
@@ -1598,7 +1596,7 @@ namespace LabelPrint
             bool err = true;
             try
             {
-                File.WriteAllText(fileName, output.ToString(), Encoding.GetEncoding(codePage));
+                File.WriteAllBytes(fileName, Encoding.GetEncoding(codePage).GetBytes(output.ToString()));
             }
             catch (Exception ex)
             {
@@ -1608,7 +1606,6 @@ namespace LabelPrint
             return err;
         }
 
-        // *BUG - saves 3 additional byte in the beginning of a file
         // doesn't save edited table
         private bool SaveTableToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
         {
@@ -1624,7 +1621,7 @@ namespace LabelPrint
             {
                 for (int i = 0; i < dataTable.Columns.Count; i++)
                 {
-                    output.Append(dataTable.Rows[0].ItemArray[i].ToString() + csvDivider);
+                    output.Append(dataTable.Rows[j].ItemArray[i].ToString() + csvDivider);
                 }
                 output.AppendLine();
             }
@@ -1632,7 +1629,7 @@ namespace LabelPrint
             bool err = true;
             try
             {
-                File.WriteAllText(fileName, output.ToString(), Encoding.GetEncoding(codePage));
+                File.WriteAllBytes(fileName, Encoding.GetEncoding(codePage).GetBytes(output.ToString()));
             }
             catch (Exception ex)
             {
