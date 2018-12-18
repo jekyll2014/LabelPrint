@@ -416,108 +416,273 @@ namespace LabelPrint
                 }
             };
             //specify the additional encoding options if there are any
-            if (addFeature != "")
+            if (addFeature != "" && addFeature.Contains("="))
             {
-                EncodeHintType _feature = EncodeHintType.MIN_SIZE;
-                string[] tmp = addFeature.Split('=');
-                if (tmp.Length == 2)
+                string hint = addFeature.Substring(0, addFeature.IndexOf("=")).Trim();
+                if (hint.Length > 0)
                 {
-                    switch (tmp[0])
+                    Enum.TryParse<EncodeHintType>(hint, out EncodeHintType _feature);
+                    string value = addFeature.Substring(addFeature.IndexOf("=") + 1).Trim();
+                    switch (_feature)
                     {
-                        case "AZTEC_LAYERS": //int [-4, 32]
+                        /* Specifies the required number of layers for an Aztec code. A negative number (-1, -2, -3, -4) specifies a compact Aztec
+                         * code 0 indicates to use the minimum number of layers (the default) A positive number (1, 2, .. 32) specifies a normal
+                         * (non-compact) Aztec code type: System.Int32, or System.String representation of the integer value
+                         */
+                        case EncodeHintType.AZTEC_LAYERS: //int [-4, 32]
                             {
                                 _feature = EncodeHintType.AZTEC_LAYERS;
-                                int param = 0;
-                                int.TryParse(tmp[1], out param);
-                                barCode.Options.Hints.Add(_feature, param);
+                                if (int.TryParse(value, out int param))
+                                {
+                                    if (param < -4) param = -4;
+                                    else if (param > 32) param = 32;
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
                             }
                             break;
-                        case "ERROR_CORRECTION": //int [0, 8]
-                            {
-                                _feature = EncodeHintType.ERROR_CORRECTION;
-                                int param = 0;
-                                int.TryParse(tmp[1], out param);
-                                barCode.Options.Hints.Add(_feature, param);
-                            }
-                            break;
-                        case "MARGIN":  //int
-                            {
-                                _feature = EncodeHintType.MARGIN;
-                                int param = 0;
-                                int.TryParse(tmp[1], out param);
-                                barCode.Options.Hints.Add(_feature, param);
-                            }
-                            break;
-                        case "PDF417_ASPECT_RATIO": //int [1, 4]
-                            {
-                                _feature = EncodeHintType.PDF417_ASPECT_RATIO;
-                                int param = 0;
-                                int.TryParse(tmp[1], out param);
-                                barCode.Options.Hints.Add(_feature, param);
-                            }
-                            break;
-                        case "QR_VERSION": //int [1, 40] ??
-                            {
-                                _feature = EncodeHintType.QR_VERSION;
-                                int param = 0;
-                                int.TryParse(tmp[1], out param);
-                                barCode.Options.Hints.Add(_feature, param);
-                            }
-                            break;
-                        case "CHARACTER_SET": //string
+
+                        /* Specifies what character encoding to use where applicable. type: System.String
+                         */
+                        case EncodeHintType.CHARACTER_SET: //string
                             {
                                 _feature = EncodeHintType.CHARACTER_SET;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                                barCode.Options.Hints.Add(_feature, value);
                             }
                             break;
-                        case "PDF417_COMPACTION": //string
-                            {
-                                _feature = EncodeHintType.PDF417_COMPACTION;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
-                            }
-                            break;
-                        case "CODE128_FORCE_CODESET_B": //bool
+
+                        /* if true, don't switch to codeset C for numbers
+                         */
+                        case EncodeHintType.CODE128_FORCE_CODESET_B: //bool
                             {
                                 _feature = EncodeHintType.CODE128_FORCE_CODESET_B;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                                if (bool.TryParse(value, out bool param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
                             }
                             break;
-                        case "DISABLE_ECI": //bool
-                            {
-                                _feature = EncodeHintType.DISABLE_ECI;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
-                            }
-                            break;
-                        case "GS1_FORMAT": //bool
-                            {
-                                _feature = EncodeHintType.GS1_FORMAT;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
-                            }
-                            break;
-                        case "PDF417_COMPACT": //bool
-                            {
-                                _feature = EncodeHintType.PDF417_COMPACT;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
-                            }
-                            break;
-                        /*case "DATA_MATRIX_DEFAULT_ENCODATION": //????
+
+                        /* Specifies the default encodation for Data Matrix (type ZXing.Datamatrix.Encoder.Encodation) Make sure that the content fits into
+                         * the encodation value, otherwise there will be an exception thrown. standard value: Encodation.ASCII
+                         */
+                        case EncodeHintType.DATA_MATRIX_DEFAULT_ENCODATION: //int [0,1,2,3,4,5] (ASCII,C40,TEXT,X12,EDIFACT,BASE256)
                             {
                                 _feature = EncodeHintType.DATA_MATRIX_DEFAULT_ENCODATION;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                                if (int.TryParse(value, out int param))
+                                {
+                                    if (param < 0) param = 0;
+                                    else if (param > 5) param = 5;
+                                    if (param == (int)ZXing.Datamatrix.Encoder.Encodation.ASCII)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.Datamatrix.Encoder.Encodation.ASCII);
+                                    }
+                                    else if (param == (int)ZXing.Datamatrix.Encoder.Encodation.BASE256)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.Datamatrix.Encoder.Encodation.BASE256);
+                                    }
+                                    else if (param == (int)ZXing.Datamatrix.Encoder.Encodation.C40)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.Datamatrix.Encoder.Encodation.C40);
+                                    }
+                                    else if (param == (int)ZXing.Datamatrix.Encoder.Encodation.EDIFACT)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.Datamatrix.Encoder.Encodation.EDIFACT);
+                                    }
+                                    else if (param == (int)ZXing.Datamatrix.Encoder.Encodation.TEXT)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.Datamatrix.Encoder.Encodation.TEXT);
+                                    }
+                                    else if (param == (int)ZXing.Datamatrix.Encoder.Encodation.X12)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.Datamatrix.Encoder.Encodation.X12);
+                                    }
+                                }
                             }
                             break;
-                        case "DATA_MATRIX_SHAPE": //?????
+
+                        /* Specifies the matrix shape for Data Matrix (type ZXing.Datamatrix.Encoder.SymbolShapeHint)
+                         */
+                        case EncodeHintType.DATA_MATRIX_SHAPE: //string [FORCE_NONE, FORCE_RECTANGLE, FORCE_SQUARE]
                             {
                                 _feature = EncodeHintType.DATA_MATRIX_SHAPE;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                                if (Enum.TryParse<ZXing.Datamatrix.Encoder.SymbolShapeHint>(value, out var param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
                             }
                             break;
-                        case "PDF417_DIMENSIONS": //????
+
+                        /* Don't append ECI segment. That is against the specification of QR Code but some readers have problems if the charset is switched
+                         * from ISO-8859-1 (default) to UTF-8 with the necessary ECI segment. If you set the property to true you can use UTF-8 encoding and
+                         * the ECI segment is omitted. type: System.Boolean
+                         */
+                        case EncodeHintType.DISABLE_ECI: //bool
                             {
-                                _feature = EncodeHintType.PDF417_DIMENSIONS;
-                                barCode.Options.Hints.Add(_feature, tmp[1]);
+                                _feature = EncodeHintType.DISABLE_ECI;
+                                if (bool.TryParse(value, out bool param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
                             }
-                            break;*/
+                            break;
+
+                        /* Specifies what degree of error correction to use, for example in QR Codes. Type depends on the encoder. For example for QR codes
+                         * it's type ZXing.QrCode.Internal.ErrorCorrectionLevel For Aztec it is of type System.Int32, representing the minimal percentage of
+                         * error correction words. In all cases, it can also be a System.String representation of the desired value as well. Note: an Aztec
+                         * symbol should have a minimum of 25% EC words. For PDF417 it is of type ZXing.PDF417.Internal.PDF417ErrorCorrectionLevel or
+                         * System.Int32 (between 0 and 8),
+                         */
+                        case EncodeHintType.ERROR_CORRECTION: //int PDF417[0, 8]; AZTEC [25-100]%; QRCODE [L,M,Q,H] (7%,15%,25%,30%)
+                            {
+                                _feature = EncodeHintType.ERROR_CORRECTION;
+                                if (barCode.Format == BarcodeFormat.AZTEC)
+                                {
+                                    if (int.TryParse(value, out int param))
+                                    {
+                                        if (param < 25) param = 25;
+                                        else if (param > 100) param = 100;
+                                        barCode.Options.Hints.Add(_feature, param);
+                                    }
+                                }
+                                else if (barCode.Format == BarcodeFormat.PDF_417)
+                                {
+                                    if (int.TryParse(value, out int param))
+                                    {
+                                        if (param < 0) param = 0;
+                                        else if (param > 8) param = 8;
+                                        barCode.Options.Hints.Add(_feature, param);
+                                    }
+                                }
+                                else if (barCode.Format == BarcodeFormat.QR_CODE)
+                                {
+                                    if (value == ZXing.QrCode.Internal.ErrorCorrectionLevel.L.Name)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.QrCode.Internal.ErrorCorrectionLevel.L);
+                                    }
+                                    else if (value == ZXing.QrCode.Internal.ErrorCorrectionLevel.M.Name)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.QrCode.Internal.ErrorCorrectionLevel.M);
+                                    }
+                                    else if (value == ZXing.QrCode.Internal.ErrorCorrectionLevel.Q.Name)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.QrCode.Internal.ErrorCorrectionLevel.Q);
+                                    }
+                                    else if (value == ZXing.QrCode.Internal.ErrorCorrectionLevel.H.Name)
+                                    {
+                                        barCode.Options.Hints.Add(_feature, ZXing.QrCode.Internal.ErrorCorrectionLevel.H);
+                                    }
+                                }
+                            }
+                            break;
+
+                        /* Specifies whether the data should be encoded to the GS1 standard type: System.Boolean, or "true" or "false" System.String value
+                         */
+                        case EncodeHintType.GS1_FORMAT: //bool
+                            {
+                                _feature = EncodeHintType.GS1_FORMAT;
+                                if (bool.TryParse(value, out bool param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /* Specifies the height of the barcode image type: System.Int32
+                         */
+                        //HEIGHT
+
+                        /* Specifies margin, in pixels, to use when generating the barcode. The meaning can vary by format; for example it controls margin
+                         * before and after the barcode horizontally for most 1D formats. type: System.Int32, or System.String representation of the integer value
+                         */
+                        case EncodeHintType.MARGIN:  //int
+                            {
+                                _feature = EncodeHintType.MARGIN;
+                                if (int.TryParse(value, out int param))
+                                {
+                                    if (param < 0) param = 0;
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /* Specifies a maximum barcode size (type ZXing.Dimension). Only applicable to Data Matrix now.
+                         */
+                        //MAX_SIZE
+
+                        /* Specifies a minimum barcode size (type ZXing.Dimension). Only applicable to Data Matrix now.
+                         */
+                        //MIN_SIZE
+
+                        /* Specifies the aspect ratio to use. Default is 4. type: ZXing.PDF417.Internal.PDF417AspectRatio, or 1-4.
+                         */
+                        case EncodeHintType.PDF417_ASPECT_RATIO: //int [1, 4]
+                            {
+                                _feature = EncodeHintType.PDF417_ASPECT_RATIO;
+                                if (int.TryParse(value, out int param))
+                                {
+                                    if (param < 1) param = 1;
+                                    else if (param > 4) param = 4;
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /* Specifies whether to use compact mode for PDF417 type: System.Boolean, or "true" or "false" System.String value
+                         */
+                        case EncodeHintType.PDF417_COMPACT: //bool
+                            {
+                                _feature = EncodeHintType.PDF417_COMPACT;
+                                if (bool.TryParse(value, out bool param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /* Specifies what compaction mode to use for PDF417. type: ZXing.PDF417.Internal.Compaction or System.String value of one of its enum values
+                         */
+                        case EncodeHintType.PDF417_COMPACTION: //string [AUTO,BYTE,NUMERIC,TEXT]
+                            {
+                                _feature = EncodeHintType.PDF417_COMPACTION;
+                                if (Enum.TryParse<ZXing.PDF417.Internal.Compaction>(value, out var param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /*Specifies the minimum and maximum number of rows and columns for PDF417. type: ZXing.PDF417.Internal.Dimensions
+                         */
+                        //PDF417_DIMENSIONS
+
+                        /* Don't put the content string into the output image. type: System.Boolean
+                         */
+                        case EncodeHintType.PURE_BARCODE: //bool
+                            {
+                                _feature = EncodeHintType.QR_VERSION;
+                                if (bool.TryParse(value, out bool param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /* Specifies the exact version of QR code to be encoded. (Type System.Int32, or System.String representation of the integer value).
+                         */
+                        case EncodeHintType.QR_VERSION: //int [1, 40] ???
+                            {
+                                _feature = EncodeHintType.QR_VERSION;
+                                if (int.TryParse(value, out int param))
+                                {
+                                    barCode.Options.Hints.Add(_feature, param);
+                                }
+                            }
+                            break;
+
+                        /* Specifies the width of the barcode image type: System.Int32
+                         */
+                        //WIDTH
+
                         default:
                             MessageBox.Show("Unrecognized additional feature option:" + addFeature);
                             break;
@@ -803,8 +968,9 @@ namespace LabelPrint
                     for (int i = 0; i < cells.Length - 1; i++)
                     {
                         //row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        if (tmp1 != "") row[i] = tmp1;
+                        //string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        //if (tmp1 != "") row[i] = tmp1;
+                        row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
                     }
                     table.Rows.Add(row);
                 }
@@ -1058,8 +1224,7 @@ namespace LabelPrint
                                     templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
                                 }*/
 
-                                byte t = 0;
-                                byte.TryParse(cells[8], out t);
+                                byte.TryParse(cells[8], out byte t);
                                 templ.transparent = (t > 0);
                             }
                             else
@@ -1153,8 +1318,7 @@ namespace LabelPrint
                                     templ.barCodeFormat = BarcodeFormat.QR_CODE;
                                 }
 
-                                byte t = 0;
-                                byte.TryParse(cells[10], out t);
+                                byte.TryParse(cells[10], out byte t);
                                 templ.transparent = (t > 0);
 
                                 if (cells.Count >= 12 && cells[11].Contains("="))
@@ -1383,8 +1547,7 @@ namespace LabelPrint
                                     templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
                                 }*/
 
-                                byte t = 0;
-                                byte.TryParse(cells[8], out t);
+                                byte.TryParse(cells[8], out byte t);
                                 templ.transparent = (t > 0);
                             }
                             else
@@ -1467,8 +1630,7 @@ namespace LabelPrint
                                     templ.height = (int)Math.Sqrt((int)tmpLabel[0].width * (int)tmpLabel[0].width + (int)tmpLabel[0].height * (int)tmpLabel[0].height);
                                 }*/
 
-                                byte t = 0;
-                                byte.TryParse(cells[8], out t);
+                                byte.TryParse(cells[8], out byte t);
                                 templ.transparent = (t > 0);
                             }
                             else
@@ -1606,7 +1768,6 @@ namespace LabelPrint
             return err;
         }
 
-        // doesn't save edited table
         private bool SaveTableToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
         {
             if (codePage == -1) codePage = Encoding.UTF8.CodePage;
@@ -1943,8 +2104,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_width.Text, out f);
+                    float.TryParse(textBox_width.Text, out float f);
                     templ.width = f * mult;
 
                     float.TryParse(textBox_height.Text, out f);
@@ -1957,8 +2117,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -1969,13 +2128,11 @@ namespace LabelPrint
 
                     templ.content = textBox_content.Text;
 
-                    float b = 0;
                     textBox_fontSize.Text = Evaluate(textBox_fontSize.Text).ToString();
-                    float.TryParse(textBox_fontSize.Text, out b);
+                    float.TryParse(textBox_fontSize.Text, out float b);
                     templ.fontSize = b;
 
-                    FontStyle s = 0;
-                    FontStyle.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out s);
+                    FontStyle.TryParse(comboBox_fontStyle.SelectedItem.ToString().Substring(0, 1), out FontStyle s);
                     templ.fontStyle = s;
 
                     templ.fontName = comboBox_fontName.SelectedItem.ToString();
@@ -1987,8 +2144,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.bgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -2017,8 +2173,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -2051,8 +2206,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -2075,8 +2229,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -2100,8 +2253,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -2129,8 +2281,7 @@ namespace LabelPrint
                     if (comboBox_objectColor.SelectedItem.ToString() == "Default object color") templ.fgColor = Label[0].fgColor;
                     else templ.fgColor = Color.FromName(comboBox_objectColor.SelectedItem.ToString());
 
-                    float f = 0;
-                    float.TryParse(textBox_posX.Text, out f);
+                    float.TryParse(textBox_posX.Text, out float f);
                     templ.posX = f * mult;
 
                     float.TryParse(textBox_posY.Text, out f);
@@ -2761,13 +2912,13 @@ namespace LabelPrint
                     dataGridView_labels.DataSource = LabelsDatabase;
                     foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
                     //check for picture file existence
-                    foreach (DataGridViewRow row in dataGridView_labels.Rows)
+                    foreach (DataRow row in LabelsDatabase.Rows)
                     {
-                        for (int i = 0; i < dataGridView_labels.ColumnCount; i++)
+                        for (int i = 0; i < LabelsDatabase.Columns.Count; i++)
                         {
-                            if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.Cells[i].Value.ToString()))
+                            if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.ItemArray[i].ToString()))
                             {
-                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.Cells[i].Value.ToString());
+                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
                             }
                         }
                     }
@@ -3150,8 +3301,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float y = 0;
-                    float.TryParse(textBox_move.Text, out y);
+                    float y = (float)numericUpDown_scale.Value;
                     templ.posY -= y;
                     Label[n] = templ;
                     k.Add(n);
@@ -3173,8 +3323,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_move.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     templ.posX -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3196,8 +3345,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float y = 0;
-                    float.TryParse(textBox_move.Text, out y);
+                    float y = (float)numericUpDown_scale.Value;
                     templ.posY += y;
                     Label[n] = templ;
                     k.Add(n);
@@ -3219,8 +3367,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_move.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     templ.posX += x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3242,8 +3389,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_scale.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     if (templ.objectType == LabelObject.text)
                     {
                         templ.fontSize += x;
@@ -3273,8 +3419,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_scale.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     if (templ.objectType == LabelObject.text)
                     {
                         templ.fontSize -= x;
@@ -3304,8 +3449,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_scale.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     templ.width += x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3327,8 +3471,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_scale.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     templ.width -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3350,8 +3493,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_scale.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     templ.height += x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3373,8 +3515,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = 0;
-                    float.TryParse(textBox_scale.Text, out x);
+                    float x = (float)numericUpDown_scale.Value;
                     templ.height -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3407,18 +3548,10 @@ namespace LabelPrint
             pictureBox_label.Image = LabelBmp;
         }
 
-        private void TextBox_move_Leave(object sender, EventArgs e)
-        {
-            float n = 0;
-            float.TryParse(textBox_move.Text, out n);
-            if (n <= 0) n = 1;
-            textBox_move.Text = n.ToString();
-        }
-
         private void TextBox_rangeFrom_Leave(object sender, EventArgs e)
         {
-            int n = 1;
-            int.TryParse(textBox_rangeFrom.Text, out n);
+            int.TryParse(textBox_rangeFrom.Text, out int n);
+            if (n < 1) textBox_rangeFrom.Text = "1";
             if (n >= 1) textBox_rangeFrom.Text = n.ToString();
         }
 
@@ -3465,14 +3598,6 @@ namespace LabelPrint
             }
         }
 
-        private void TextBox_scale_Leave(object sender, EventArgs e)
-        {
-            float n = 0;
-            float.TryParse(textBox_scale.Text, out n);
-            if (n <= 0) n = 1;
-            textBox_scale.Text = n.ToString();
-        }
-
         private void Button_printCurrent_Click(object sender, EventArgs e)
         {
             if (dataGridView_labels.CurrentRow.Index >= LabelsDatabase.Rows.Count) return;
@@ -3506,10 +3631,9 @@ namespace LabelPrint
 
         private void Button_printRange_Click(object sender, EventArgs e)
         {
-            int _pagesFrom = 0;
             int _pagesTo = LabelsDatabase.Rows.Count;
 
-            int.TryParse(textBox_rangeFrom.Text, out _pagesFrom);
+            int.TryParse(textBox_rangeFrom.Text, out int _pagesFrom);
             int.TryParse(textBox_rangeTo.Text, out _pagesTo);
             if (_pagesFrom < 1) _pagesFrom = 1;
             if (_pagesTo > LabelsDatabase.Rows.Count) _pagesTo = LabelsDatabase.Rows.Count;
