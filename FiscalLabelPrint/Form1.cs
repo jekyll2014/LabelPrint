@@ -7,6 +7,8 @@ using System.Drawing.Imaging;
 using System.Drawing.Printing;
 using System.Drawing.Text;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Windows.Forms;
 using ZXing;
@@ -16,48 +18,47 @@ namespace LabelPrint
 {
     public partial class Form1 : Form
     {
-        private const int labelObject = 0;
-        private const int textObject = 1;
-        private const int pictureObject = 2;
-        private const int barcodeObject = 3;
-        private const int line_coord_Object = 4;
-        private const int line_length_Object = 5;
-        private const int rectangleObject = 6;
-        private const int ellipseObject = 7;
-
-        private enum LabelObject
+        [DataContract]
+        public enum LabelObject
         {
-            label,
-            text,
-            picture,
-            barcode,
-            line_coord,
-            line_length,
-            rectangle,
-            ellipse,
+            [EnumMember] label,
+            [EnumMember] text,
+            [EnumMember] picture,
+            [EnumMember] barcode,
+            [EnumMember] line_coord,
+            [EnumMember] line_length,
+            [EnumMember] rectangle,
+            [EnumMember] ellipse,
         }
 
-        private struct Template
+        [DataContract]
+        public class Template
         {
-            public LabelObject objectType;
-            public Color bgColor;
-            public Color fgColor;
-            public float dpi;
-            public int codePage;
-            public float posX;
-            public float posY;
-            public float rotate;
-            public string content;
-            public float width;
-            public float height;
-            public bool transparent;
-            public BarcodeFormat barCodeFormat;
-            public float fontSize;
-            public FontStyle fontStyle;
-            public string fontName;
-            public string addFeature;
-            public float lineLength;
-            public float lineWidth;
+            [DataMember] public LabelObject objectType;
+            [DataMember(EmitDefaultValue = false)] public Color bgColor;
+            [DataMember(EmitDefaultValue = false)] public Color fgColor;
+            [DataMember(EmitDefaultValue = false)] public float dpi;
+            [DataMember(EmitDefaultValue = false)] public int codePage;
+
+            [DataMember] public float posX;
+            [DataMember] public float posY;
+            [DataMember(EmitDefaultValue = false)] public float width;
+            [DataMember(EmitDefaultValue = false)] public float height;
+            [DataMember(EmitDefaultValue = false)] public float rotate;
+
+            [DataMember(EmitDefaultValue = false)] public string content;
+
+            [DataMember(EmitDefaultValue = false)] public bool transparent;
+
+            [DataMember(EmitDefaultValue = false)] public float fontSize;
+            [DataMember(EmitDefaultValue = false)] public FontStyle fontStyle;
+            [DataMember(EmitDefaultValue = false)] public string fontName;
+
+            [DataMember(EmitDefaultValue = false)] public BarcodeFormat barCodeFormat;
+            [DataMember(EmitDefaultValue = false)] public string addFeature;
+
+            [DataMember(EmitDefaultValue = false)] public float lineLength;
+            [DataMember(EmitDefaultValue = false)] public float lineWidth;
         }
 
         private List<Template> Label = new List<Template>();
@@ -90,23 +91,25 @@ namespace LabelPrint
             }
             comboBox_object.Items.AddRange(Enum.GetNames(typeof(LabelObject)));
 
-            Template init_label = new Template
-            {
-                objectType = LabelObject.label,
-                bgColor = Color.White,
-                fgColor = Color.Black,
-                width = 100,
-                height = 100,
-                dpi = 300,
-                codePage = Properties.Settings.Default.CodePage
-            };
+            Template init_label = new Template();
+            init_label.objectType = LabelObject.label;
+            init_label.bgColor = Color.White;
+            init_label.fgColor = Color.Black;
+            init_label.dpi = 300;
+            init_label.codePage = Properties.Settings.Default.CodePage;
+            init_label.width = 1;
+            init_label.height = 1;
             Label.Add(init_label);
 
             bcFeatures.AddRange(Enum.GetNames(typeof(EncodeHintType)));
             listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = 0;
             comboBox_units.SelectedIndex = 0;
-            textBox_dpi.Text = Label[0].dpi.ToString("F4");
+            textBox_dpi.Text = Label[0].dpi.ToString();
+            units[1] = (float)(Label[0].dpi / 25.4);
+            units[2] = (float)(Label[0].dpi / 2.54);
+            units[3] = Label[0].dpi;
+            mult = units[comboBox_units.SelectedIndex];
 
             comboBox_encoding.Items.Clear();
             comboBox_encoding.Items.AddRange(GetEncodingList());
@@ -120,8 +123,6 @@ namespace LabelPrint
                     break;
                 }
             }
-
-            TextBox_dpi_Leave(this, EventArgs.Empty);
         }
 
         //command line example: LabelPrint.exe /t=template.csv /l=labels.csv /c /prn="CUSTOM VKP80 II" /p=3
@@ -243,7 +244,7 @@ namespace LabelPrint
                     cmdLinePrint = true;
                     //import template
                     path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
-                    Label = LoadCsvTemplate(templateFile, Label[0].codePage);
+                    Label = LoadTemplateFromCSV(templateFile, Label[0].codePage);
                     if (Label.Count <= 1)
                     {
                         Console.WriteLine("Incorrect template file.\r\n");
@@ -251,7 +252,7 @@ namespace LabelPrint
                     }
                     //import labels
                     path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
-                    LabelsDatabase = LoadCsvLabel(labelFile, Label[0].codePage, columnNames);
+                    LabelsDatabase = LoadLabelsFromCSV(labelFile, Label[0].codePage, columnNames);
                     if (LabelsDatabase.Rows.Count < 1)
                     {
                         Console.WriteLine("Incorrect label file.\r\n");
@@ -909,76 +910,18 @@ namespace LabelPrint
 
         #region file management
 
-        private DataTable LoadCsvLabel(string fileName, int codePage, bool createColumnsNames = false)
+        private List<Template> LoadTemplateFromJson(string fileName, int codePage)
         {
-            DataTable table = new DataTable();
-            List<string> inputStr = new List<string>();
-            try
-            {
-                inputStr.AddRange(File.ReadAllLines(fileName, Encoding.GetEncoding(codePage)));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error opening file:" + fileName + " : " + ex.Message);
-                return table;
-            }
+            List<Template> tmpLabel = new List<Template>();
 
-            if (inputStr.Count <= 0) return null;
-            //read headers
-            int n = 0;
-            if (createColumnsNames == true)
-            {
-                table.Columns.Clear();
-                //create and count columns and read headers
-                if (inputStr[0].Length != 0)
-                {
-                    string[] cells = inputStr[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
-                    for (int i = 0; i < cells.Length - 1; i++)
-                    {
-                        table.Columns.Add(cells[i]);
-                    }
-                }
-                n++;
-            }
-            else
-            {
-                //create 1st row and count columns
-                if (inputStr[0].Length != 0)
-                {
-                    string[] cells = inputStr[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
-                    DataRow row = table.NewRow();
-                    for (int i = 0; i < cells.Length - 1; i++)
-                    {
-                        table.Columns.Add(i.ToString());
-                        string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        if (tmp1 != "") row[i] = tmp1;
-                    }
-                    table.Rows.Add(row);
-                    n++;
-                }
-            }
+            byte[] inputData = File.ReadAllBytes(fileName);
+            tmpLabel = ImportJson(inputData);
 
-            //read CSV content string by string
-            for (; n < inputStr.Count; n++)
-            {
-                if (inputStr[n].ToString().Replace(Properties.Settings.Default.CSVdelimiter, ' ').Trim().TrimStart('\r').TrimStart('\n').TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').TrimEnd('\r').TrimEnd('\n') != "")
-                {
-                    string[] cells = inputStr[n].ToString().Split(Properties.Settings.Default.CSVdelimiter);
-                    DataRow row = table.NewRow();
-                    for (int i = 0; i < cells.Length - 1; i++)
-                    {
-                        //row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        //string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        //if (tmp1 != "") row[i] = tmp1;
-                        row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                    }
-                    table.Rows.Add(row);
-                }
-            }
-            return table;
+            if (tmpLabel.Count > 0) return tmpLabel;
+            else return Label;
         }
 
-        private List<Template> LoadCsvTemplate(string fileName, int codePage)
+        private List<Template> LoadTemplateFromCSV(string fileName, int codePage)
         {
             List<Template> tmpLabel = new List<Template>();
             string[] inputStr = File.ReadAllLines(fileName, Encoding.GetEncoding(codePage));
@@ -1051,7 +994,11 @@ namespace LabelPrint
                                 MessageBox.Show("[Line " + i.ToString() + "] Incorrect resolution: " + templ.dpi.ToString());
                                 templ.height = 1;
                             }
-                            textBox_dpi.Text = templ.dpi.ToString("F4");
+                            textBox_dpi.Text = templ.dpi.ToString();
+                            units[1] = (float)(Label[0].dpi / 25.4);
+                            units[2] = (float)(Label[0].dpi / 2.54);
+                            units[3] = Label[0].dpi;
+                            mult = units[comboBox_units.SelectedIndex];
 
                             int.TryParse(cells[6], out templ.codePage);
                             if (templ.codePage == 0) templ.codePage = codePage;
@@ -1194,7 +1141,7 @@ namespace LabelPrint
                                 float.TryParse(cells[4], out templ.rotate);
 
                                 templ.content = cells[5];
-                                if (!File.Exists(path + templ.content))
+                                if (templ.content != null && templ.content != "" && !File.Exists(path + templ.content))
                                 //if (!File.Exists(@templ.content))
                                 {
                                     MessageBox.Show("[Line " + i.ToString() + "] File not exist: " + path + templ.content);
@@ -1647,6 +1594,24 @@ namespace LabelPrint
             else return Label;
         }
 
+        private bool SaveTemplateToJson(string fileName, List<Template> _label, int codePage)
+        {
+            bool err = true;
+            StringBuilder output = new StringBuilder();
+            output.Append(ExportJson(_label));
+            try
+            {
+                File.WriteAllBytes(fileName, Encoding.GetEncoding(codePage).GetBytes(output.ToString()));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
+                err = false;
+            }
+
+            return err;
+        }
+
         private bool SaveTemplateToCSV(string fileName, List<Template> _label, int codePage)
         {
             StringBuilder output = new StringBuilder();
@@ -1762,13 +1727,82 @@ namespace LabelPrint
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
+                MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
                 err = false;
             }
             return err;
         }
 
-        private bool SaveTableToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
+        private DataTable LoadLabelsFromCSV(string fileName, int codePage, bool createColumnsNames = false)
+        {
+            DataTable table = new DataTable();
+            List<string> inputStr = new List<string>();
+            try
+            {
+                inputStr.AddRange(File.ReadAllLines(fileName, Encoding.GetEncoding(codePage)));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening file:" + fileName + " : " + ex.Message);
+                return table;
+            }
+
+            if (inputStr.Count <= 0) return null;
+            //read headers
+            int n = 0;
+            if (createColumnsNames == true)
+            {
+                table.Columns.Clear();
+                //create and count columns and read headers
+                if (inputStr[0].Length != 0)
+                {
+                    string[] cells = inputStr[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
+                    for (int i = 0; i < cells.Length - 1; i++)
+                    {
+                        table.Columns.Add(cells[i]);
+                    }
+                }
+                n++;
+            }
+            else
+            {
+                //create 1st row and count columns
+                if (inputStr[0].Length != 0)
+                {
+                    string[] cells = inputStr[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
+                    DataRow row = table.NewRow();
+                    for (int i = 0; i < cells.Length - 1; i++)
+                    {
+                        table.Columns.Add(i.ToString());
+                        string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        if (tmp1 != "") row[i] = tmp1;
+                    }
+                    table.Rows.Add(row);
+                    n++;
+                }
+            }
+
+            //read CSV content string by string
+            for (; n < inputStr.Count; n++)
+            {
+                if (inputStr[n].ToString().Replace(Properties.Settings.Default.CSVdelimiter, ' ').Trim().TrimStart('\r').TrimStart('\n').TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').TrimEnd('\r').TrimEnd('\n') != "")
+                {
+                    string[] cells = inputStr[n].ToString().Split(Properties.Settings.Default.CSVdelimiter);
+                    DataRow row = table.NewRow();
+                    for (int i = 0; i < cells.Length - 1; i++)
+                    {
+                        //row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        //string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        //if (tmp1 != "") row[i] = tmp1;
+                        row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                    }
+                    table.Rows.Add(row);
+                }
+            }
+            return table;
+        }
+
+        private bool SaveLabelsToCSV(string fileName, DataTable dataTable, bool saveColumnNames, char csvDivider = ';', int codePage = -1)
         {
             if (codePage == -1) codePage = Encoding.UTF8.CodePage;
             StringBuilder output = new StringBuilder();
@@ -1794,10 +1828,52 @@ namespace LabelPrint
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
+                MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName + ": " + ex.Message);
                 err = false;
             }
             return err;
+        }
+
+        private string ExportJson(List<Template> data)
+        {
+            string json = "";
+            MemoryStream stream1 = new MemoryStream();
+            DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(List<Template>));
+
+            try
+            {
+                jsonSerializer.WriteObject(stream1, data);
+                stream1.Position = 0;
+                StreamReader streamReader = new StreamReader(stream1);
+                json = streamReader.ReadToEnd();
+                //stream1.Close();
+                stream1.Dispose();
+            }
+            catch (Exception Ex)
+            {
+                MessageBox.Show("JSON serialization error: " + Ex.Message + "\r\n", "ToDoServer error message");
+            }
+            return json;
+        }
+
+        private List<Template> ImportJson(byte[] data)
+        {
+            List<Template> n = new List<Template>();
+            MemoryStream stream1 = new MemoryStream(data);
+            DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(List<Template>));
+            try
+            {
+                stream1.Position = 0;
+                n = (List<Template>)jsonSerializer.ReadObject(stream1);
+                //stream1.Close();
+                stream1.Dispose();
+            }
+            catch (Exception Ex)
+            {
+                MessageBox.Show("JSON parse error: " + Ex.Message + "\r\n", "ToDoServer error message");
+                n = null;
+            }
+            return n;
         }
 
         #endregion
@@ -2058,6 +2134,7 @@ namespace LabelPrint
             Template templ = new Template();
             if (n < 0) return templ;
 
+            //create new object
             if (n == listBox_objects.Items.Count - 1)
             {
                 templ.objectType = (LabelObject)comboBox_object.SelectedIndex;
@@ -2092,6 +2169,7 @@ namespace LabelPrint
                 templ.lineLength = 1;
                 templ.lineWidth = 1;
             }
+            //edit existing object
             else
             {
                 templ = Label[n];
@@ -2844,40 +2922,58 @@ namespace LabelPrint
         private void Button_importLabels_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
-            openFileDialog1.Title = "Open labels .CSV database";
+            openFileDialog1.Title = "Open labels .CSV file";
             openFileDialog1.DefaultExt = "csv";
-            openFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            openFileDialog1.Filter = "CSV files|*.csv";
             openFileDialog1.ShowDialog();
         }
 
         private void Button_importTemplate_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
-            openFileDialog1.Title = "Open template .CSV file";
+            openFileDialog1.Title = "Open template .CSV/.Json file";
             openFileDialog1.DefaultExt = "csv";
-            openFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            openFileDialog1.Filter = "CSV files|*.csv|Json files|*.json";
             openFileDialog1.ShowDialog();
         }
 
         private void OpenFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (openFileDialog1.Title == "Open template .CSV file")
+            if (openFileDialog1.Title == "Open template .CSV/.Json file")
             {
                 dataGridView_labels.DataSource = null;
                 LabelsDatabase.Clear();
                 LabelsDatabase.Columns.Clear();
                 LabelsDatabase.Rows.Clear();
                 textBox_labelsName.Clear();
-                //Label.Clear();
-                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                Label = LoadCsvTemplate(openFileDialog1.FileName, Label[0].codePage);
+                if (openFileDialog1.FileName.Contains("\\")) path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                else path = "";
 
-                TextBox_dpi_Leave(this, EventArgs.Empty);
+                if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".json"))
+                {
+                    Label = LoadTemplateFromJson(openFileDialog1.FileName, Label[0].codePage);
+                }
+                else if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".csv"))
+                {
+                    Label = LoadTemplateFromCSV(openFileDialog1.FileName, Label[0].codePage);
+                }
+                else
+                {
+                    MessageBox.Show("Incorrect file extension: " + openFileDialog1.FileName);
+                }
+
+                units[1] = (float)(Label[0].dpi / 25.4);
+                units[2] = (float)(Label[0].dpi / 2.54);
+                units[3] = Label[0].dpi;
+                mult = units[comboBox_units.SelectedIndex];
+
                 button_importLabels.Enabled = true;
                 LabelBmp = GenerateLabel(Label, LabelsDatabase, -1, LabelBmp);
                 pictureBox_label.Image = LabelBmp;
 
-                textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                if (openFileDialog1.FileName.Contains("\\")) textBox_templateName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                else textBox_templateName.Text = openFileDialog1.FileName;
+
                 //save path to template
                 //create colums and fill 1 row with default values
                 for (int i = 1; i < Label.Count; i++)
@@ -2900,12 +2996,13 @@ namespace LabelPrint
                 SetRowNumber(dataGridView_labels);
                 TabControl1_SelectedIndexChanged(this, EventArgs.Empty);
             }
-            else if (openFileDialog1.Title == "Open labels .CSV database")
+            else if (openFileDialog1.Title == "Open labels .CSV file")
             {
                 dataGridView_labels.DataSource = null;
 
-                path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                LabelsDatabase = LoadCsvLabel(openFileDialog1.FileName, Label[0].codePage, checkBox_columnNames.Checked);
+                if (openFileDialog1.FileName.Contains("\\")) path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                else path = "";
+                LabelsDatabase = LoadLabelsFromCSV(openFileDialog1.FileName, Label[0].codePage, checkBox_columnNames.Checked);
 
                 if (LabelsDatabase.Rows.Count > 0)
                 {
@@ -2916,7 +3013,7 @@ namespace LabelPrint
                     {
                         for (int i = 0; i < LabelsDatabase.Columns.Count; i++)
                         {
-                            if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.ItemArray[i].ToString()))
+                            if (Label[i + 1].objectType == LabelObject.picture && row.ItemArray[i].ToString() != null && row.ItemArray[i].ToString() != "" && !File.Exists(path + row.ItemArray[i].ToString()))
                             {
                                 MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
                             }
@@ -2935,21 +3032,24 @@ namespace LabelPrint
                     return;
                 }
                 if (dataGridView_labels.Columns.Count != Label.Count - 1)
+                {
                     MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + dataGridView_labels.Columns.Count.ToString());
+                }
                 dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                 dataGridView_labels.Rows[0].Selected = true;
                 LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
                 pictureBox_label.Image = LabelBmp;
-                textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                if (openFileDialog1.FileName.Contains("\\")) textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                else textBox_labelsName.Text = openFileDialog1.FileName;
                 //save path to template
             }
         }
 
         private void Button_saveTemplate_Click(object sender, EventArgs e)
         {
-            SaveFileDialog1.Title = "Save template as .CSV...";
+            SaveFileDialog1.Title = "Save template as .CSV/.Json...";
             SaveFileDialog1.DefaultExt = "csv";
-            SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
+            SaveFileDialog1.Filter = "CSV files|*.csv|Json files|*.json";
             if (textBox_templateName.Text == "") SaveFileDialog1.FileName = "template_" + DateTime.Today.ToShortDateString().Replace("/", "_") + ".csv";
             else SaveFileDialog1.FileName = textBox_templateName.Text;
             SaveFileDialog1.ShowDialog();
@@ -2957,10 +3057,15 @@ namespace LabelPrint
 
         private void Button_saveLabel_Click(object sender, EventArgs e)
         {
-            SaveFileDialog1.Title = "Save label data as .CSV...";
+            SaveFileDialog1.Title = "Save labels as .CSV...";
             SaveFileDialog1.DefaultExt = "csv";
-            SaveFileDialog1.Filter = "CSV files|*.csv|All files|*.*";
-            SaveFileDialog1.FileName = "label_" + textBox_templateName.Text;
+            SaveFileDialog1.Filter = "CSV files|*.csv";
+            if (textBox_labelsName.Text == "")
+            {
+                SaveFileDialog1.FileName = "label_" + textBox_templateName.Text;
+                if (SaveFileDialog1.FileName.Trim().ToLower().EndsWith(".json")) SaveFileDialog1.FileName = SaveFileDialog1.FileName.Replace(".json", ".csv");
+            }
+            else SaveFileDialog1.FileName = textBox_labelsName.Text;
             SaveFileDialog1.ShowDialog();
         }
 
@@ -2968,13 +3073,20 @@ namespace LabelPrint
         {
             StringBuilder output = new StringBuilder();
             char div = Properties.Settings.Default.CSVdelimiter;
-            if (SaveFileDialog1.Title == "Save template as .CSV...")
+            if (SaveFileDialog1.Title == "Save template as .CSV/.Json...")
             {
-                if (!SaveTemplateToCSV(SaveFileDialog1.FileName, Label, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                if (SaveFileDialog1.FileName.Trim().ToLower().EndsWith(".json"))
+                {
+                    if (!SaveTemplateToJson(SaveFileDialog1.FileName, Label, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                }
+                else if (SaveFileDialog1.FileName.Trim().ToLower().EndsWith(".csv"))
+                {
+                    if (!SaveTemplateToCSV(SaveFileDialog1.FileName, Label, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                }
             }
-            else if (SaveFileDialog1.Title == "Save label data as .CSV...")
+            else if (SaveFileDialog1.Title == "Save labels as .CSV...")
             {
-                if (!SaveTableToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
+                if (!SaveLabelsToCSV(SaveFileDialog1.FileName, LabelsDatabase, checkBox_columnNames.Checked, Properties.Settings.Default.CSVdelimiter, Label[0].codePage)) MessageBox.Show("Error writing to file " + SaveFileDialog1.FileName);
             }
         }
 
@@ -3050,7 +3162,7 @@ namespace LabelPrint
                         {
                             for (int i = 0; i < LabelsDatabase.Columns.Count; i++)
                             {
-                                if (Label[i + 1].objectType == LabelObject.picture && !File.Exists(path + row.ItemArray[i].ToString()))
+                                if (Label[i + 1].objectType == LabelObject.picture && row.ItemArray[i].ToString() != null && row.ItemArray[i].ToString() != "" && !File.Exists(path + row.ItemArray[i].ToString()))
                                 {
                                     MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
                                 }
@@ -3102,14 +3214,15 @@ namespace LabelPrint
 
         private void Button_apply_Click(object sender, EventArgs e)
         {
-            if (listBox_objects.SelectedIndex < 0) return;
+            if (listBox_objects.SelectedIndex < 0 || comboBox_object.SelectedIndex == (int)LabelObject.label) return;
             listBox_objects.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             int n = listBox_objects.SelectedIndex;
             Template templ = CollectObjectFromGUI(n);
 
             if (n >= Label.Count)
             {
-                if (comboBox_object.SelectedIndex > 0) Label.Add(templ);
+                Label.Add(templ);
+                _templateChanged = true;
             }
             else
             {
@@ -3122,7 +3235,6 @@ namespace LabelPrint
             listBox_objects.Items.Clear();
             listBox_objects.Items.AddRange(GetObjectsList());
             listBox_objects.SelectedIndex = n;
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objects.SelectedIndex);
             listBox_objects.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3191,10 +3303,9 @@ namespace LabelPrint
         private void TextBox_dpi_Leave(object sender, EventArgs e)
         {
             Template templ = Label[0];
-            float diff = 0;
-
+            float diff = templ.dpi;
             float.TryParse(textBox_dpi.Text, out templ.dpi);
-            diff = templ.dpi / Label[0].dpi;
+            diff = templ.dpi / diff;
             Label[0] = templ;
             textBox_dpi.Text = Label[0].dpi.ToString();
             units[1] = (float)(Label[0].dpi / 25.4);
@@ -3218,7 +3329,7 @@ namespace LabelPrint
             pictureBox_label.Image = LabelBmp;
             pictureBox_label.Width = LabelBmp.Width;
             pictureBox_label.Height = LabelBmp.Height;
-            _templateChanged = true;
+            //_templateChanged = true;
             ShowObjectInGUI(listBox_objects.SelectedIndex);
         }
 
@@ -3310,7 +3421,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3332,7 +3442,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3354,7 +3463,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3376,7 +3484,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3406,7 +3513,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3436,7 +3542,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3458,7 +3563,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3480,7 +3584,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3502,7 +3605,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
@@ -3524,7 +3626,6 @@ namespace LabelPrint
             listBox_objectsMulti.SelectedIndexChanged -= new EventHandler(ListBox_objects_SelectedIndexChanged);
             listBox_objectsMulti.SelectedIndex = -1;
             foreach (int n in k) listBox_objectsMulti.SetSelected(n, true);
-            _templateChanged = true;
             ShowObjectInGUI(listBox_objectsMulti.SelectedIndex);
             listBox_objectsMulti.SelectedIndexChanged += new EventHandler(ListBox_objects_SelectedIndexChanged);
         }
