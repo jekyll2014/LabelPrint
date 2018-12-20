@@ -31,7 +31,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.splitContainer_horizontal = new System.Windows.Forms.SplitContainer();
             this.splitContainer_vertical = new System.Windows.Forms.SplitContainer();
             this.panel_picture = new System.Windows.Forms.Panel();
@@ -50,6 +50,7 @@
             this.textBox_saveFileName = new System.Windows.Forms.TextBox();
             this.textBox_rangeTo = new System.Windows.Forms.TextBox();
             this.tabPage_edit = new System.Windows.Forms.TabPage();
+            this.textBox_posX = new System.Windows.Forms.TextBox();
             this.listBox_objects = new System.Windows.Forms.ListBox();
             this.label_content = new System.Windows.Forms.Label();
             this.label_fontSize = new System.Windows.Forms.Label();
@@ -63,7 +64,11 @@
             this.label_objectColor = new System.Windows.Forms.Label();
             this.label_backgroundColor = new System.Windows.Forms.Label();
             this.checkBox_fill = new System.Windows.Forms.CheckBox();
+            this.textBox_height = new System.Windows.Forms.TextBox();
             this.textBox_fontSize = new System.Windows.Forms.TextBox();
+            this.textBox_rotate = new System.Windows.Forms.TextBox();
+            this.textBox_width = new System.Windows.Forms.TextBox();
+            this.textBox_posY = new System.Windows.Forms.TextBox();
             this.textBox_content = new System.Windows.Forms.TextBox();
             this.comboBox_objectColor = new System.Windows.Forms.ComboBox();
             this.comboBox_fontStyle = new System.Windows.Forms.ComboBox();
@@ -110,11 +115,6 @@
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.SaveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.textBox_rotate = new System.Windows.Forms.TextBox();
-            this.textBox_height = new System.Windows.Forms.TextBox();
-            this.textBox_width = new System.Windows.Forms.TextBox();
-            this.textBox_posY = new System.Windows.Forms.TextBox();
-            this.textBox_posX = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer_horizontal)).BeginInit();
             this.splitContainer_horizontal.Panel1.SuspendLayout();
             this.splitContainer_horizontal.Panel2.SuspendLayout();
@@ -403,6 +403,15 @@
             this.tabPage_edit.Text = "Edit template";
             this.tabPage_edit.UseVisualStyleBackColor = true;
             // 
+            // textBox_posX
+            // 
+            this.textBox_posX.Location = new System.Drawing.Point(108, 78);
+            this.textBox_posX.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_posX.Name = "textBox_posX";
+            this.textBox_posX.Size = new System.Drawing.Size(67, 20);
+            this.textBox_posX.TabIndex = 7;
+            this.textBox_posX.Leave += new System.EventHandler(this.TextBox_posX_Leave);
+            // 
             // listBox_objects
             // 
             this.listBox_objects.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -524,6 +533,15 @@
             this.checkBox_fill.Text = "Transparent";
             this.checkBox_fill.UseVisualStyleBackColor = true;
             // 
+            // textBox_height
+            // 
+            this.textBox_height.Location = new System.Drawing.Point(108, 195);
+            this.textBox_height.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_height.Name = "textBox_height";
+            this.textBox_height.Size = new System.Drawing.Size(67, 20);
+            this.textBox_height.TabIndex = 3;
+            this.textBox_height.Leave += new System.EventHandler(this.TextBox_height_Leave);
+            // 
             // textBox_fontSize
             // 
             this.textBox_fontSize.Location = new System.Drawing.Point(181, 233);
@@ -531,6 +549,33 @@
             this.textBox_fontSize.Name = "textBox_fontSize";
             this.textBox_fontSize.Size = new System.Drawing.Size(140, 20);
             this.textBox_fontSize.TabIndex = 3;
+            // 
+            // textBox_rotate
+            // 
+            this.textBox_rotate.Location = new System.Drawing.Point(108, 233);
+            this.textBox_rotate.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_rotate.Name = "textBox_rotate";
+            this.textBox_rotate.Size = new System.Drawing.Size(67, 20);
+            this.textBox_rotate.TabIndex = 3;
+            this.textBox_rotate.Leave += new System.EventHandler(this.TextBox_rotate_Leave);
+            // 
+            // textBox_width
+            // 
+            this.textBox_width.Location = new System.Drawing.Point(108, 156);
+            this.textBox_width.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_width.Name = "textBox_width";
+            this.textBox_width.Size = new System.Drawing.Size(67, 20);
+            this.textBox_width.TabIndex = 3;
+            this.textBox_width.Leave += new System.EventHandler(this.TextBox_width_Leave);
+            // 
+            // textBox_posY
+            // 
+            this.textBox_posY.Location = new System.Drawing.Point(108, 117);
+            this.textBox_posY.MinimumSize = new System.Drawing.Size(60, 4);
+            this.textBox_posY.Name = "textBox_posY";
+            this.textBox_posY.Size = new System.Drawing.Size(67, 20);
+            this.textBox_posY.TabIndex = 3;
+            this.textBox_posY.Leave += new System.EventHandler(this.TextBox_posY_Leave);
             // 
             // textBox_content
             // 
@@ -978,24 +1023,28 @@
             // 
             this.dataGridView_labels.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
             this.dataGridView_labels.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.DisplayedCells;
+            this.dataGridView_labels.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             this.dataGridView_labels.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView_labels.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView_labels.Location = new System.Drawing.Point(0, 0);
             this.dataGridView_labels.MultiSelect = false;
             this.dataGridView_labels.Name = "dataGridView_labels";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.Format = "N0";
-            dataGridViewCellStyle2.NullValue = null;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
-            this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.Format = "N0";
+            dataGridViewCellStyle1.NullValue = null;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView_labels.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            this.dataGridView_labels.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dataGridView_labels.Size = new System.Drawing.Size(610, 186);
             this.dataGridView_labels.TabIndex = 0;
+            this.dataGridView_labels.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView_labels_CellClick);
+            this.dataGridView_labels.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView_labels_CellEndEdit);
+            this.dataGridView_labels.RowHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dataGridView_labels_RowHeaderMouseClick);
             this.dataGridView_labels.SelectionChanged += new System.EventHandler(this.DataGridView_labels_SelectionChanged);
             // 
             // openFileDialog1
@@ -1015,51 +1064,6 @@
             // 
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
-            // 
-            // textBox_rotate
-            // 
-            this.textBox_rotate.Location = new System.Drawing.Point(108, 233);
-            this.textBox_rotate.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_rotate.Name = "textBox_rotate";
-            this.textBox_rotate.Size = new System.Drawing.Size(67, 20);
-            this.textBox_rotate.TabIndex = 3;
-            this.textBox_rotate.Leave += new System.EventHandler(this.TextBox_rotate_Leave);
-            // 
-            // textBox_height
-            // 
-            this.textBox_height.Location = new System.Drawing.Point(108, 195);
-            this.textBox_height.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_height.Name = "textBox_height";
-            this.textBox_height.Size = new System.Drawing.Size(67, 20);
-            this.textBox_height.TabIndex = 3;
-            this.textBox_height.Leave += new System.EventHandler(this.TextBox_height_Leave);
-            // 
-            // textBox_width
-            // 
-            this.textBox_width.Location = new System.Drawing.Point(108, 156);
-            this.textBox_width.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_width.Name = "textBox_width";
-            this.textBox_width.Size = new System.Drawing.Size(67, 20);
-            this.textBox_width.TabIndex = 3;
-            this.textBox_width.Leave += new System.EventHandler(this.TextBox_width_Leave);
-            // 
-            // textBox_posY
-            // 
-            this.textBox_posY.Location = new System.Drawing.Point(108, 117);
-            this.textBox_posY.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_posY.Name = "textBox_posY";
-            this.textBox_posY.Size = new System.Drawing.Size(67, 20);
-            this.textBox_posY.TabIndex = 3;
-            this.textBox_posY.Leave += new System.EventHandler(this.TextBox_posY_Leave);
-            // 
-            // textBox_posX
-            // 
-            this.textBox_posX.Location = new System.Drawing.Point(108, 78);
-            this.textBox_posX.MinimumSize = new System.Drawing.Size(60, 4);
-            this.textBox_posX.Name = "textBox_posX";
-            this.textBox_posX.Size = new System.Drawing.Size(67, 20);
-            this.textBox_posX.TabIndex = 7;
-            this.textBox_posX.Leave += new System.EventHandler(this.TextBox_posX_Leave);
             // 
             // Form1
             // 

@@ -91,14 +91,16 @@ namespace LabelPrint
             }
             comboBox_object.Items.AddRange(Enum.GetNames(typeof(LabelObject)));
 
-            Template init_label = new Template();
-            init_label.objectType = LabelObject.label;
-            init_label.bgColor = Color.White;
-            init_label.fgColor = Color.Black;
-            init_label.dpi = 300;
-            init_label.codePage = Properties.Settings.Default.CodePage;
-            init_label.width = 1;
-            init_label.height = 1;
+            Template init_label = new Template
+            {
+                objectType = LabelObject.label,
+                bgColor = Color.White,
+                fgColor = Color.Black,
+                dpi = 300,
+                codePage = Properties.Settings.Default.CodePage,
+                width = 1,
+                height = 1
+            };
             Label.Add(init_label);
 
             bcFeatures.AddRange(Enum.GetNames(typeof(EncodeHintType)));
@@ -243,21 +245,57 @@ namespace LabelPrint
                 {
                     cmdLinePrint = true;
                     //import template
-                    path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
-                    Label = LoadTemplateFromCSV(templateFile, Label[0].codePage);
+                    if (templateFile.Contains("\\")) path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
+                    else path = "";
+
+                    if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".json"))
+                    {
+                        Label = LoadTemplateFromJson(openFileDialog1.FileName, Label[0].codePage);
+                    }
+                    else if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".csv"))
+                    {
+                        Label = LoadTemplateFromCSV(openFileDialog1.FileName, Label[0].codePage);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Incorrect file extension: " + openFileDialog1.FileName);
+                        Exit();
+                    }
                     if (Label.Count <= 1)
                     {
                         Console.WriteLine("Incorrect template file.\r\n");
                         Exit();
                     }
+
                     //import labels
-                    path = templateFile.Substring(0, templateFile.LastIndexOf('\\') + 1);
-                    LabelsDatabase = LoadLabelsFromCSV(labelFile, Label[0].codePage, columnNames);
-                    if (LabelsDatabase.Rows.Count < 1)
+                    if (labelFile.Contains("\\")) path = labelFile.Substring(0, labelFile.LastIndexOf('\\') + 1);
+                    else path = "";
+                    DataTable tmpDb = LoadLabelsFromCSV(labelFile, Label[0].codePage, columnNames);
+
+                    if (tmpDb.Rows.Count <= 0)
                     {
-                        Console.WriteLine("Incorrect label file.\r\n");
+                        Console.WriteLine("Error: No label data loaded.");
                         Exit();
                     }
+                    if (tmpDb.Columns.Count != Label.Count - 1)
+                    {
+                        Console.WriteLine("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + tmpDb.Columns.Count.ToString());
+                        Exit();
+                    }
+
+                    //check for picture file existence
+                    foreach (DataRow row in tmpDb.Rows)
+                    {
+                        for (int i = 0; i < tmpDb.Columns.Count; i++)
+                        {
+                            if (Label[i + 1].objectType == LabelObject.picture && row.ItemArray[i].ToString() != null && row.ItemArray[i].ToString() != "" && !File.Exists(path + row.ItemArray[i].ToString()))
+                            {
+                                Console.WriteLine("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
+                                Exit();
+                            }
+                        }
+                    }
+                    LabelsDatabase = tmpDb;
 
                     if (printAll)
                     {
@@ -1770,15 +1808,15 @@ namespace LabelPrint
                 if (inputStr[0].Length != 0)
                 {
                     string[] cells = inputStr[0].ToString().Split(Properties.Settings.Default.CSVdelimiter);
-                    DataRow row = table.NewRow();
+                    //DataRow row = table.NewRow();
                     for (int i = 0; i < cells.Length - 1; i++)
                     {
                         table.Columns.Add(i.ToString());
-                        string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        if (tmp1 != "") row[i] = tmp1;
+                        //string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        //if (tmp1 != "") row[i] = tmp1;
                     }
-                    table.Rows.Add(row);
-                    n++;
+                    //table.Rows.Add(row);
+                    //n++;
                 }
             }
 
@@ -1791,10 +1829,10 @@ namespace LabelPrint
                     DataRow row = table.NewRow();
                     for (int i = 0; i < cells.Length - 1; i++)
                     {
-                        //row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        //string tmp1 = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
-                        //if (tmp1 != "") row[i] = tmp1;
-                        row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r').Trim();
+                        if (Label[i + 1].objectType == LabelObject.barcode || Label[i + 1].objectType == LabelObject.picture || Label[i + 1].objectType == LabelObject.text)
+                        {
+                            row[i] = cells[i].TrimStart('\r').TrimStart('\n').TrimEnd('\n').TrimEnd('\r');
+                        }
                     }
                     table.Rows.Add(row);
                 }
@@ -2397,7 +2435,9 @@ namespace LabelPrint
             }
             else
             {
+                comboBox_object.Enabled = false;
                 comboBox_object.SelectedItem = Label[n].objectType;
+
                 // label; [bgColor]; [objectColor]; width; height;
                 if (Label[n].objectType == LabelObject.label)
                 {
@@ -2998,50 +3038,49 @@ namespace LabelPrint
             }
             else if (openFileDialog1.Title == "Open labels .CSV file")
             {
-                dataGridView_labels.DataSource = null;
-
                 if (openFileDialog1.FileName.Contains("\\")) path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 else path = "";
-                LabelsDatabase = LoadLabelsFromCSV(openFileDialog1.FileName, Label[0].codePage, checkBox_columnNames.Checked);
+                DataTable tmpDb = LoadLabelsFromCSV(openFileDialog1.FileName, Label[0].codePage, checkBox_columnNames.Checked);
 
-                if (LabelsDatabase.Rows.Count > 0)
-                {
-                    dataGridView_labels.DataSource = LabelsDatabase;
-                    foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                    //check for picture file existence
-                    foreach (DataRow row in LabelsDatabase.Rows)
-                    {
-                        for (int i = 0; i < LabelsDatabase.Columns.Count; i++)
-                        {
-                            if (Label[i + 1].objectType == LabelObject.picture && row.ItemArray[i].ToString() != null && row.ItemArray[i].ToString() != "" && !File.Exists(path + row.ItemArray[i].ToString()))
-                            {
-                                MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
-                            }
-                        }
-                    }
-                    button_printCurrent.Enabled = true;
-                    button_printAll.Enabled = true;
-                    button_printRange.Enabled = true;
-                    textBox_rangeFrom.Text = "0";
-                    textBox_rangeTo.Text = (LabelsDatabase.Rows.Count).ToString();
-                    SetRowNumber(dataGridView_labels);
-                }
-                else
+                if (tmpDb.Rows.Count <= 0)
                 {
                     MessageBox.Show("Error: No label data loaded.");
                     return;
                 }
-                if (dataGridView_labels.Columns.Count != Label.Count - 1)
+                if (tmpDb.Columns.Count != Label.Count - 1)
                 {
-                    MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + dataGridView_labels.Columns.Count.ToString());
+                    MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + tmpDb.Columns.Count.ToString());
+                    return;
                 }
+
+                //check for picture file existence
+                foreach (DataRow row in tmpDb.Rows)
+                {
+                    for (int i = 0; i < tmpDb.Columns.Count; i++)
+                    {
+                        if (Label[i + 1].objectType == LabelObject.picture && row.ItemArray[i].ToString() != null && row.ItemArray[i].ToString() != "" && !File.Exists(path + row.ItemArray[i].ToString()))
+                        {
+                            MessageBox.Show("[Line " + (i + 1).ToString() + "] File not exist: " + path + row.ItemArray[i].ToString());
+                        }
+                    }
+                }
+
+                LabelsDatabase = tmpDb;
+                dataGridView_labels.DataSource = LabelsDatabase;
+                foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                button_printCurrent.Enabled = true;
+                button_printAll.Enabled = true;
+                button_printRange.Enabled = true;
+                textBox_rangeFrom.Text = "0";
+                textBox_rangeTo.Text = (LabelsDatabase.Rows.Count).ToString();
+                SetRowNumber(dataGridView_labels);
                 dataGridView_labels.CurrentCell = dataGridView_labels.Rows[0].Cells[0];
                 dataGridView_labels.Rows[0].Selected = true;
                 LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
                 pictureBox_label.Image = LabelBmp;
                 if (openFileDialog1.FileName.Contains("\\")) textBox_labelsName.Text = openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 else textBox_labelsName.Text = openFileDialog1.FileName;
-                //save path to template
+
             }
         }
 
@@ -3117,6 +3156,20 @@ namespace LabelPrint
             {
                 LabelBmp = GenerateLabel(Label, LabelsDatabase, dataGridView_labels.CurrentCell.RowIndex, LabelBmp);
                 pictureBox_label.Image = LabelBmp;
+
+                if (tabControl1.SelectedIndex == 1 || tabControl1.SelectedIndex == 2)
+                {
+                    int n = dataGridView_labels.CurrentCell.ColumnIndex;
+                    if (n >= 0)
+                    {
+                        n++;
+                        if (tabControl1.SelectedIndex == 1) listBox_objects.SelectedIndex = n;
+                        else
+                        {
+                            listBox_objectsMulti.SetSelected(n, !listBox_objectsMulti.GetSelected(n));
+                        }
+                    }
+                }
             }
         }
 
@@ -3833,6 +3886,25 @@ namespace LabelPrint
                     listBox_objectsMulti.SetSelected(n, !listBox_objectsMulti.GetSelected(n));
                 }
             }
+        }
+
+        private void dataGridView_labels_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            int i = dataGridView_labels.CurrentCell.ColumnIndex + 1;
+            if (Label[i].objectType != LabelObject.barcode && Label[i].objectType != LabelObject.picture && Label[i].objectType != LabelObject.text)
+            {
+                dataGridView_labels.CurrentCell.Value = "";
+            }
+        }
+
+        private void dataGridView_labels_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            dataGridView_labels.SelectionMode = DataGridViewSelectionMode.CellSelect;
+        }
+
+        private void dataGridView_labels_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            dataGridView_labels.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
 
         public int LabelObjectPointed(int posX, int posY)
