@@ -261,7 +261,7 @@ namespace LabelPrint
                         Console.WriteLine("Incorrect file extension: " + openFileDialog1.FileName);
                         Exit();
                     }
-                    if (Label.Count <= 1)
+                    if (Label == null || Label.Count <= 1)
                     {
                         Console.WriteLine("Incorrect template file.\r\n");
                         Exit();
@@ -976,14 +976,22 @@ namespace LabelPrint
                     if (cells.Count >= 7)
                     {
                         Template templ = new Template();
+                        int m = -1;
                         for (int n = 0; n < Enum.GetNames(typeof(LabelObject)).Length; n++)
                         {
-                            if (Enum.GetName(typeof(LabelObject), n) == cells[0]) templ.objectType = (LabelObject)n;
+                            if (Enum.GetName(typeof(LabelObject), n) == cells[0]) m = n;
                         }
+                        if (m != -1) templ.objectType = (LabelObject)m;
+                        else
+                        {
+                            MessageBox.Show("[Line " + i.ToString() + "] Unknown label object: " + cells[0]);
+                            return null;
+                        }
+
                         if (i == 0 && templ.objectType != LabelObject.label)
                         {
                             MessageBox.Show("[Line " + i.ToString() + "] Label object must be defined first");
-                            return Label;
+                            return null;
                         }
                         // label; 1 [bgColor]; 2 [objectColor]; 3 width; 4 height;
                         if (templ.objectType == LabelObject.label)
@@ -1625,11 +1633,15 @@ namespace LabelPrint
                         }
                         tmpLabel.Add(templ);
                     }
-                    else MessageBox.Show("[Line " + i.ToString() + "] Incorrect object definition");
+                    else
+                    {
+                        MessageBox.Show("[Line " + i.ToString() + "] Incorrect object definition");
+                        return null;
+                    }
                 }
             }
             if (tmpLabel.Count > 0) return tmpLabel;
-            else return Label;
+            else return null;
         }
 
         private bool SaveTemplateToJson(string fileName, List<Template> _label, int codePage)
@@ -2981,27 +2993,36 @@ namespace LabelPrint
         {
             if (openFileDialog1.Title == "Open template .CSV/.Json file")
             {
-                dataGridView_labels.DataSource = null;
+                string tmpPath = path;
+                if (openFileDialog1.FileName.Contains("\\")) path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
+                else path = "";
+
+                List<Template> tmpLabel = new List<Template>();
+                if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".json"))
+                {
+                    tmpLabel = LoadTemplateFromJson(openFileDialog1.FileName, Label[0].codePage);
+                }
+                else if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".csv"))
+                {
+                    tmpLabel = LoadTemplateFromCSV(openFileDialog1.FileName, Label[0].codePage);
+                }
+                else
+                {
+                    path = tmpPath;
+                    MessageBox.Show("Incorrect file extension: " + openFileDialog1.FileName);
+                    return;
+                }
+                if (tmpLabel == null || tmpLabel.Count <= 1)
+                {
+                    path = tmpPath;
+                    Console.WriteLine("Incorrect template file.\r\n");
+                    return;
+                }
+                Label = tmpLabel;
                 LabelsDatabase.Clear();
                 LabelsDatabase.Columns.Clear();
                 LabelsDatabase.Rows.Clear();
                 textBox_labelsName.Clear();
-                if (openFileDialog1.FileName.Contains("\\")) path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
-                else path = "";
-
-                if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".json"))
-                {
-                    Label = LoadTemplateFromJson(openFileDialog1.FileName, Label[0].codePage);
-                }
-                else if (openFileDialog1.FileName.Trim().ToLower().EndsWith(".csv"))
-                {
-                    Label = LoadTemplateFromCSV(openFileDialog1.FileName, Label[0].codePage);
-                }
-                else
-                {
-                    MessageBox.Show("Incorrect file extension: " + openFileDialog1.FileName);
-                }
-
                 units[1] = (float)(Label[0].dpi / 25.4);
                 units[2] = (float)(Label[0].dpi / 2.54);
                 units[3] = Label[0].dpi;
@@ -3038,17 +3059,20 @@ namespace LabelPrint
             }
             else if (openFileDialog1.Title == "Open labels .CSV file")
             {
+                string tmpPath = path;
                 if (openFileDialog1.FileName.Contains("\\")) path = openFileDialog1.FileName.Substring(0, openFileDialog1.FileName.LastIndexOf('\\') + 1);
                 else path = "";
                 DataTable tmpDb = LoadLabelsFromCSV(openFileDialog1.FileName, Label[0].codePage, checkBox_columnNames.Checked);
 
                 if (tmpDb.Rows.Count <= 0)
                 {
+                    path=tmpPath;
                     MessageBox.Show("Error: No label data loaded.");
                     return;
                 }
                 if (tmpDb.Columns.Count != Label.Count - 1)
                 {
+                    path = tmpPath;
                     MessageBox.Show("Label data doesn't match template.\r\nTemplate objects defined:" + (Label.Count - 1).ToString() + "Data loaded: " + tmpDb.Columns.Count.ToString());
                     return;
                 }
@@ -3064,7 +3088,6 @@ namespace LabelPrint
                         }
                     }
                 }
-
                 LabelsDatabase = tmpDb;
                 dataGridView_labels.DataSource = LabelsDatabase;
                 foreach (DataGridViewColumn column in dataGridView_labels.Columns) column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -3358,6 +3381,7 @@ namespace LabelPrint
             Template templ = Label[0];
             float diff = templ.dpi;
             float.TryParse(textBox_dpi.Text, out templ.dpi);
+            if (templ.dpi < 1) templ.dpi = 1;
             diff = templ.dpi / diff;
             Label[0] = templ;
             textBox_dpi.Text = Label[0].dpi.ToString();
@@ -3465,7 +3489,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float y = (float)numericUpDown_scale.Value;
+                    float y = (float)numericUpDown_scale.Value * mult;
                     templ.posY -= y;
                     Label[n] = templ;
                     k.Add(n);
@@ -3486,7 +3510,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     templ.posX -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3507,7 +3531,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float y = (float)numericUpDown_scale.Value;
+                    float y = (float)numericUpDown_scale.Value * mult;
                     templ.posY += y;
                     Label[n] = templ;
                     k.Add(n);
@@ -3528,7 +3552,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     templ.posX += x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3549,7 +3573,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     if (templ.objectType == LabelObject.text)
                     {
                         templ.fontSize += x;
@@ -3578,7 +3602,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     if (templ.objectType == LabelObject.text)
                     {
                         templ.fontSize -= x;
@@ -3607,7 +3631,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     templ.width += x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3628,7 +3652,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     templ.width -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3649,7 +3673,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     templ.height += x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3670,7 +3694,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1 && Label[n].objectType != LabelObject.text && Label[n].objectType != LabelObject.line_length)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value;
+                    float x = (float)numericUpDown_scale.Value * mult;
                     templ.height -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3704,16 +3728,25 @@ namespace LabelPrint
 
         private void TextBox_rangeFrom_Leave(object sender, EventArgs e)
         {
-            int.TryParse(textBox_rangeFrom.Text, out int n);
-            if (n < 1) textBox_rangeFrom.Text = "1";
-            if (n >= 1) textBox_rangeFrom.Text = n.ToString();
+            int.TryParse(textBox_rangeTo.Text, out int n2);
+            int.TryParse(textBox_rangeFrom.Text, out int n1);
+            if (n1 < 1) n1 = 1;
+            if (n1 > LabelsDatabase.Rows.Count) n1 = LabelsDatabase.Rows.Count;
+            if (n1 > n2) n2 = n1;
+            textBox_rangeFrom.Text = n1.ToString();
+            textBox_rangeTo.Text = n2.ToString();
+
         }
 
         private void TextBox_rangeTo_Leave(object sender, EventArgs e)
         {
-            int n = LabelsDatabase.Rows.Count;
-            int.TryParse(textBox_rangeTo.Text, out n);
-            if (n <= LabelsDatabase.Rows.Count) textBox_rangeTo.Text = n.ToString();
+            int.TryParse(textBox_rangeFrom.Text, out int n1);
+            int.TryParse(textBox_rangeTo.Text, out int n2);
+            if (n2 < 1) n2 = 1;
+            if (n2 > LabelsDatabase.Rows.Count) n2 = LabelsDatabase.Rows.Count;
+            if (n2 < n1) n1 = n2;
+            textBox_rangeFrom.Text = n1.ToString();
+            textBox_rangeTo.Text = n2.ToString();
         }
 
         private void ListBox_objectsMulti_SelectedIndexChanged(object sender, EventArgs e)
@@ -3907,9 +3940,23 @@ namespace LabelPrint
             dataGridView_labels.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
 
+        private void numericUpDown_move_Leave(object sender, EventArgs e)
+        {
+            int.TryParse(numericUpDown_move.Text, out int n);
+            if (n < 1) n = 1;
+            numericUpDown_move.Text = n.ToString();
+        }
+
+        private void numericUpDown_scale_Leave(object sender, EventArgs e)
+        {
+            int.TryParse(numericUpDown_scale.Text, out int n);
+            if (n < 1) n = 1;
+            numericUpDown_scale.Text = n.ToString();
+        }
+
         public int LabelObjectPointed(int posX, int posY)
         {
-            for (int i = 0; i < Label.Count; i++)
+            for (int i = Label.Count - 1; i >= 0; i--)
             {
                 PointF[] rect = new PointF[4];
                 rect[0].X = currentObjectsPositions[i].X;
