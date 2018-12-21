@@ -3066,7 +3066,7 @@ namespace LabelPrint
 
                 if (tmpDb.Rows.Count <= 0)
                 {
-                    path=tmpPath;
+                    path = tmpPath;
                     MessageBox.Show("Error: No label data loaded.");
                     return;
                 }
