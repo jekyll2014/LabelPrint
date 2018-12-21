@@ -3489,7 +3489,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float y = (float)numericUpDown_scale.Value * mult;
+                    float y = (float)numericUpDown_move.Value * mult;
                     templ.posY -= y;
                     Label[n] = templ;
                     k.Add(n);
@@ -3510,7 +3510,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value * mult;
+                    float x = (float)numericUpDown_move.Value * mult;
                     templ.posX -= x;
                     Label[n] = templ;
                     k.Add(n);
@@ -3531,7 +3531,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float y = (float)numericUpDown_scale.Value * mult;
+                    float y = (float)numericUpDown_move.Value * mult;
                     templ.posY += y;
                     Label[n] = templ;
                     k.Add(n);
@@ -3552,7 +3552,7 @@ namespace LabelPrint
                 if (n > 0 && n < listBox_objectsMulti.Items.Count - 1)
                 {
                     Template templ = Label[n];
-                    float x = (float)numericUpDown_scale.Value * mult;
+                    float x = (float)numericUpDown_move.Value * mult;
                     templ.posX += x;
                     Label[n] = templ;
                     k.Add(n);
